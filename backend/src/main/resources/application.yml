@@ -1,0 +1,20 @@
+server:
+  port: 8080
+
+spring:
+  application:
+    name: grain-platform-backend
+  datasource:
+    url: jdbc:mysql://localhost:3306/grain_platform?useUnicode=true&characterEncoding=UTF-8&serverTimezone=Asia/Shanghai
+    username: root
+    password: 123456
+    driver-class-name: com.mysql.cj.jdbc.Driver
+
+mybatis:
+  type-aliases-package: com.grain.platform
+  configuration:
+    map-underscore-to-camel-case: true
+
+logging:
+  level:
+    root: info

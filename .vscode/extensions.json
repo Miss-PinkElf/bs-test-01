@@ -1,0 +1,8 @@
+{
+  "recommendations": [
+    "vscjava.vscode-java-pack",
+    "vmware.vscode-spring-boot",
+    "vue.volar",
+    "dbaeumer.vscode-eslint"
+  ]
+}

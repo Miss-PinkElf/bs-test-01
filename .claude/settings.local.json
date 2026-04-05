@@ -1,0 +1,26 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(pnpm create:*)",
+      "Bash(npx create-electron-app@latest:*)",
+      "Bash(npm create electron-vite@latest agent-desktop-pet:*)",
+      "Bash(python:*)",
+      "Bash(backend/.venv/Scripts/python.exe:*)",
+      "Bash(ls:*)",
+      "Bash(npm start)",
+      "Skill(agent-browser)",
+      "Bash(curl:*)",
+      "Bash(npm uninstall:*)",
+      "Bash(npm install:*)",
+      "Bash(git -C \"/d/Users/Mobius/Desktop/mine/AAA-code/agent-desktop-pet\" log --oneline -n 30)",
+      "Bash(gh api:*)",
+      "WebSearch",
+      "mcp__fetch__fetch",
+      "Skill(react-tsx-readability-guard)",
+      "Bash(npm:*)",
+      "Skill(context-budget-explore)",
+      "Bash(python3:*)",
+      "mcp__ide__getDiagnostics"
+    ]
+  }
+}

@@ -1,0 +1,17 @@
+package com.grain.platform.dto.sensor;
+
+import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.NotNull;
+
+import java.time.LocalDateTime;
+
+public record SensorDataCreateRequest(
+        @NotNull(message = "仓库不能为空")
+        Long warehouseId,
+        @NotBlank(message = "指标类型不能为空")
+        String metricType,
+        @NotNull(message = "指标值不能为空")
+        Double metricValue,
+        LocalDateTime collectedAt
+) {
+}
