@@ -20,7 +20,7 @@
 - [x] 任务 6：升级正式版 Vue 前端骨架
   - 验收：`frontend/` 切换到 `Vue 3 + Vue Router + Pinia + Element Plus + Axios + ECharts` 正式结构，并补齐登录、仪表盘、用户、仓库、环境数据、预测页面入口。
 
-- [ ] 任务 7：将核心后端接口替换为真实 MyBatis 持久层
+- [x] 任务 7：将核心后端接口替换为真实 MyBatis 持久层
   - 验收：登录、仓库、环境数据、预测主链路不再依赖 `DemoDataService`，而是按数据库定稿与接口设计接入真实表结构。
 
 ## 审查与验证任务

@@ -1,8 +1,15 @@
 package com.grain.platform.mapper;
 
+import com.grain.platform.entity.Warehouse;
 import org.apache.ibatis.annotations.Mapper;
+
+import java.util.List;
 
 @Mapper
 public interface WarehouseMapper {
-    // 预留给后续接入 MyBatis 与真实数据库查询。
+    List<Warehouse> selectAll();
+
+    List<Warehouse> selectOptions();
+
+    void insert(Warehouse warehouse);
 }

@@ -47,7 +47,7 @@ function normalizeWarehouse(item) {
 }
 
 function normalizeSensorData(item) {
-  const metricCode = item.metricCode || item.metricType || "temperature";
+  const metricCode = item.metricCode || item.metricCode || "temperature";
 
   return {
     id: item.id,
@@ -125,28 +125,30 @@ export async function fetchWarehouses() {
 }
 
 export async function createWarehouse(payload) {
-  return request({
+  const raw = await request({
     url: "/api/warehouses",
     method: "post",
     data: {
-      code: payload.warehouseCode,
-      name: payload.warehouseName,
+      warehouseCode: payload.warehouseCode,
+      warehouseName: payload.warehouseName,
       location: payload.location,
       capacityTon: Number(payload.capacityTon),
       managerName: payload.managerName,
       status: payload.status
     }
   });
+
+  return raw;
 }
 
 export async function fetchSensorData(params = {}) {
-  const metricCode = params.metricCode || params.metricType;
+  const metricCode = params.metricCode || params.metricCode;
   const raw = await request({
     url: "/api/sensor-data",
     method: "get",
     params: {
       warehouseId: params.warehouseId || undefined,
-      metricType: metricCode || undefined
+      metricCode: metricCode || undefined
     }
   });
 
@@ -159,7 +161,7 @@ export async function createSensorData(payload) {
     method: "post",
     data: {
       warehouseId: payload.warehouseId,
-      metricType: payload.metricCode || payload.metricType,
+      metricCode: payload.metricCode || payload.metricCode,
       metricValue: Number(payload.metricValue),
       collectedAt: payload.collectedAt || undefined
     }
@@ -174,7 +176,7 @@ export async function predictTemperature(payload) {
     method: "post",
     data: {
       warehouseId: payload.warehouseId,
-      metricType: payload.metricCode || payload.metricType || "temperature",
+      metricCode: payload.metricCode || payload.metricCode || "temperature",
       futureSteps: Number(payload.futureSteps)
     }
   });

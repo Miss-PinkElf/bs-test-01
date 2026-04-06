@@ -14,19 +14,19 @@ public class ForecastService {
 
     public List<PredictionPointDto> predict(List<SensorDataPointDto> history, int futureSteps) {
         List<SensorDataPointDto> sorted = history.stream()
-                .sorted(Comparator.comparing(SensorDataPointDto::collectedAt))
+                .sorted(Comparator.comparing(SensorDataPointDto::getCollectedAt))
                 .toList();
 
         List<PredictionPointDto> result = new ArrayList<>();
-        sorted.forEach(item -> result.add(new PredictionPointDto(item.collectedAt(), item.metricValue(), null)));
+        sorted.forEach(item -> result.add(new PredictionPointDto(item.getCollectedAt(), item.getMetricValue(), null)));
 
         if (sorted.isEmpty()) {
             return result;
         }
 
         double slope = calculateSlope(sorted);
-        double base = sorted.get(sorted.size() - 1).metricValue();
-        LocalDateTime lastTime = sorted.get(sorted.size() - 1).collectedAt();
+        double base = sorted.get(sorted.size() - 1).getMetricValue();
+        LocalDateTime lastTime = sorted.get(sorted.size() - 1).getCollectedAt();
 
         for (int step = 1; step <= futureSteps; step++) {
             result.add(new PredictionPointDto(
@@ -52,7 +52,7 @@ public class ForecastService {
 
         for (int index = 0; index < n; index++) {
             double x = index + 1;
-            double y = points.get(index).metricValue();
+            double y = points.get(index).getMetricValue();
             sumX += x;
             sumY += y;
             sumXY += x * y;

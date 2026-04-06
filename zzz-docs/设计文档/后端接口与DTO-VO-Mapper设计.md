@@ -556,3 +556,31 @@ backend/src/main/java/com/grain/platform/
 
 - 后端实体、Mapper、Service、Controller 正式实现
 - Vue 前端骨架改造与接口联调
+
+## 9. 2026-04-06 实际落地进展补充
+
+本轮已经完成第一批真实持久层替换，已落地并验证通过的主链路如下：
+
+- 登录：`POST /api/auth/login`
+- 仓库列表：`GET /api/warehouses`
+- 环境数据写入：`POST /api/sensor-data`
+- 温度预测归档：`POST /api/predictions/temperature`
+
+已完成的实现收口：
+
+- 后端数据库连接已切到本地 `grain_env_predict`
+- MyBatis XML 已接入 `mapper/` 目录
+- 已新增统一返回结构 `ApiResponse`
+- 已将后端主链路从 `DemoDataService` 切到真实 `Mapper + Service`
+- 已开始把前后端字段命名向 `metricCode` 收口
+
+本轮验证说明：
+
+- 由于本机会话中已有旧 Java 进程占用 `8080`，联调验证临时使用 `8081`
+- 在 `8081` 下已实测通过登录、仓库、环境数据、预测归档四条链路
+
+下一步建议：
+
+- 优先推进 `frontend/` 与真实 API 的联调
+- 再补用户管理、角色选项、指标选项、预测历史等正式接口
+- 最后收口仪表盘增强和演示流程

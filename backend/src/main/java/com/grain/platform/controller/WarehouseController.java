@@ -1,7 +1,9 @@
 package com.grain.platform.controller;
 
+import com.grain.platform.common.ApiResponse;
 import com.grain.platform.dto.warehouse.WarehouseDto;
-import com.grain.platform.service.DemoDataService;
+import com.grain.platform.service.WarehouseService;
+import com.grain.platform.vo.common.IdVO;
 import jakarta.validation.Valid;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -15,19 +17,24 @@ import java.util.List;
 @RequestMapping("/api/warehouses")
 public class WarehouseController {
 
-    private final DemoDataService demoDataService;
+    private final WarehouseService warehouseService;
 
-    public WarehouseController(DemoDataService demoDataService) {
-        this.demoDataService = demoDataService;
+    public WarehouseController(WarehouseService warehouseService) {
+        this.warehouseService = warehouseService;
     }
 
     @GetMapping
-    public List<WarehouseDto> list() {
-        return demoDataService.listWarehouses();
+    public ApiResponse<List<WarehouseDto>> list() {
+        return ApiResponse.success(warehouseService.list());
+    }
+
+    @GetMapping("/options")
+    public ApiResponse<List<WarehouseDto>> options() {
+        return ApiResponse.success(warehouseService.options());
     }
 
     @PostMapping
-    public WarehouseDto create(@Valid @RequestBody WarehouseDto request) {
-        return demoDataService.createWarehouse(request);
+    public ApiResponse<IdVO> create(@Valid @RequestBody WarehouseDto request) {
+        return ApiResponse.success(warehouseService.create(request));
     }
 }

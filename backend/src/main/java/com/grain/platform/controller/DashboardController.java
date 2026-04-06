@@ -1,7 +1,8 @@
 package com.grain.platform.controller;
 
+import com.grain.platform.common.ApiResponse;
 import com.grain.platform.dto.dashboard.DashboardOverviewResponse;
-import com.grain.platform.service.DemoDataService;
+import com.grain.platform.service.DashboardService;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
@@ -10,14 +11,14 @@ import org.springframework.web.bind.annotation.RestController;
 @RequestMapping("/api/dashboard")
 public class DashboardController {
 
-    private final DemoDataService demoDataService;
+    private final DashboardService dashboardService;
 
-    public DashboardController(DemoDataService demoDataService) {
-        this.demoDataService = demoDataService;
+    public DashboardController(DashboardService dashboardService) {
+        this.dashboardService = dashboardService;
     }
 
     @GetMapping("/overview")
-    public DashboardOverviewResponse overview() {
-        return demoDataService.getOverview();
+    public ApiResponse<DashboardOverviewResponse> overview() {
+        return ApiResponse.success(dashboardService.getOverview());
     }
 }

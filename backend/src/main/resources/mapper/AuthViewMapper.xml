@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.grain.platform.mapper.AuthViewMapper">
+
+    <select id="selectWarehouseNameByUserId" resultType="string">
+        select w.warehouse_name
+        from sys_user u
+                 left join warehouse w on u.warehouse_id = w.id
+        where u.id = #{userId}
+        limit 1
+    </select>
+</mapper>

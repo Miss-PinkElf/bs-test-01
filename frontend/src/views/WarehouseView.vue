@@ -42,7 +42,7 @@ async function loadWarehouses() {
 
 async function submit() {
   await createWarehouse(form);
-  ElMessage.success("仓库已加入演示列表");
+  ElMessage.success("仓库已写入数据库");
   form.warehouseCode = "";
   form.warehouseName = "";
   form.location = "";

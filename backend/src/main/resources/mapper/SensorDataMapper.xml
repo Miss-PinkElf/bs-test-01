@@ -1,0 +1,80 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.grain.platform.mapper.SensorDataMapper">
+
+    <resultMap id="sensorPointMap" type="com.grain.platform.dto.sensor.SensorDataPointDto">
+        <id property="id" column="id"/>
+        <result property="warehouseId" column="warehouse_id"/>
+        <result property="warehouseName" column="warehouse_name"/>
+        <result property="metricCode" column="metric_code"/>
+        <result property="metricName" column="metric_name"/>
+        <result property="metricValue" column="metric_value"/>
+        <result property="unit" column="unit"/>
+        <result property="collectedAt" column="collected_at"/>
+        <result property="sourceType" column="source_type"/>
+        <result property="qualityFlag" column="quality_flag"/>
+    </resultMap>
+
+    <select id="selectByCondition" resultMap="sensorPointMap">
+        select sd.id,
+               sd.warehouse_id,
+               w.warehouse_name,
+               sd.metric_code,
+               sm.metric_name,
+               sd.metric_value,
+               sm.unit,
+               sd.collected_at,
+               sd.source_type,
+               sd.quality_flag
+        from sensor_data sd
+                 join warehouse w on sd.warehouse_id = w.id
+                 join sensor_metric sm on sd.metric_code = sm.metric_code
+        where (#{warehouseId} is null or sd.warehouse_id = #{warehouseId})
+          and (#{metricCode} is null or #{metricCode} = '' or sd.metric_code = #{metricCode})
+        order by sd.collected_at asc
+    </select>
+
+    <select id="selectRecentByMetric" resultMap="sensorPointMap">
+        select sd.id,
+               sd.warehouse_id,
+               w.warehouse_name,
+               sd.metric_code,
+               sm.metric_name,
+               sd.metric_value,
+               sm.unit,
+               sd.collected_at,
+               sd.source_type,
+               sd.quality_flag
+        from sensor_data sd
+                 join warehouse w on sd.warehouse_id = w.id
+                 join sensor_metric sm on sd.metric_code = sm.metric_code
+        where sd.warehouse_id = #{warehouseId}
+          and sd.metric_code = #{metricCode}
+        order by sd.collected_at asc
+        limit 24
+    </select>
+
+    <insert id="insert" parameterType="com.grain.platform.entity.SensorData" useGeneratedKeys="true" keyProperty="id">
+        insert into sensor_data (
+            warehouse_id,
+            metric_code,
+            metric_value,
+            collected_at,
+            source_type,
+            quality_flag,
+            remark,
+            created_by
+        ) values (
+            #{warehouseId},
+            #{metricCode},
+            #{metricValue},
+            #{collectedAt},
+            #{sourceType},
+            #{qualityFlag},
+            #{remark},
+            #{createdBy}
+        )
+    </insert>
+</mapper>

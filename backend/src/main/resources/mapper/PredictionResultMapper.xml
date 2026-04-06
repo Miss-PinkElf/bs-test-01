@@ -1,0 +1,38 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.grain.platform.mapper.PredictionResultMapper">
+
+    <insert id="insertBatch">
+        insert into prediction_result (
+            task_id,
+            step_index,
+            predicted_time,
+            actual_value,
+            predicted_value
+        ) values
+        <foreach collection="list" item="item" separator=",">
+            (
+                #{item.taskId},
+                #{item.stepIndex},
+                #{item.predictedTime},
+                #{item.actualValue},
+                #{item.predictedValue}
+            )
+        </foreach>
+    </insert>
+
+    <select id="selectByTaskId" resultType="com.grain.platform.entity.PredictionResult">
+        select id,
+               task_id,
+               step_index,
+               predicted_time,
+               actual_value,
+               predicted_value,
+               created_at
+        from prediction_result
+        where task_id = #{taskId}
+        order by step_index asc
+    </select>
+</mapper>

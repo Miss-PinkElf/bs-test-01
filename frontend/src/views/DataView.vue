@@ -53,7 +53,7 @@ async function loadData() {
 
 async function submit() {
   await createSensorData(form);
-  ElMessage.success("环境数据已写入演示接口");
+  ElMessage.success("环境数据已写入数据库");
   await loadData();
 }
 

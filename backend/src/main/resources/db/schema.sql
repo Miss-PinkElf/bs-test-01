@@ -1,8 +1,8 @@
-CREATE DATABASE IF NOT EXISTS grain_platform
+CREATE DATABASE IF NOT EXISTS grain_env_predict
     DEFAULT CHARACTER SET utf8mb4
     COLLATE utf8mb4_general_ci;
 
-USE grain_platform;
+USE grain_env_predict;
 
 CREATE TABLE IF NOT EXISTS warehouse (
     id BIGINT PRIMARY KEY AUTO_INCREMENT COMMENT '主键',

@@ -2,10 +2,10 @@ package com.grain.platform.dto.warehouse;
 
 public record WarehouseDto(
         Long id,
-        String code,
-        String name,
+        String warehouseCode,
+        String warehouseName,
         String location,
-        Integer capacityTon,
+        Double capacityTon,
         String managerName,
         String status
 ) {

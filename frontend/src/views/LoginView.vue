@@ -52,7 +52,7 @@ function openScreen() {
 
     <el-card class="login-panel" shadow="never">
       <template #header>
-        <div class="login-panel-title">演示登录</div>
+        <div class="login-panel-title">系统登录</div>
       </template>
 
       <el-form label-position="top">

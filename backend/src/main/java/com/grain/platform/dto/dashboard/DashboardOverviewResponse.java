@@ -6,6 +6,7 @@ public record DashboardOverviewResponse(
         int warehouseCount,
         int todayDataCount,
         int alertCount,
+        int archivedPredictionCount,
         List<String> latestAlerts
 ) {
 }

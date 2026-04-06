@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.grain.platform.mapper.DashboardMapper">
+
+    <select id="countWarehouses" resultType="int">
+        select count(*) from warehouse where status != 'DISABLED'
+    </select>
+
+    <select id="countTodaySensorData" resultType="int">
+        select count(*) from sensor_data where date(collected_at) = curdate()
+    </select>
+
+    <select id="countArchivedPredictionCount" resultType="int">
+        select count(*) from prediction_task
+    </select>
+
+    <select id="selectLatestAlerts" resultType="string">
+        select concat(w.warehouse_name, ' ', sm.metric_name, ' 接近阈值')
+        from sensor_data sd
+                 join warehouse w on sd.warehouse_id = w.id
+                 join sensor_metric sm on sd.metric_code = sm.metric_code
+        where sm.max_threshold is not null
+          and sd.metric_value >= sm.max_threshold * 0.9
+        order by sd.collected_at desc
+        limit 5
+    </select>
+</mapper>

@@ -1,0 +1,70 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.grain.platform.mapper.PredictionTaskMapper">
+
+    <resultMap id="predictionTaskMap" type="com.grain.platform.entity.PredictionTask">
+        <id property="id" column="id"/>
+        <result property="taskNo" column="task_no"/>
+        <result property="warehouseId" column="warehouse_id"/>
+        <result property="metricCode" column="metric_code"/>
+        <result property="algorithmCode" column="algorithm_code"/>
+        <result property="algorithmName" column="algorithm_name"/>
+        <result property="futureSteps" column="future_steps"/>
+        <result property="sampleSize" column="sample_size"/>
+        <result property="status" column="status"/>
+        <result property="riskLevel" column="risk_level"/>
+        <result property="requestedBy" column="requested_by"/>
+        <result property="requestedAt" column="requested_at"/>
+        <result property="completedAt" column="completed_at"/>
+        <result property="summary" column="summary"/>
+        <result property="createdAt" column="created_at"/>
+        <result property="updatedAt" column="updated_at"/>
+    </resultMap>
+
+    <insert id="insert" parameterType="com.grain.platform.entity.PredictionTask" useGeneratedKeys="true" keyProperty="id">
+        insert into prediction_task (
+            task_no,
+            warehouse_id,
+            metric_code,
+            algorithm_code,
+            algorithm_name,
+            future_steps,
+            sample_size,
+            status,
+            risk_level,
+            requested_by,
+            requested_at,
+            completed_at,
+            summary
+        ) values (
+            #{taskNo},
+            #{warehouseId},
+            #{metricCode},
+            #{algorithmCode},
+            #{algorithmName},
+            #{futureSteps},
+            #{sampleSize},
+            #{status},
+            #{riskLevel},
+            #{requestedBy},
+            #{requestedAt},
+            #{completedAt},
+            #{summary}
+        )
+    </insert>
+
+    <select id="selectAll" resultMap="predictionTaskMap">
+        select *
+        from prediction_task
+        order by requested_at desc, id desc
+    </select>
+
+    <select id="selectById" resultMap="predictionTaskMap">
+        select *
+        from prediction_task
+        where id = #{id}
+        limit 1
+    </select>
+</mapper>
