@@ -6,7 +6,7 @@ import "./globals.css";
 
 export const metadata: Metadata = {
   title: "粮仓环境数据预测管理平台",
-  description: "基于 Next 与 Ant Design 的纯静态演示版"
+  description: "基于 Next 与 Ant Design 的高保真静态原型，用于预览毕业设计最终成品效果"
 };
 
 type RootLayoutProps = Readonly<{

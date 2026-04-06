@@ -10,10 +10,10 @@ export default function LoginPage() {
   return (
     <div className="login-wrapper">
       <Card className="login-card" variant="borderless">
-        <div className="login-badge">纯静态演示版</div>
+        <div className="login-badge">高保真静态原型</div>
         <h1 className="login-title">粮仓环境数据预测管理平台</h1>
         <Paragraph className="login-description">
-          这是一版只看最终效果的静态页面，账号、权限、业务数据全部由本地 mock 提供。
+          这版页面用来提前看到最终答辩成品的样子。账号、权限、业务数据仍由本地 mock 提供，但页面结构已经按 PRD 收敛。
         </Paragraph>
 
         <Form layout="vertical" initialValues={{ username: MOCK_CURRENT_USER.username, password: "123456" }}>
@@ -29,9 +29,14 @@ export default function LoginPage() {
               当前演示用户：{MOCK_CURRENT_USER.displayName} / {MOCK_CURRENT_USER.roleLabel}
             </Text>
           </Space>
-          <Button type="primary" size="large" block href="/dashboard">
-            进入系统
-          </Button>
+          <Space direction="vertical" size={12} style={{ width: "100%" }}>
+            <Button type="primary" size="large" block href="/dashboard">
+              进入后台原型
+            </Button>
+            <Button size="large" block href="/screen">
+              直接查看展示大屏
+            </Button>
+          </Space>
         </Form>
       </Card>
     </div>

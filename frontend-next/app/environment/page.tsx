@@ -3,7 +3,7 @@ import { EnvironmentPage } from "@/components/pages/EnvironmentPage";
 
 export default function EnvironmentRoute() {
   return (
-    <AppShell pageTitle="环境数据" pageDescription="查看温度、湿度等环境记录，全部使用 mock 数据展示。">
+    <AppShell pageTitle="环境数据" pageDescription="展示数据录入、导入、查询、图表分析和预处理说明。">
       <EnvironmentPage />
     </AppShell>
   );

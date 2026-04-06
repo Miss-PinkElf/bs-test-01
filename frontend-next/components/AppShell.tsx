@@ -3,11 +3,13 @@
 import { Avatar, Button, Layout, Menu, Space, Tag, Typography } from "antd";
 import {
   AlertOutlined,
+  AreaChartOutlined,
   BarChartOutlined,
   DatabaseOutlined,
   HomeOutlined,
   LogoutOutlined,
   ShopOutlined,
+  TeamOutlined,
   UserOutlined
 } from "@ant-design/icons";
 import Link from "next/link";
@@ -19,9 +21,11 @@ const { Text } = Typography;
 
 const NAV_ITEMS = [
   { key: "/dashboard", icon: <HomeOutlined />, label: <Link href="/dashboard">仪表盘</Link> },
+  { key: "/users", icon: <TeamOutlined />, label: <Link href="/users">用户管理</Link> },
   { key: "/warehouses", icon: <ShopOutlined />, label: <Link href="/warehouses">仓库管理</Link> },
   { key: "/environment", icon: <DatabaseOutlined />, label: <Link href="/environment">环境数据</Link> },
-  { key: "/prediction", icon: <BarChartOutlined />, label: <Link href="/prediction">温度预测</Link> }
+  { key: "/prediction", icon: <BarChartOutlined />, label: <Link href="/prediction">温度预测</Link> },
+  { key: "/screen", icon: <AreaChartOutlined />, label: <Link href="/screen">展示大屏</Link> }
 ];
 
 type AppShellProps = {
@@ -35,11 +39,11 @@ export function AppShell({ pageTitle, pageDescription, children }: AppShellProps
 
   return (
     <Layout className="page-shell">
-      <Sider theme="light" width={240} style={{ borderRight: "1px solid #e7ebf3" }}>
+      <Sider theme="light" width={252} style={{ borderRight: "1px solid #e7ebf3" }}>
         <div style={{ padding: 24 }}>
-          <div style={{ fontSize: 22, fontWeight: 700 }}>粮仓平台</div>
+          <div style={{ fontSize: 22, fontWeight: 700 }}>粮仓平台原型</div>
           <div className="mini-text" style={{ marginTop: 8 }}>
-            Next + Ant Design 静态演示
+            PRD 对齐的高保真静态演示
           </div>
         </div>
         <Menu mode="inline" selectedKeys={[pathname]} items={NAV_ITEMS} style={{ borderInlineEnd: "none" }} />
@@ -57,8 +61,8 @@ export function AppShell({ pageTitle, pageDescription, children }: AppShellProps
           }}
         >
           <Space align="center">
-            <AlertOutlined style={{ color: "#1677ff" }} />
-            <Text className="mini-text">当前为 mock 演示环境，无需登录后端</Text>
+            <AlertOutlined style={{ color: "#2f6fed" }} />
+            <Text className="mini-text">当前为 frontend-next 静态参考原型，正式前端仍然是 Vue 3 路线</Text>
           </Space>
 
           <Space size={12}>
@@ -77,7 +81,7 @@ export function AppShell({ pageTitle, pageDescription, children }: AppShellProps
               <h1 className="page-title">{pageTitle}</h1>
               <div className="page-subtitle">{pageDescription}</div>
             </div>
-            <Tag color="processing">纯静态页面预览</Tag>
+            <Tag color="processing">高保真静态原型</Tag>
           </div>
           {children}
         </Content>

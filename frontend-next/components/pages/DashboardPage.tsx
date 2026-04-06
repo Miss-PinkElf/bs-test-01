@@ -1,20 +1,66 @@
 "use client";
 
-import { Alert, Card, Col, List, Progress, Row, Space, Statistic, Table, Tag, Typography } from "antd";
-import { dashboardCards, environmentRows, forecastSummary, warehouseAlerts } from "@/mock/grain-data";
+import { Alert, Card, Col, List, Row, Space, Statistic, Table, Tag, Timeline, Typography } from "antd";
+import {
+  dashboardCards,
+  dashboardHighlights,
+  dashboardTrendSeries,
+  environmentRows,
+  forecastSummary,
+  processStages,
+  warehouseAlerts,
+  warehouseHealthRanking
+} from "@/mock/grain-data";
+import { MultiLineTrendChart } from "@/components/charts/MultiLineTrendChart";
+import { RankingBarChart } from "@/components/charts/RankingBarChart";
 
 const { Paragraph, Text } = Typography;
 
-const metricColumns = [
+const recentColumns = [
   { title: "仓库", dataIndex: "warehouseName", key: "warehouseName" },
-  { title: "指标", dataIndex: "metricType", key: "metricType" },
-  { title: "当前值", dataIndex: "metricValue", key: "metricValue" },
-  { title: "采集时间", dataIndex: "collectedAt", key: "collectedAt" }
+  { title: "指标", dataIndex: "metricTypeLabel", key: "metricTypeLabel" },
+  { title: "采样值", dataIndex: "metricValueLabel", key: "metricValueLabel" },
+  { title: "采集时间", dataIndex: "collectedAt", key: "collectedAt" },
+  {
+    title: "状态",
+    dataIndex: "statusLabel",
+    key: "statusLabel",
+    render: (statusLabel: string, record: (typeof environmentRows)[number]) => (
+      <Tag color={record.statusColor}>{statusLabel}</Tag>
+    )
+  }
 ];
 
 export function DashboardPage() {
   return (
     <div className="section-stack">
+      <Card className="panel-card hero-card" variant="borderless">
+        <div className="hero-grid">
+          <div>
+            <div className="section-eyebrow">毕业设计成品预期</div>
+            <h2 className="hero-title">一个可登录、可管理、可查询、可展示、可预测、可归档的粮仓环境数据平台</h2>
+            <Paragraph className="hero-description">
+              这版静态原型不追求真数据，而是把最终答辩会展示出来的页面结构、主流程和图表感先做清楚。
+            </Paragraph>
+            <div className="flow-chip-row">
+              {processStages.map((item) => (
+                <span className={`flow-chip flow-chip-${item.status}`} key={item.title}>
+                  {item.title}
+                </span>
+              ))}
+            </div>
+          </div>
+
+          <div className="hero-highlight-list">
+            {dashboardHighlights.map((item) => (
+              <div className="hero-highlight-item" key={item}>
+                {item}
+              </div>
+            ))}
+          </div>
+        </div>
+      </Card>
+
       <div className="stat-grid">
         {dashboardCards.map((card) => (
           <Card key={card.key} className="panel-card">
@@ -27,7 +73,21 @@ export function DashboardPage() {
       </div>
 
       <Row gutter={[16, 16]}>
-        <Col xs={24} xl={14}>
+        <Col xs={24} xl={15}>
+          <Card className="panel-card" title="今日采样与预警走势">
+            <MultiLineTrendChart series={dashboardTrendSeries} />
+          </Card>
+        </Col>
+
+        <Col xs={24} xl={9}>
+          <Card className="panel-card" title="仓库运行健康度">
+            <RankingBarChart items={warehouseHealthRanking} />
+          </Card>
+        </Col>
+      </Row>
+
+      <Row gutter={[16, 16]}>
+        <Col xs={24} xl={10}>
           <Card className="panel-card" title="近期预警">
             <List
               dataSource={warehouseAlerts}
@@ -46,6 +106,20 @@ export function DashboardPage() {
           </Card>
         </Col>
 
+        <Col xs={24} xl={14}>
+          <Card className="panel-card" title="最近采样记录">
+            <Table
+              rowKey="id"
+              columns={recentColumns}
+              dataSource={environmentRows}
+              pagination={{ pageSize: 5 }}
+              size="middle"
+            />
+          </Card>
+        </Col>
+      </Row>
+
+      <Row gutter={[16, 16]}>
         <Col xs={24} xl={10}>
           <Card className="panel-card" title="预测摘要">
             <div className="forecast-list">
@@ -61,32 +135,33 @@ export function DashboardPage() {
             </div>
           </Card>
         </Col>
-      </Row>
 
-      <Row gutter={[16, 16]}>
-        <Col xs={24} xl={16}>
-          <Card className="panel-card" title="最近采样记录">
-            <Table
-              rowKey="id"
-              columns={metricColumns}
-              dataSource={environmentRows.slice(0, 5)}
-              pagination={false}
-              size="middle"
+        <Col xs={24} xl={8}>
+          <Card className="panel-card" title="核心演示脚本">
+            <Timeline
+              items={processStages.map((item) => ({
+                color: item.status === "done" ? "green" : item.status === "active" ? "blue" : "gray",
+                children: (
+                  <div>
+                    <div className="timeline-title">{item.title}</div>
+                    <div className="mini-text">{item.description}</div>
+                  </div>
+                )
+              }))}
             />
           </Card>
         </Col>
 
-        <Col xs={24} xl={8}>
-          <Card className="panel-card" title="系统说明">
+        <Col xs={24} xl={6}>
+          <Card className="panel-card" title="原型说明">
             <Space direction="vertical" size={16} style={{ width: "100%" }}>
-              <Alert message="当前页面全部使用 mock 数据渲染" type="info" showIcon />
+              <Alert message="静态原型用途" type="info" showIcon />
               <Paragraph style={{ margin: 0 }}>
-                这版页面主要用于先看毕业设计最终展示效果，后面再决定是否接 MySQL、Spring Boot 和真实权限。
+                这里主要回答“最终成品大概是什么样”。正式开发时，数据来源会替换成 Spring Boot + MySQL 接口。
               </Paragraph>
-              <div>
-                <Text strong>完成度预览</Text>
-                <Progress percent={78} strokeColor="#1677ff" />
-              </div>
+              <Paragraph style={{ margin: 0 }}>
+                大屏、图表、预测曲线都只做展示，不额外引入超出 PRD 的业务范围。
+              </Paragraph>
             </Space>
           </Card>
         </Col>
