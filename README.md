@@ -72,9 +72,13 @@ scripts/   Windows 启动脚本
 - `warehouse`
 - `sensor_metric`
 - `sensor_data`
-- `prediction_record`
+- `prediction_task`
+- `prediction_result`
 
-SQL 初稿见 `backend/src/main/resources/db/schema.sql`。
+数据库定稿见：
+
+- `backend/src/main/resources/db/schema.sql`
+- `zzz-docs/设计文档/数据库设计定稿.md`
 
 ## 启动方式
 

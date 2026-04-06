@@ -32,7 +32,7 @@
 4. Checkpoint 与交付说明
 
 ## 当前阶段
-- Apply
+- Handoff / Ready for resume
 
 ## 退出条件
 - 用户可直接查看 spec、项目骨架、脚本和说明。

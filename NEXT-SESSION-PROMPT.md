@@ -4,9 +4,11 @@
 1. 读取 `zzz-docs/开发指导版PRD-粮仓环境数据预测管理平台.md`
 2. 读取 `zzz-docs/设计文档/需求清单-任务书与开题报告对齐.md`
 3. 读取 `.explore/grain-docs-alignment/handoffs/2026-04-06-001-resume-ready.md`
-4. 读取 `.explore/grain-platform-bootstrap/handoffs/2026-04-06-002-static-prototype-resume-ready.md`
+4. 读取 `.explore/grain-platform-bootstrap/handoffs/2026-04-06-003-database-api-vue-resume-ready.md`
 5. 读取 `.explore/grain-docs-alignment/state.md` 和 `.explore/grain-platform-bootstrap/state.md`
-6. 读取 `frontend-next/README.md`
+6. 读取 `zzz-docs/设计文档/数据库设计定稿.md`
+7. 读取 `zzz-docs/设计文档/后端接口与DTO-VO-Mapper设计.md`
+8. 读取 `frontend-next/README.md`
 
 当前已经完成的工作：
 - 已完成任务书与开题报告的 Markdown 转换与对齐
@@ -15,6 +17,11 @@
 - 已完成后端骨架、Vue 早期骨架、PowerShell 启动脚本
 - 已完成 `frontend-next/` 的高保真静态原型增强，补齐了用户管理、环境数据图表、预测页、展示大屏和原型说明文档
 - 已修复 `frontend-next/` 的 Next SWC 依赖问题，并重新通过 `npm run build` 验证
+- 已完成数据库 SQL 定稿和表说明
+- 已完成后端接口清单、DTO/VO、Mapper 设计
+- 已将 `frontend/` 升级为正式版 Vue 前端骨架，接入 `Vue Router + Pinia + Element Plus + Axios + ECharts`
+- 已补齐正式前端的登录、仪表盘、用户管理、仓库管理、环境数据、预测页和展示大屏入口
+- 已在 `frontend/` 执行 `npm install` 和 `npm run build`，构建通过
 
 当前正式路线：
 - 前端正式实现使用 `Vue 3 + Vite + Vue Router + Pinia + Element Plus + ECharts + Axios`
@@ -28,8 +35,9 @@
 - 不要把 `frontend-next/` 误当成正式实现目标，它只负责帮助理解最终成品会长什么样
 
 默认下一步任务：
-1. 输出数据库 SQL 定稿和表说明
-2. 输出后端接口清单、DTO/VO、Mapper 设计
-3. 创建正式版 Vue 前端骨架，并参考 `frontend-next/` 的页面结构与信息架构
+1. 开始替换后端 `DemoDataService`，按数据库定稿接入真实 MyBatis 持久层
+2. 优先打通登录、仓库、环境数据、预测归档四条后端主链路
+3. 再补齐用户管理、角色选项、指标选项、预测历史等正式接口
+4. 完成后与 `frontend/` 进行联调，把当前兼容态页面逐步切到真实 API
 
 如果用户没有改变方向，就从第 1 步开始推进。

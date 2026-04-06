@@ -46,12 +46,21 @@
 
 - API 或服务：
   - `POST /api/auth/login`
+  - `GET /api/auth/me`
   - `GET /api/dashboard/overview`
+  - `GET /api/users`
+  - `POST /api/users`
+  - `PUT /api/users/{id}`
   - `GET /api/warehouses`
+  - `GET /api/warehouses/options`
   - `POST /api/warehouses`
   - `GET /api/sensor-data`
+  - `GET /api/sensor-data/trend`
+  - `GET /api/metrics/options`
   - `POST /api/sensor-data`
   - `POST /api/predictions/temperature`
+  - `GET /api/predictions/tasks`
+  - `GET /api/predictions/tasks/{id}`
 - 类型或数据契约：
   - 用户：`id / username / role / displayName`
   - 仓库：`id / code / name / location / capacity / managerName / status`
@@ -67,11 +76,15 @@
   - `warehouse`
   - `sensor_metric`
   - `sensor_data`
-  - `prediction_record`
+  - `prediction_task`
+  - `prediction_result`
 - 推荐角色：
   - `ADMIN`：系统管理员，管理用户和全部仓库
   - `WAREHOUSE_MANAGER`：仓库管理员，维护本仓库数据
   - `VIEWER`：查看者，只读访问
+- 关键建模：
+  - 环境数据按“单指标单行”存储，便于查询与图表展示。
+  - 预测归档采用“任务主表 + 结果明细表”，便于展示一次预测的完整闭环。
 
 ## 风险
 

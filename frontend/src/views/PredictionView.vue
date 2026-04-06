@@ -1,33 +1,61 @@
 <script setup>
 import * as echarts from "echarts";
-import { nextTick, onMounted, reactive, ref } from "vue";
-import { fetchWarehouses, predictTemperature } from "../api/grain";
+import { nextTick, onBeforeUnmount, onMounted, reactive, ref } from "vue";
+import {
+  fetchWarehouses,
+  getMetricOptions,
+  predictTemperature
+} from "../api/grain";
+import { mockPredictionArchives } from "../mock/platform";
 
-const warehouses = ref([]);
 const chartRef = ref();
-const rows = ref([]);
+const loading = ref(false);
+const warehouses = ref([]);
+const prediction = ref({
+  taskNo: "",
+  algorithmName: "",
+  riskLevel: "NORMAL",
+  requestedAt: "",
+  resultList: []
+});
+const metricOptions = getMetricOptions().filter((item) => item.value === "temperature");
 let chart;
 
 const form = reactive({
-  warehouseId: 1,
-  metricType: "temperature",
+  warehouseId: "",
+  metricCode: "temperature",
   futureSteps: 6
 });
 
+function formatDateTime(value) {
+  return value ? String(value).replace("T", " ") : "-";
+}
+
 async function loadWarehouses() {
   warehouses.value = await fetchWarehouses();
+
+  if (!form.warehouseId && warehouses.value.length > 0) {
+    form.warehouseId = warehouses.value[0].id;
+  }
 }
 
 async function runPrediction() {
-  rows.value = await predictTemperature(form);
-  await nextTick();
-  renderChart();
+  loading.value = true;
+
+  try {
+    prediction.value = await predictTemperature(form);
+    await nextTick();
+    renderChart();
+  } finally {
+    loading.value = false;
+  }
 }
 
 function renderChart() {
   if (!chartRef.value) {
     return;
   }
+
   if (!chart) {
     chart = echarts.init(chartRef.value);
   }
@@ -35,9 +63,10 @@ function renderChart() {
   chart.setOption({
     tooltip: { trigger: "axis" },
     legend: { data: ["实际值", "预测值"] },
+    grid: { left: 32, right: 18, top: 34, bottom: 28 },
     xAxis: {
       type: "category",
-      data: rows.value.map((item) => item.time.replace("T", " "))
+      data: prediction.value.resultList.map((item) => formatDateTime(item.predictedTime))
     },
     yAxis: { type: "value" },
     series: [
@@ -45,13 +74,20 @@ function renderChart() {
         name: "实际值",
         type: "line",
         smooth: true,
-        data: rows.value.map((item) => item.actualValue)
+        data: prediction.value.resultList.map((item) => item.actualValue),
+        lineStyle: { color: "#a855f7" },
+        itemStyle: { color: "#a855f7" }
       },
       {
         name: "预测值",
         type: "line",
         smooth: true,
-        data: rows.value.map((item) => item.predictedValue)
+        data: prediction.value.resultList.map((item) => item.predictedValue),
+        lineStyle: { color: "#ea580c" },
+        itemStyle: { color: "#ea580c" },
+        areaStyle: {
+          color: "rgba(234, 88, 12, 0.12)"
+        }
       }
     ]
   });
@@ -61,35 +97,130 @@ onMounted(async () => {
   await loadWarehouses();
   await runPrediction();
 });
+
+onBeforeUnmount(() => {
+  if (chart) {
+    chart.dispose();
+  }
+});
 </script>
 
 <template>
-  <div class="stack">
-    <div class="panel">
-      <div class="section-title">温度预测</div>
-      <div class="form-grid three-columns">
-        <label>
-          <span>仓库</span>
-          <select v-model="form.warehouseId" class="input">
-            <option v-for="item in warehouses" :key="item.id" :value="item.id">{{ item.name }}</option>
-          </select>
-        </label>
-        <label>
-          <span>指标</span>
-          <select v-model="form.metricType" class="input">
-            <option value="temperature">温度</option>
-          </select>
-        </label>
-        <label>
-          <span>未来步数</span>
-          <input v-model="form.futureSteps" class="input" type="number" min="1" max="24" />
-        </label>
-      </div>
-      <button class="primary-btn" @click="runPrediction">执行预测</button>
-    </div>
+  <div class="page-stack">
+    <el-row :gutter="16">
+      <el-col :xs="24" :xl="15">
+        <el-card class="panel-card" shadow="never">
+          <template #header>
+            <div class="panel-title">预测参数</div>
+          </template>
 
-    <div class="panel">
+          <el-form inline>
+            <el-form-item label="仓库">
+              <el-select v-model="form.warehouseId" style="width: 180px">
+                <el-option
+                  v-for="item in warehouses"
+                  :key="item.id"
+                  :label="item.warehouseName"
+                  :value="item.id"
+                />
+              </el-select>
+            </el-form-item>
+
+            <el-form-item label="指标">
+              <el-select v-model="form.metricCode" style="width: 160px">
+                <el-option
+                  v-for="item in metricOptions"
+                  :key="item.value"
+                  :label="item.label"
+                  :value="item.value"
+                />
+              </el-select>
+            </el-form-item>
+
+            <el-form-item label="未来步数">
+              <el-input-number v-model="form.futureSteps" :min="1" :max="24" />
+            </el-form-item>
+
+            <el-form-item>
+              <el-button type="primary" :loading="loading" @click="runPrediction">
+                执行预测
+              </el-button>
+            </el-form-item>
+          </el-form>
+        </el-card>
+      </el-col>
+
+      <el-col :xs="24" :xl="9">
+        <el-card class="panel-card" shadow="never">
+          <template #header>
+            <div class="panel-title">任务摘要</div>
+          </template>
+
+          <div class="detail-grid">
+            <div><strong>任务号：</strong>{{ prediction.taskNo }}</div>
+            <div><strong>算法：</strong>{{ prediction.algorithmName }}</div>
+            <div><strong>风险等级：</strong>{{ prediction.riskLevel }}</div>
+            <div><strong>执行时间：</strong>{{ formatDateTime(prediction.requestedAt) }}</div>
+            <div><strong>结果点数：</strong>{{ prediction.resultList.length }}</div>
+          </div>
+        </el-card>
+      </el-col>
+    </el-row>
+
+    <el-card class="panel-card" shadow="never">
+      <template #header>
+        <div class="panel-title">历史温度与预测曲线</div>
+      </template>
+
       <div ref="chartRef" class="chart-box"></div>
-    </div>
+    </el-card>
+
+    <el-row :gutter="16">
+      <el-col :xs="24" :xl="15">
+        <el-card class="panel-card" shadow="never">
+          <template #header>
+            <div class="panel-title">预测结果列表</div>
+          </template>
+
+          <el-table :data="prediction.resultList" stripe v-loading="loading">
+            <el-table-column prop="stepIndex" label="步数" width="90" />
+            <el-table-column label="预测时间">
+              <template #default="{ row }">
+                {{ formatDateTime(row.predictedTime) }}
+              </template>
+            </el-table-column>
+            <el-table-column label="实际值">
+              <template #default="{ row }">
+                {{ row.actualValue ?? "--" }}
+              </template>
+            </el-table-column>
+            <el-table-column prop="predictedValue" label="预测值" />
+          </el-table>
+        </el-card>
+      </el-col>
+
+      <el-col :xs="24" :xl="9">
+        <el-card class="panel-card" shadow="never">
+          <template #header>
+            <div class="panel-title">历史归档记录</div>
+          </template>
+
+          <div class="stack-list">
+            <div
+              v-for="item in mockPredictionArchives"
+              :key="item.id"
+              class="list-card"
+            >
+              <div class="list-card-header">
+                <strong>{{ item.taskName }}</strong>
+                <el-tag type="info">{{ item.algorithmName }}</el-tag>
+              </div>
+              <div class="list-card-desc">{{ item.createdAt }}</div>
+              <div class="list-card-desc">{{ item.summary }}</div>
+            </div>
+          </div>
+        </el-card>
+      </el-col>
+    </el-row>
   </div>
 </template>

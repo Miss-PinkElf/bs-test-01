@@ -1,17 +1,49 @@
-const API_BASE = "http://localhost:8080";
+import axios from "axios";
 
-export async function request(path, options = {}) {
-  const response = await fetch(`${API_BASE}${path}`, {
-    headers: {
-      "Content-Type": "application/json",
-      ...(options.headers || {})
-    },
-    ...options
-  });
+const http = axios.create({
+  baseURL: import.meta.env.VITE_API_BASE || "http://localhost:8080",
+  timeout: 10000
+});
 
-  if (!response.ok) {
-    throw new Error(`请求失败: ${response.status}`);
+http.interceptors.response.use(
+  (response) => response.data,
+  (error) => {
+    const message =
+      error.response?.data?.message ||
+      error.response?.data?.error ||
+      error.message ||
+      "请求失败";
+
+    return Promise.reject(new Error(message));
+  }
+);
+
+export function unwrapPayload(payload) {
+  if (
+    payload &&
+    typeof payload === "object" &&
+    "code" in payload &&
+    "data" in payload
+  ) {
+    if (payload.code !== 200) {
+      throw new Error(payload.message || "请求失败");
+    }
+
+    return payload.data;
   }
 
-  return response.json();
+  return payload;
 }
+
+export async function request(config) {
+  const payload = await http.request({
+    headers: {
+      "Content-Type": "application/json"
+    },
+    ...config
+  });
+
+  return unwrapPayload(payload);
+}
+
+export default http;

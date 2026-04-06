@@ -1,10 +1,13 @@
 <script setup>
 import { reactive, ref } from "vue";
-import { useRouter } from "vue-router";
+import { useRoute, useRouter } from "vue-router";
 import { login } from "../api/grain";
-import { saveSession } from "../utils/session";
+import { useAuthStore } from "../stores/auth";
 
+const route = useRoute();
 const router = useRouter();
+const authStore = useAuthStore();
+
 const loading = ref(false);
 const errorMessage = ref("");
 const form = reactive({
@@ -15,35 +18,72 @@ const form = reactive({
 async function submit() {
   loading.value = true;
   errorMessage.value = "";
+
   try {
     const user = await login(form);
-    saveSession(user);
-    router.push("/");
+    authStore.setUser(user);
+    router.push(route.query.redirect || "/dashboard");
   } catch (error) {
     errorMessage.value = error.message;
   } finally {
     loading.value = false;
   }
 }
+
+function openScreen() {
+  router.push("/screen");
+}
 </script>
 
 <template>
-  <div class="login-card">
-    <div class="section-title">粮仓环境数据预测管理平台</div>
-    <p class="section-hint">使用演示账号登录后即可查看仪表盘、数据与预测页面。</p>
-    <div class="form-grid">
-      <label>
-        <span>用户名</span>
-        <input v-model="form.username" class="input" />
-      </label>
-      <label>
-        <span>密码</span>
-        <input v-model="form.password" class="input" type="password" />
-      </label>
+  <div class="login-page">
+    <div class="login-hero">
+      <div class="login-eyebrow">毕业设计正式开发入口</div>
+      <h1>粮仓环境数据预测管理平台</h1>
+      <p>
+        正式路线使用 Vue 3 + Pinia + Element Plus + Axios。当前页面负责把登录、后台入口和展示大屏入口先稳定下来。
+      </p>
+      <div class="hero-badges">
+        <span>登录与角色识别</span>
+        <span>环境数据管理</span>
+        <span>温度预测闭环</span>
+      </div>
     </div>
-    <p v-if="errorMessage" class="error-text">{{ errorMessage }}</p>
-    <button class="primary-btn" :disabled="loading" @click="submit">
-      {{ loading ? "登录中..." : "登录" }}
-    </button>
+
+    <el-card class="login-panel" shadow="never">
+      <template #header>
+        <div class="login-panel-title">演示登录</div>
+      </template>
+
+      <el-form label-position="top">
+        <el-form-item label="用户名">
+          <el-input v-model="form.username" placeholder="请输入用户名" />
+        </el-form-item>
+        <el-form-item label="密码">
+          <el-input
+            v-model="form.password"
+            type="password"
+            show-password
+            placeholder="请输入密码"
+            @keyup.enter="submit"
+          />
+        </el-form-item>
+      </el-form>
+
+      <el-alert
+        v-if="errorMessage"
+        type="error"
+        :closable="false"
+        :title="errorMessage"
+        class="login-alert"
+      />
+
+      <div class="login-actions">
+        <el-button type="primary" :loading="loading" @click="submit">
+          {{ loading ? "登录中" : "进入后台" }}
+        </el-button>
+        <el-button plain @click="openScreen">查看展示大屏</el-button>
+      </div>
+    </el-card>
   </div>
 </template>
