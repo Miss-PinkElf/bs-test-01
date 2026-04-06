@@ -2,14 +2,16 @@ $ErrorActionPreference = "Stop"
 $backendPath = Join-Path $PSScriptRoot "..\backend"
 Set-Location $backendPath
 
+$runArgs = @("spring-boot:run", "-Dspring-boot.run.arguments=--server.port=8081")
+
 if (Test-Path -LiteralPath ".\mvnw.cmd") {
-    & ".\mvnw.cmd" spring-boot:run
+    & ".\mvnw.cmd" @runArgs
     exit $LASTEXITCODE
 }
 
 $mvn = Get-Command mvn -ErrorAction SilentlyContinue
 if ($null -ne $mvn) {
-    & $mvn.Source spring-boot:run
+    & $mvn.Source @runArgs
     exit $LASTEXITCODE
 }
 
