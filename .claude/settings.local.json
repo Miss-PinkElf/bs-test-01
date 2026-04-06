@@ -20,7 +20,13 @@
       "Bash(npm:*)",
       "Skill(context-budget-explore)",
       "Bash(python3:*)",
-      "mcp__ide__getDiagnostics"
+      "mcp__ide__getDiagnostics",
+      "Bash(mvn:*)",
+      "Skill(update-config)",
+      "Bash(mysql:*)",
+      "Bash(pkill -f \"grain-platform-backend\")",
+      "Bash(lsof:*)",
+      "Bash(pkill -f \"server.port=8081\")"
     ]
   }
 }

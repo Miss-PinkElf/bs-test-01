@@ -53,7 +53,7 @@
 
 ## 2. 组件库
 
-1. 默认使用 Ant Design（Antd）。
+1. 使用element-plus。
 
 ## 3. 样式规范
 
