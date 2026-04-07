@@ -33,6 +33,11 @@ Clear-Port -Port 8081
 $backendPath = Join-Path $PSScriptRoot "..\backend"
 Set-Location $backendPath
 
+$projectMavenSettings = Join-Path $backendPath ".mvn\settings.xml"
+if (Test-Path -LiteralPath $projectMavenSettings) {
+    Write-Host "Using project Maven settings: $projectMavenSettings" -ForegroundColor Cyan
+}
+
 $runArgs = @("spring-boot:run", "-Dspring-boot.run.arguments=--server.port=8081")
 
 if (Test-Path -LiteralPath ".\mvnw.cmd") {
