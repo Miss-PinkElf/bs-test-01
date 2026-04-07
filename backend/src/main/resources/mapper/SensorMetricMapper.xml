@@ -1,0 +1,44 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.grain.platform.mapper.SensorMetricMapper">
+
+    <resultMap id="sensorMetricResultMap" type="com.grain.platform.entity.SensorMetric">
+        <id property="id" column="id"/>
+        <result property="metricCode" column="metric_code"/>
+        <result property="metricName" column="metric_name"/>
+        <result property="unit" column="unit"/>
+        <result property="minThreshold" column="min_threshold"/>
+        <result property="maxThreshold" column="max_threshold"/>
+        <result property="status" column="status"/>
+        <result property="createdAt" column="created_at"/>
+        <result property="updatedAt" column="updated_at"/>
+    </resultMap>
+
+    <select id="selectActiveOptions" resultType="com.grain.platform.dto.sensor.MetricOptionResponse">
+        select metric_code,
+               metric_name,
+               unit,
+               min_threshold,
+               max_threshold
+        from sensor_metric
+        where status = 'ACTIVE'
+        order by id asc
+    </select>
+
+    <select id="selectByCode" resultMap="sensorMetricResultMap">
+        select id,
+               metric_code,
+               metric_name,
+               unit,
+               min_threshold,
+               max_threshold,
+               status,
+               created_at,
+               updated_at
+        from sensor_metric
+        where metric_code = #{metricCode}
+        limit 1
+    </select>
+</mapper>

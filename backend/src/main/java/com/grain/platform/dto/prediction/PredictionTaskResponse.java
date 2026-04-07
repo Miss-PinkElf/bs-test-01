@@ -5,6 +5,10 @@ import java.util.List;
 public record PredictionTaskResponse(
         Long taskId,
         String taskNo,
+        String metricCode,
+        String metricName,
+        String unit,
+        Double maxThreshold,
         String algorithmName,
         String riskLevel,
         String requestedAt,

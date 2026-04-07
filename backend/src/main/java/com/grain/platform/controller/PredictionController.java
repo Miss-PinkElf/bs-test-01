@@ -28,13 +28,13 @@ public class PredictionController {
         this.predictionService = predictionService;
     }
 
-    // 执行温度预测。
-    @PostMapping("/temperature")
-    public ApiResponse<PredictionTaskResponse> predictTemperature(@Valid @RequestBody PredictionRequest request) {
-        log.info("调用温度预测接口，warehouseId={}, metricCode={}, futureSteps={}", request.warehouseId(), request.metricCode(), request.futureSteps());
+    // 执行指标预测。
+    @PostMapping
+    public ApiResponse<PredictionTaskResponse> predict(@Valid @RequestBody PredictionRequest request) {
+        log.info("调用指标预测接口，warehouseId={}, metricCode={}, futureSteps={}", request.warehouseId(), request.metricCode(), request.futureSteps());
         PredictionTaskResponse response = predictionService.predict(request);
         int resultCount = response.resultList() == null ? 0 : response.resultList().size();
-        log.info("温度预测成功，taskId={}, riskLevel={}, resultCount={}", response.taskId(), response.riskLevel(), resultCount);
+        log.info("指标预测成功，taskId={}, metricCode={}, riskLevel={}, resultCount={}", response.taskId(), response.metricCode(), response.riskLevel(), resultCount);
         return ApiResponse.success(response);
     }
 

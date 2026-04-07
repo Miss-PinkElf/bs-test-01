@@ -16,8 +16,13 @@
         select count(*) from prediction_task
     </select>
 
-    <select id="selectLatestAlerts" resultType="string">
-        select concat(w.warehouse_name, ' ', sm.metric_name, ' 接近阈值')
+    <select id="selectLatestAlerts" resultType="com.grain.platform.dto.dashboard.DashboardAlertItemResponse">
+        select concat(w.warehouse_name, ' ', sm.metric_name, ' 接近阈值') as title,
+               case
+                   when sd.metric_value >= sm.max_threshold then 'WARNING'
+                   else 'ATTENTION'
+                   end as level,
+               concat('最新值 ', sd.metric_value, sm.unit, '，阈值上限 ', sm.max_threshold, sm.unit) as description
         from sensor_data sd
                  join warehouse w on sd.warehouse_id = w.id
                  join sensor_metric sm on sd.metric_code = sm.metric_code
@@ -25,5 +30,50 @@
           and sd.metric_value >= sm.max_threshold * 0.9
         order by sd.collected_at desc
         limit 5
+    </select>
+
+    <select id="selectRecentSensorRecords" resultType="com.grain.platform.dto.dashboard.DashboardRecentSensorResponse">
+        select sd.id as id,
+               w.warehouse_name as warehouseName,
+               sm.metric_name as metricName,
+               sd.metric_value as metricValue,
+               date_format(sd.collected_at, '%Y-%m-%d %H:%i:%s') as collectedAt,
+               sd.quality_flag as qualityFlag
+        from sensor_data sd
+                 join warehouse w on sd.warehouse_id = w.id
+                 join sensor_metric sm on sd.metric_code = sm.metric_code
+        order by sd.collected_at desc, sd.id desc
+        limit 8
+    </select>
+
+    <select id="selectWarehouseHealthList" resultType="com.grain.platform.dto.dashboard.DashboardWarehouseHealthResponse">
+        select w.id as warehouseId,
+               w.warehouse_name as warehouseName,
+               case
+                   when ifnull(metric_risk.max_ratio, 0) >= 1 then 68
+                   when ifnull(metric_risk.max_ratio, 0) >= 0.9 then 82
+                   else 95
+                   end as healthScore,
+               case
+                   when w.status = 'MAINTENANCE' then 'MAINTENANCE'
+                   when ifnull(metric_risk.max_ratio, 0) >= 1 then 'WARNING'
+                   when ifnull(metric_risk.max_ratio, 0) >= 0.9 then 'ATTENTION'
+                   else 'NORMAL'
+                   end as riskLevel
+        from warehouse w
+                 left join (
+            select sd.warehouse_id,
+                   max(case
+                           when sm.max_threshold is not null and sm.max_threshold > 0
+                               then sd.metric_value / sm.max_threshold
+                           else 0
+                       end) as max_ratio
+            from sensor_data sd
+                     join sensor_metric sm on sd.metric_code = sm.metric_code
+            group by sd.warehouse_id
+        ) metric_risk on metric_risk.warehouse_id = w.id
+        where w.status != 'DISABLED'
+        order by healthScore asc, w.id asc
+        limit 6
     </select>
 </mapper>

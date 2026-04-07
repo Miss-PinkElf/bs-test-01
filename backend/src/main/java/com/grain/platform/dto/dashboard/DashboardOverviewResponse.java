@@ -7,6 +7,8 @@ public record DashboardOverviewResponse(
         int todayDataCount,
         int alertCount,
         int archivedPredictionCount,
-        List<String> latestAlerts
+        List<DashboardAlertItemResponse> latestAlerts,
+        List<DashboardRecentSensorResponse> recentSensorRecords,
+        List<DashboardWarehouseHealthResponse> warehouseHealthList
 ) {
 }

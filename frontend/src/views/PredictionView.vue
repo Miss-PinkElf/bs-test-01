@@ -2,36 +2,50 @@
 import * as echarts from "echarts";
 import { nextTick, onBeforeUnmount, onMounted, reactive, ref } from "vue";
 import {
+  fetchMetricOptions,
   fetchPredictionTasks,
   fetchWarehouses,
-  getMetricOptions,
-  predictTemperature
+  predictMetric
 } from "../api/grain";
+
+const DEFAULT_METRIC_CODE = "temperature";
 
 const chartRef = ref();
 const loading = ref(false);
 const historyLoading = ref(false);
 const warehouses = ref([]);
+const metricOptions = ref([]);
 const predictionHistory = ref([]);
 const selectedTaskId = ref(null);
 const prediction = ref({
   taskNo: "",
+  metricCode: DEFAULT_METRIC_CODE,
+  metricName: "温度",
+  unit: "",
   algorithmName: "",
   riskLevel: "NORMAL",
   requestedAt: "",
   resultList: []
 });
-const metricOptions = getMetricOptions().filter((item) => item.value === "temperature");
 let chart;
 
 const form = reactive({
   warehouseId: "",
-  metricCode: "temperature",
+  metricCode: DEFAULT_METRIC_CODE,
   futureSteps: 6
 });
 
 function formatDateTime(value) {
   return value ? String(value).replace("T", " ") : "-";
+}
+
+function getInitialMetricCode() {
+  return metricOptions.value[0]?.value || DEFAULT_METRIC_CODE;
+}
+
+async function loadMetricOptions() {
+  metricOptions.value = await fetchMetricOptions();
+  form.metricCode = getInitialMetricCode();
 }
 
 async function loadWarehouses() {
@@ -58,7 +72,7 @@ async function runPrediction() {
   loading.value = true;
 
   try {
-    prediction.value = await predictTemperature(form);
+    prediction.value = await predictMetric(form);
     selectedTaskId.value = prediction.value.taskId;
     await loadPredictionHistory();
     await nextTick();
@@ -124,6 +138,7 @@ function renderChart() {
 }
 
 onMounted(async () => {
+  await loadMetricOptions();
   await loadWarehouses();
   await loadPredictionHistory();
   await runPrediction();
@@ -189,6 +204,8 @@ onBeforeUnmount(() => {
 
           <div class="detail-grid">
             <div><strong>任务号：</strong>{{ prediction.taskNo }}</div>
+            <div><strong>指标：</strong>{{ prediction.metricName }}</div>
+            <div><strong>单位：</strong>{{ prediction.unit || "-" }}</div>
             <div><strong>算法：</strong>{{ prediction.algorithmName }}</div>
             <div><strong>风险等级：</strong>{{ prediction.riskLevel }}</div>
             <div><strong>执行时间：</strong>{{ formatDateTime(prediction.requestedAt) }}</div>
@@ -201,7 +218,7 @@ onBeforeUnmount(() => {
 
     <el-card class="panel-card" shadow="never">
       <template #header>
-        <div class="panel-title">历史温度与预测曲线</div>
+        <div class="panel-title">历史指标与预测曲线</div>
       </template>
 
       <div ref="chartRef" class="chart-box"></div>
@@ -247,8 +264,9 @@ onBeforeUnmount(() => {
             >
               <div class="list-card-header">
                 <strong>{{ item.taskNo }}</strong>
-                <el-tag type="info">{{ item.algorithmName }}</el-tag>
+                <el-tag type="info">{{ item.metricName }}</el-tag>
               </div>
+              <div class="list-card-desc">指标：{{ item.metricName }}</div>
               <div class="list-card-desc">风险等级：{{ item.riskLevel }}</div>
               <div class="list-card-desc">{{ formatDateTime(item.requestedAt) }}</div>
               <div class="list-card-desc">{{ item.summary }}</div>

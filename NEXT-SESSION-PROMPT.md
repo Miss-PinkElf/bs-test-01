@@ -53,9 +53,22 @@
   - 新增 `GET /api/users`
   - 新增 `GET /api/roles/options`
   - `frontend/src/views/UsersView.vue` 已切到真实用户列表、真实角色说明和真实统计卡
-- 上述最近两轮改动已提交：
+- 已完成指标选项真实接口与多指标独立预测主线：
+  - 新增 `GET /api/metrics/options`
+  - 已将预测接口收口为 `POST /api/predictions`
+  - 已支持温度、湿度、二氧化碳浓度按所选指标独立预测
+  - 已按指标阈值计算风险等级
+- 已在 `backend/src/main/resources/db/schema.sql` 中补充湿度与二氧化碳浓度预测 mock 数据
+- 已完成仪表盘首页真实化：
+  - 近期预警真实化
+  - 仓库健康度真实化
+  - 最近采样记录真实化
+  - 预测归档卡片不再使用 mock 兜底
+- 已同步开发指导版 PRD、后端接口设计、数据库设计、README 与 `.explore/` 主状态文档
+- 最近已提交：
   - `f7039e8` `补齐预测页真实归档与回显交互`
   - `6ea2343` `补齐用户页真实接口与角色选项展示`
+  - 本轮新增改动尚未提交
 
 当前正式路线：
 - 前端正式实现使用 `Vue 3 + Vite + Vue Router + Pinia + Element Plus + ECharts + Axios`
@@ -74,10 +87,12 @@
 - 当前数据库 mock 数据已确认导入：
   - `warehouse = 6`
   - `sensor_data = 36`
-  - `prediction_task = 4+`（后续联调过程中会继续增加）
+  - `prediction_task = 5+`（已补湿度与二氧化碳浓度预测样本）
 - 当前后端核心接口启动后应能直接看到简短日志输出
 - Windows `scripts/start-backend.ps1` 启动前会自动清理 `8081`
-- 当前预测归档真实结构以 `prediction_task + prediction_result` 为准
+- 当前指标选项真实接口：`GET /api/metrics/options`
+- 当前预测接口：`POST /api/predictions`
+- 当前预测归档真实结构以 `prediction_task + prediction_result` 为准，数据库表结构本轮未新增字段
 
 脚本启动方式：
 - Windows PowerShell：
@@ -96,16 +111,19 @@
 - 不要把 `frontend-next/` 误当成正式实现目标，它只负责帮助理解最终成品会长什么样
 
 默认下一步任务：
-1. 先补指标选项真实接口：
-   - 新增 `GET /api/metrics/options`
-   - 把 `frontend/src/api/grain.js` 中硬编码的指标选项切到真实接口
-2. 再清理仪表盘剩余 mock：
-   - 仓库健康度
-   - 最近采样记录
-   - 预测归档兜底逻辑
-3. 视联调情况再推进展示大屏进一步真实化
-4. 最后再看是否补用户新增、编辑、状态切换等正式操作接口
-5. 如果本轮收尾文档尚未提交，则把 `.explore/` 与 `NEXT-SESSION-PROMPT.md` 一并提交
+1. 已完成指标选项真实接口、多指标独立预测主线与仪表盘首页真实化：
+   - 已新增 `GET /api/metrics/options`
+   - 已将前端硬编码指标切到真实接口
+   - 已将预测接口收口为 `POST /api/predictions`
+   - 已支持温度、湿度、二氧化碳浓度按所选指标独立预测
+   - 已完成仪表盘首页概览、近期预警、仓库健康度、最近采样记录真实化
+2. 下一步优先推进展示大屏进一步真实化：
+   - 尽量复用 `fetchOverview()` 的真实数据
+   - 继续替换大屏中的 mock 指标与预警底板
+   - 收口展示文案里旧的“温度预测”单指标口径
+3. 完成大屏后，再评估是否补用户新增、编辑、状态切换等正式操作接口
+4. 如进入收尾阶段，再统一清理旧 handoff / spec / 历史文档里的旧口径
+5. 本轮已经补了 `.explore/` handoff 与 `NEXT-SESSION-PROMPT.md`，下一次可直接按本提示词恢复
 
-如果用户没有改变方向，就从第 1 步开始推进。
+如果用户没有改变方向，就从第 2 步开始推进。
 ```

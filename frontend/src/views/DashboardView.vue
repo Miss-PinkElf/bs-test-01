@@ -1,11 +1,6 @@
 <script setup>
 import { computed, onMounted, ref } from "vue";
 import { fetchOverview } from "../api/grain";
-import {
-  mockPredictionArchives,
-  mockRecentSensorRecords,
-  mockWarehouseHealth
-} from "../mock/platform";
 
 const loading = ref(false);
 const overview = ref({
@@ -13,7 +8,9 @@ const overview = ref({
   todayDataCount: 0,
   alertCount: 0,
   archivedPredictionCount: 0,
-  latestAlerts: []
+  latestAlerts: [],
+  recentSensorRecords: [],
+  warehouseHealthList: []
 });
 
 const cards = computed(() => [
@@ -22,7 +19,7 @@ const cards = computed(() => [
   { label: "重点预警", value: overview.value.alertCount, note: "需要优先关注的预警数量" },
   {
     label: "预测归档",
-    value: overview.value.archivedPredictionCount || mockPredictionArchives.length,
+    value: overview.value.archivedPredictionCount,
     note: "已执行并形成留痕的预测任务"
   }
 ]);
@@ -97,8 +94,8 @@ onMounted(loadOverview);
 
           <div class="stack-list">
             <div
-              v-for="item in mockWarehouseHealth"
-              :key="item.warehouseName"
+              v-for="item in overview.warehouseHealthList"
+              :key="item.warehouseId"
               class="score-row"
             >
               <div>
@@ -119,7 +116,7 @@ onMounted(loadOverview);
             <div class="panel-title">最近采样记录</div>
           </template>
 
-          <el-table :data="mockRecentSensorRecords" stripe>
+          <el-table :data="overview.recentSensorRecords" stripe>
             <el-table-column prop="warehouseName" label="仓库" />
             <el-table-column prop="metricName" label="指标" />
             <el-table-column prop="metricValue" label="数值" />
@@ -136,8 +133,8 @@ onMounted(loadOverview);
           </template>
 
           <div class="compact-lines">
-            <div>当前仪表盘优先保证首页概览、近期预警和最近采样能展示。</div>
-            <div>后续再把趋势图、健康度排行和预测摘要升级为真实后端统计。</div>
+            <div>当前仪表盘已切到真实首页概览、近期预警、仓库健康度和最近采样记录。</div>
+            <div>后续可继续补趋势图、更多聚合统计和大屏真实化展示。</div>
             <div>正式前端已切到 Pinia + Element Plus + Axios 路线。</div>
           </div>
         </el-card>

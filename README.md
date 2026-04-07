@@ -52,7 +52,7 @@ scripts/   Windows 启动脚本
 - 仪表盘
 - 仓库管理
 - 环境数据查询
-- 温度预测
+- 多指标独立预测
 
 ## 核心接口
 
@@ -62,7 +62,8 @@ scripts/   Windows 启动脚本
 - `POST /api/warehouses`
 - `GET /api/sensor-data`
 - `POST /api/sensor-data`
-- `POST /api/predictions/temperature`
+- `GET /api/metrics/options`
+- `POST /api/predictions`
 
 ## 数据库表建议
 

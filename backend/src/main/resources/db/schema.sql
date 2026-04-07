@@ -313,7 +313,9 @@ INSERT INTO prediction_task (
 VALUES
     (1, 'TASK-DEMO01', 1, 'temperature', 'LINEAR_REGRESSION', '线性回归', 6, 12, 'SUCCESS', 'ATTENTION', 2, '2026-04-07 10:05:00', '2026-04-07 10:05:10', '未来 6 小时温度将缓慢上升'),
     (2, 'TASK-DEMO02', 2, 'temperature', 'WEIGHTED_MOVING_AVERAGE', '加权移动平均', 6, 12, 'SUCCESS', 'WARNING', 4, '2026-04-07 10:10:00', '2026-04-07 10:10:08', '二号平房仓有持续升温风险'),
-    (3, 'TASK-DEMO03', 5, 'temperature', 'LINEAR_REGRESSION', '线性回归', 4, 8, 'SUCCESS', 'NORMAL', 6, '2026-04-07 09:40:00', '2026-04-07 09:40:06', '五号浅圆仓走势平稳')
+    (3, 'TASK-DEMO03', 5, 'temperature', 'LINEAR_REGRESSION', '线性回归', 4, 8, 'SUCCESS', 'NORMAL', 6, '2026-04-07 09:40:00', '2026-04-07 09:40:06', '五号浅圆仓走势平稳'),
+    (4, 'TASK-DEMO04', 2, 'humidity', 'LINEAR_REGRESSION', '线性回归', 4, 10, 'SUCCESS', 'ATTENTION', 4, '2026-04-07 10:20:00', '2026-04-07 10:20:06', '二号平房仓湿度未来 4 小时仍偏高'),
+    (5, 'TASK-DEMO05', 6, 'co2', 'WEIGHTED_MOVING_AVERAGE', '加权移动平均', 4, 10, 'SUCCESS', 'NORMAL', 7, '2026-04-07 10:25:00', '2026-04-07 10:25:07', '六号立筒仓二氧化碳浓度整体平稳')
 ON DUPLICATE KEY UPDATE
     warehouse_id = VALUES(warehouse_id),
     metric_code = VALUES(metric_code),
@@ -352,7 +354,15 @@ VALUES
     (13, 3, 1, '2026-04-07 10:30:00', NULL, 23.30),
     (14, 3, 2, '2026-04-07 11:30:00', NULL, 23.40),
     (15, 3, 3, '2026-04-07 12:30:00', NULL, 23.50),
-    (16, 3, 4, '2026-04-07 13:30:00', NULL, 23.60)
+    (16, 3, 4, '2026-04-07 13:30:00', NULL, 23.60),
+    (17, 4, 1, '2026-04-07 11:00:00', NULL, 74.60),
+    (18, 4, 2, '2026-04-07 12:00:00', NULL, 74.90),
+    (19, 4, 3, '2026-04-07 13:00:00', NULL, 75.20),
+    (20, 4, 4, '2026-04-07 14:00:00', NULL, 75.40),
+    (21, 5, 1, '2026-04-07 11:00:00', NULL, 1000.00),
+    (22, 5, 2, '2026-04-07 12:00:00', NULL, 1020.00),
+    (23, 5, 3, '2026-04-07 13:00:00', NULL, 1040.00),
+    (24, 5, 4, '2026-04-07 14:00:00', NULL, 1050.00)
 ON DUPLICATE KEY UPDATE
     task_id = VALUES(task_id),
     step_index = VALUES(step_index),

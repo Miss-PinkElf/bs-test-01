@@ -390,7 +390,8 @@ backend/src/main/java/com/grain/platform/
 
 | 方法 | 路径 | 说明 | 请求 DTO | 返回 VO |
 | --- | --- | --- | --- | --- |
-| `POST` | `/api/predictions/temperature` | 执行温度预测并归档 | `PredictionExecuteDTO` | `PredictionTaskDetailVO` |
+| `GET` | `/api/metrics/options` | 指标下拉列表 | 无 | `List<MetricOptionVO>` |
+| `POST` | `/api/predictions` | 执行指标预测并归档 | `PredictionExecuteDTO` | `PredictionTaskDetailVO` |
 | `GET` | `/api/predictions/tasks` | 预测任务分页列表 | `PredictionTaskPageQueryDTO` | `PageResult<PredictionTaskListItemVO>` |
 | `GET` | `/api/predictions/tasks/{taskId}` | 预测任务详情 | 无 | `PredictionTaskDetailVO` |
 
@@ -564,7 +565,7 @@ backend/src/main/java/com/grain/platform/
 - 登录：`POST /api/auth/login`
 - 仓库列表：`GET /api/warehouses`
 - 环境数据写入：`POST /api/sensor-data`
-- 温度预测归档：`POST /api/predictions/temperature`
+- 多指标预测归档：`POST /api/predictions`
 
 已完成的实现收口：
 

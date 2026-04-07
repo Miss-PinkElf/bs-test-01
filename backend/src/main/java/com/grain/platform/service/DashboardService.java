@@ -1,6 +1,9 @@
 package com.grain.platform.service;
 
+import com.grain.platform.dto.dashboard.DashboardAlertItemResponse;
 import com.grain.platform.dto.dashboard.DashboardOverviewResponse;
+import com.grain.platform.dto.dashboard.DashboardRecentSensorResponse;
+import com.grain.platform.dto.dashboard.DashboardWarehouseHealthResponse;
 import com.grain.platform.mapper.DashboardMapper;
 import org.springframework.stereotype.Service;
 
@@ -16,13 +19,17 @@ public class DashboardService {
     }
 
     public DashboardOverviewResponse getOverview() {
-        List<String> alerts = dashboardMapper.selectLatestAlerts();
+        List<DashboardAlertItemResponse> alerts = dashboardMapper.selectLatestAlerts();
+        List<DashboardRecentSensorResponse> recentSensorRecords = dashboardMapper.selectRecentSensorRecords();
+        List<DashboardWarehouseHealthResponse> warehouseHealthList = dashboardMapper.selectWarehouseHealthList();
         return new DashboardOverviewResponse(
                 dashboardMapper.countWarehouses(),
                 dashboardMapper.countTodaySensorData(),
                 alerts.size(),
                 dashboardMapper.countArchivedPredictionCount(),
-                alerts
+                alerts,
+                recentSensorRecords,
+                warehouseHealthList
         );
     }
 }

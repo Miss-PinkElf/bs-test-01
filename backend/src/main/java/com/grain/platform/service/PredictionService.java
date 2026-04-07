@@ -7,6 +7,7 @@ import com.grain.platform.dto.prediction.PredictionTaskResponse;
 import com.grain.platform.dto.sensor.SensorDataPointDto;
 import com.grain.platform.entity.PredictionResult;
 import com.grain.platform.entity.PredictionTask;
+import com.grain.platform.entity.SensorMetric;
 import com.grain.platform.mapper.PredictionResultMapper;
 import com.grain.platform.mapper.PredictionTaskMapper;
 import org.springframework.stereotype.Service;
@@ -24,22 +25,26 @@ public class PredictionService {
 
     private final SensorDataService sensorDataService;
     private final ForecastService forecastService;
+    private final MetricService metricService;
     private final PredictionTaskMapper predictionTaskMapper;
     private final PredictionResultMapper predictionResultMapper;
 
     public PredictionService(
             SensorDataService sensorDataService,
             ForecastService forecastService,
+            MetricService metricService,
             PredictionTaskMapper predictionTaskMapper,
             PredictionResultMapper predictionResultMapper
     ) {
         this.sensorDataService = sensorDataService;
         this.forecastService = forecastService;
+        this.metricService = metricService;
         this.predictionTaskMapper = predictionTaskMapper;
         this.predictionResultMapper = predictionResultMapper;
     }
 
     public PredictionTaskResponse predict(PredictionRequest request) {
+        SensorMetric metric = metricService.getMetric(request.metricCode());
         List<SensorDataPointDto> history = sensorDataService.list(request.warehouseId(), request.metricCode());
         List<PredictionPointDto> points = forecastService.predict(history, request.futureSteps());
 
@@ -54,7 +59,7 @@ public class PredictionService {
                 request.futureSteps(),
                 history.size(),
                 "SUCCESS",
-                calcRiskLevel(points),
+                calcRiskLevel(points, metric),
                 1L,
                 now,
                 now,
@@ -69,12 +74,12 @@ public class PredictionService {
             predictionResultMapper.insertBatch(resultEntities);
         }
 
-        return toResponse(task, predictionResultMapper.selectByTaskId(task.getId()));
+        return toResponse(task, metric, predictionResultMapper.selectByTaskId(task.getId()));
     }
 
     public List<PredictionTaskResponse> listTasks() {
         return predictionTaskMapper.selectAll().stream()
-                .map(task -> toResponse(task, predictionResultMapper.selectByTaskId(task.getId())))
+                .map(task -> toResponse(task, metricService.getMetric(task.getMetricCode()), predictionResultMapper.selectByTaskId(task.getId())))
                 .toList();
     }
 
@@ -83,7 +88,7 @@ public class PredictionService {
         if (task == null) {
             throw new IllegalArgumentException("预测任务不存在");
         }
-        return toResponse(task, predictionResultMapper.selectByTaskId(taskId));
+        return toResponse(task, metricService.getMetric(task.getMetricCode()), predictionResultMapper.selectByTaskId(taskId));
     }
 
     private List<PredictionResult> buildResultEntities(Long taskId, List<PredictionPointDto> points) {
@@ -102,10 +107,14 @@ public class PredictionService {
                 .toList();
     }
 
-    private PredictionTaskResponse toResponse(PredictionTask task, List<PredictionResult> results) {
+    private PredictionTaskResponse toResponse(PredictionTask task, SensorMetric metric, List<PredictionResult> results) {
         return new PredictionTaskResponse(
                 task.getId(),
                 task.getTaskNo(),
+                task.getMetricCode(),
+                metric.getMetricName(),
+                metric.getUnit(),
+                metric.getMaxThreshold() == null ? null : metric.getMaxThreshold().doubleValue(),
                 task.getAlgorithmName(),
                 task.getRiskLevel(),
                 task.getRequestedAt() == null ? null : task.getRequestedAt().format(FORMATTER),
@@ -119,17 +128,25 @@ public class PredictionService {
         );
     }
 
-    private String calcRiskLevel(List<PredictionPointDto> points) {
+    private String calcRiskLevel(List<PredictionPointDto> points, SensorMetric metric) {
         double peak = points.stream()
                 .filter(item -> item.predictedValue() != null)
                 .mapToDouble(PredictionPointDto::predictedValue)
                 .max()
                 .orElse(0.0);
 
-        if (peak >= 28) {
+        BigDecimal maxThreshold = metric.getMaxThreshold();
+        if (maxThreshold == null) {
+            return "NORMAL";
+        }
+
+        double warningThreshold = maxThreshold.doubleValue();
+        double attentionThreshold = warningThreshold * 0.9;
+
+        if (peak >= warningThreshold) {
             return "WARNING";
         }
-        if (peak >= 26) {
+        if (peak >= attentionThreshold) {
             return "ATTENTION";
         }
         return "NORMAL";

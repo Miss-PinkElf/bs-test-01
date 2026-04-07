@@ -5,11 +5,13 @@ import { nextTick, onBeforeUnmount, onMounted, reactive, ref } from "vue";
 import {
   createSensorData,
   downloadSensorTemplate,
+  fetchMetricOptions,
   fetchSensorData,
   fetchWarehouses,
-  getMetricOptions,
   importSensorData
 } from "../api/grain";
+
+const DEFAULT_METRIC_CODE = "temperature";
 
 const chartRef = ref();
 const loading = ref(false);
@@ -17,17 +19,17 @@ const importLoading = ref(false);
 const dialogVisible = ref(false);
 const warehouses = ref([]);
 const rows = ref([]);
-const metricOptions = getMetricOptions();
+const metricOptions = ref([]);
 let chart;
 
 const filters = reactive({
   warehouseId: "",
-  metricCode: "temperature"
+  metricCode: DEFAULT_METRIC_CODE
 });
 
 const form = reactive({
   warehouseId: "",
-  metricCode: "temperature",
+  metricCode: DEFAULT_METRIC_CODE,
   metricValue: 24.8,
   collectedAt: ""
 });
@@ -36,8 +38,12 @@ function formatDateTime(value) {
   return value ? String(value).replace("T", " ") : "-";
 }
 
+function getInitialMetricCode() {
+  return metricOptions.value[0]?.value || DEFAULT_METRIC_CODE;
+}
+
 function resetForm() {
-  form.metricCode = "temperature";
+  form.metricCode = getInitialMetricCode();
   form.metricValue = 24.8;
   form.collectedAt = "";
 
@@ -49,6 +55,12 @@ function resetForm() {
 function openManualDialog() {
   resetForm();
   dialogVisible.value = true;
+}
+
+async function loadMetricOptions() {
+  metricOptions.value = await fetchMetricOptions();
+  filters.metricCode = getInitialMetricCode();
+  form.metricCode = getInitialMetricCode();
 }
 
 async function loadWarehouses() {
@@ -142,6 +154,7 @@ function renderChart() {
 }
 
 onMounted(async () => {
+  await loadMetricOptions();
   await loadWarehouses();
   await loadData();
 });

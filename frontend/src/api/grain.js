@@ -7,6 +7,8 @@ const metricNameMap = {
   co2: "二氧化碳浓度"
 };
 
+const DEFAULT_METRIC_CODE = "temperature";
+
 function normalizeRoleCodes(raw) {
   if (Array.isArray(raw?.roleCodes)) {
     return raw.roleCodes;
@@ -72,14 +74,18 @@ function normalizePredictionPoint(item, index) {
   };
 }
 
-function calcRiskLevel(points) {
+function calcRiskLevel(points, maxThreshold) {
   const peak = Math.max(...points.map((item) => Number(item.predictedValue || 0)), 0);
 
-  if (peak >= 28) {
+  if (!maxThreshold) {
+    return "NORMAL";
+  }
+
+  if (peak >= Number(maxThreshold)) {
     return "WARNING";
   }
 
-  if (peak >= 26) {
+  if (peak >= Number(maxThreshold) * 0.9) {
     return "ATTENTION";
   }
 
@@ -112,6 +118,12 @@ export async function fetchOverview() {
     archivedPredictionCount: raw.archivedPredictionCount || 0,
     latestAlerts: Array.isArray(raw.latestAlerts)
       ? raw.latestAlerts.map(normalizeAlert)
+      : [],
+    recentSensorRecords: Array.isArray(raw.recentSensorRecords)
+      ? raw.recentSensorRecords.map(normalizeSensorData)
+      : [],
+    warehouseHealthList: Array.isArray(raw.warehouseHealthList)
+      ? raw.warehouseHealthList
       : []
   };
 }
@@ -200,31 +212,39 @@ function normalizePredictionTask(item) {
   const resultList = Array.isArray(item?.resultList)
     ? item.resultList.map(normalizePredictionPoint)
     : [];
+  const metricCode = item?.metricCode || DEFAULT_METRIC_CODE;
+
+  const maxThreshold = item?.maxThreshold ?? null;
 
   return {
     taskId: item?.taskId || null,
     taskNo: item?.taskNo || "TEMP-DEMO",
+    metricCode,
+    metricName: item?.metricName || metricNameMap[metricCode] || metricCode,
+    unit: item?.unit || "",
+    maxThreshold,
     algorithmName: item?.algorithmName || "线性回归",
-    riskLevel: item?.riskLevel || calcRiskLevel(resultList),
+    riskLevel: item?.riskLevel || calcRiskLevel(resultList, maxThreshold),
     requestedAt: item?.requestedAt || new Date().toISOString(),
     summary: item?.summary || "预测执行完成",
     resultList
   };
 }
 
-export async function predictTemperature(payload) {
+export async function predictMetric(payload) {
+  const metricCode = payload.metricCode || DEFAULT_METRIC_CODE;
   console.info("[Prediction] 调用预测接口", {
     warehouseId: payload.warehouseId,
-    metricCode: payload.metricCode || "temperature",
+    metricCode,
     futureSteps: Number(payload.futureSteps)
   });
 
   const raw = await request({
-    url: "/api/predictions/temperature",
+    url: "/api/predictions",
     method: "post",
     data: {
       warehouseId: payload.warehouseId,
-      metricCode: payload.metricCode || payload.metricCode || "temperature",
+      metricCode,
       futureSteps: Number(payload.futureSteps)
     }
   });
@@ -232,6 +252,7 @@ export async function predictTemperature(payload) {
   const task = normalizePredictionTask(raw);
   console.info("[Prediction] 预测接口返回", {
     taskId: task.taskId,
+    metricCode: task.metricCode,
     riskLevel: task.riskLevel,
     resultCount: task.resultList.length
   });
@@ -302,10 +323,27 @@ export async function fetchRoleOptions() {
   return roles;
 }
 
-export function getMetricOptions() {
-  return [
-    { value: "temperature", label: "温度" },
-    { value: "humidity", label: "湿度" },
-    { value: "co2", label: "二氧化碳浓度" }
-  ];
+function normalizeMetricOption(item) {
+  const metricCode = item?.metricCode || DEFAULT_METRIC_CODE;
+
+  return {
+    value: metricCode,
+    label: item?.metricName || metricNameMap[metricCode] || metricCode,
+    unit: item?.unit || "",
+    minThreshold: item?.minThreshold ?? null,
+    maxThreshold: item?.maxThreshold ?? null
+  };
+}
+
+export async function fetchMetricOptions() {
+  console.info("[Metric] 调用指标选项接口");
+
+  const raw = await request({
+    url: "/api/metrics/options",
+    method: "get"
+  });
+
+  const options = Array.isArray(raw) ? raw.map(normalizeMetricOption) : [];
+  console.info("[Metric] 指标选项返回", { count: options.length });
+  return options;
 }
