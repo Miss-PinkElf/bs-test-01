@@ -2,15 +2,18 @@
 import * as echarts from "echarts";
 import { nextTick, onBeforeUnmount, onMounted, reactive, ref } from "vue";
 import {
+  fetchPredictionTasks,
   fetchWarehouses,
   getMetricOptions,
   predictTemperature
 } from "../api/grain";
-import { mockPredictionArchives } from "../mock/platform";
 
 const chartRef = ref();
 const loading = ref(false);
+const historyLoading = ref(false);
 const warehouses = ref([]);
+const predictionHistory = ref([]);
+const selectedTaskId = ref(null);
 const prediction = ref({
   taskNo: "",
   algorithmName: "",
@@ -39,16 +42,43 @@ async function loadWarehouses() {
   }
 }
 
+// 加载真实预测归档列表，供右侧历史记录区展示。
+async function loadPredictionHistory() {
+  historyLoading.value = true;
+
+  try {
+    predictionHistory.value = await fetchPredictionTasks();
+  } finally {
+    historyLoading.value = false;
+  }
+}
+
+// 执行新预测后，刷新归档列表并回显最新结果。
 async function runPrediction() {
   loading.value = true;
 
   try {
     prediction.value = await predictTemperature(form);
+    selectedTaskId.value = prediction.value.taskId;
+    await loadPredictionHistory();
     await nextTick();
     renderChart();
   } finally {
     loading.value = false;
   }
+}
+
+// 右侧点击历史任务时，回显对应图表与结果列表。
+async function selectPredictionTask(item) {
+  selectedTaskId.value = item.taskId;
+  prediction.value = item;
+  console.info("[Prediction] 选中历史归档记录", {
+    taskId: item.taskId,
+    taskNo: item.taskNo,
+    resultCount: item.resultList.length
+  });
+  await nextTick();
+  renderChart();
 }
 
 function renderChart() {
@@ -95,6 +125,7 @@ function renderChart() {
 
 onMounted(async () => {
   await loadWarehouses();
+  await loadPredictionHistory();
   await runPrediction();
 });
 
@@ -162,6 +193,7 @@ onBeforeUnmount(() => {
             <div><strong>风险等级：</strong>{{ prediction.riskLevel }}</div>
             <div><strong>执行时间：</strong>{{ formatDateTime(prediction.requestedAt) }}</div>
             <div><strong>结果点数：</strong>{{ prediction.resultList.length }}</div>
+            <div><strong>任务摘要：</strong>{{ prediction.summary || "预测执行完成" }}</div>
           </div>
         </el-card>
       </el-col>
@@ -205,19 +237,24 @@ onBeforeUnmount(() => {
             <div class="panel-title">历史归档记录</div>
           </template>
 
-          <div class="stack-list">
+          <div class="stack-list" v-loading="historyLoading">
             <div
-              v-for="item in mockPredictionArchives"
-              :key="item.id"
-              class="list-card"
+              v-for="item in predictionHistory"
+              :key="item.taskId"
+              class="list-card prediction-history-card"
+              :class="{ 'is-active': item.taskId === selectedTaskId }"
+              @click="selectPredictionTask(item)"
             >
               <div class="list-card-header">
-                <strong>{{ item.taskName }}</strong>
+                <strong>{{ item.taskNo }}</strong>
                 <el-tag type="info">{{ item.algorithmName }}</el-tag>
               </div>
-              <div class="list-card-desc">{{ item.createdAt }}</div>
+              <div class="list-card-desc">风险等级：{{ item.riskLevel }}</div>
+              <div class="list-card-desc">{{ formatDateTime(item.requestedAt) }}</div>
               <div class="list-card-desc">{{ item.summary }}</div>
+              <div class="list-card-desc">结果点数：{{ item.resultList.length }}</div>
             </div>
+            <el-empty v-if="!historyLoading && predictionHistory.length === 0" description="暂无预测归档记录" />
           </div>
         </el-card>
       </el-col>

@@ -8,6 +8,7 @@ public record PredictionTaskResponse(
         String algorithmName,
         String riskLevel,
         String requestedAt,
+        String summary,
         List<PredictionResultItemDto> resultList
 ) {
 }

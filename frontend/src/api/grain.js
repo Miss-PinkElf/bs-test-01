@@ -196,7 +196,29 @@ function unwrapImportResult(payload) {
   throw new Error(payload?.message || "导入失败");
 }
 
+function normalizePredictionTask(item) {
+  const resultList = Array.isArray(item?.resultList)
+    ? item.resultList.map(normalizePredictionPoint)
+    : [];
+
+  return {
+    taskId: item?.taskId || null,
+    taskNo: item?.taskNo || "TEMP-DEMO",
+    algorithmName: item?.algorithmName || "线性回归",
+    riskLevel: item?.riskLevel || calcRiskLevel(resultList),
+    requestedAt: item?.requestedAt || new Date().toISOString(),
+    summary: item?.summary || "预测执行完成",
+    resultList
+  };
+}
+
 export async function predictTemperature(payload) {
+  console.info("[Prediction] 调用预测接口", {
+    warehouseId: payload.warehouseId,
+    metricCode: payload.metricCode || "temperature",
+    futureSteps: Number(payload.futureSteps)
+  });
+
   const raw = await request({
     url: "/api/predictions/temperature",
     method: "post",
@@ -207,20 +229,26 @@ export async function predictTemperature(payload) {
     }
   });
 
-  const resultList = Array.isArray(raw)
-    ? raw.map(normalizePredictionPoint)
-    : Array.isArray(raw.resultList)
-      ? raw.resultList.map(normalizePredictionPoint)
-      : [];
+  const task = normalizePredictionTask(raw);
+  console.info("[Prediction] 预测接口返回", {
+    taskId: task.taskId,
+    riskLevel: task.riskLevel,
+    resultCount: task.resultList.length
+  });
+  return task;
+}
 
-  return {
-    taskId: raw.taskId || null,
-    taskNo: raw.taskNo || "TEMP-DEMO",
-    algorithmName: raw.algorithmName || "线性回归",
-    riskLevel: raw.riskLevel || calcRiskLevel(resultList),
-    requestedAt: raw.requestedAt || new Date().toISOString(),
-    resultList
-  };
+export async function fetchPredictionTasks() {
+  console.info("[Prediction] 调用预测历史列表接口");
+
+  const raw = await request({
+    url: "/api/predictions/tasks",
+    method: "get"
+  });
+
+  const tasks = Array.isArray(raw) ? raw.map(normalizePredictionTask) : [];
+  console.info("[Prediction] 预测历史列表返回", { count: tasks.length });
+  return tasks;
 }
 
 export function getMetricOptions() {

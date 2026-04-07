@@ -109,6 +109,7 @@ public class PredictionService {
                 task.getAlgorithmName(),
                 task.getRiskLevel(),
                 task.getRequestedAt() == null ? null : task.getRequestedAt().format(FORMATTER),
+                task.getSummary(),
                 results.stream().map(item -> new PredictionResultItemDto(
                         item.getStepIndex(),
                         item.getPredictedTime() == null ? null : item.getPredictedTime().format(FORMATTER),
