@@ -26,7 +26,12 @@
       "Bash(mysql:*)",
       "Bash(pkill -f \"grain-platform-backend\")",
       "Bash(lsof:*)",
-      "Bash(pkill -f \"server.port=8081\")"
+      "Bash(pkill -f \"server.port=8081\")",
+      "Bash(powershell:*)",
+      "Bash(G:/APP/Mysql/bin/mysql.exe:*)",
+      "Bash(git add:*)",
+      "Bash(git commit -m ':*)",
+      "Bash(java:*)"
     ]
   }
 }
