@@ -1,7 +1,7 @@
 # 当前状态
 
 ## 当前阶段
-- Handoff / Ready for resume
+- Resume-ready after truth-source rewrite and schema refactor
 
 ## 已确认的事实
 - 用户要求使用 `context-budget-explore` 记录过程。
@@ -10,33 +10,33 @@
 - 开题报告已转为 Markdown，核心课题是“基于 Spring Boot 的粮仓环境数据预测管理平台设计与实现”。
 - 已完成 `frontend-next/` 高保真静态原型增强，但正式前端路线仍是 `frontend/`。
 - 已完成数据库定稿、后端接口设计、正式 Vue 前端骨架、真实 MyBatis + MySQL 主链路替换、8081 联调口径收口、环境数据导入与启动脚本修复。
-- 已完成后端核心 Controller 简短接口日志与简单注释补充。
-- 已完成预测页真实归档与点击回显闭环，对应提交：`f7039e8`。
-- 已完成用户页真实接口与角色选项展示，对应提交：`6ea2343`。
-- 已完成指标选项真实接口、多指标独立预测主线、仪表盘首页概览 / 近期预警 / 仓库健康度 / 最近采样记录真实化。
-- 已在 `backend/src/main/resources/db/schema.sql` 中补充湿度与二氧化碳浓度预测 mock 数据。
-- 当前本地 MySQL `root` 密码以 `123456` 为准。
+- 已完成新一轮需求对齐：老师最新口径不再以“24 小时短期预测”或“多指标独立预测展示”为主，而是以粮温数据为核心的滚动预测闭环。
+- 已确认当前正式业务闭环为：固定模板 XLS 导入 -> 粮温原始测点入库 -> 系统生成汇总 -> 前 8 个月真实数据作为训练参考 -> 预测后 2 个月每天数据 -> 新真实数据回填验证 -> 修正后续预测 -> 高温预警。
+- 已新增五份新真相源文档，并新增 `schema.sql` 改造实施计划。
+- 已重写 `backend/src/main/resources/db/schema.sql`，新增粮温测点、原始记录、汇总分析、滚动预测任务版本链和预测结果误差/预警结构。
+- 已在 `schema.sql` 中写入稳定仓、风险仓、修正仓三类 mock 数据。
+- 使用 `mysql -uroot -p123456` 实际导入新 `schema.sql` 时返回 `Access denied for user 'root'@'localhost'`，因此数据库真实导入验证尚未完成。
 
 ## 工作假设
 - 以毕业设计 MVP 为目标，先做可演示的软件平台，不接入真实硬件。
-- 预测功能采用简单回归或移动平均，符合开题报告范围。
+- 预测功能继续采用简单回归或移动平均，重点在数据库与闭环留痕，而不是算法复杂度。
 - 项目结构采用前后端分离：`backend/` + `frontend/`。
 - 启动与联调默认使用 `8081`，避免与本地旧进程占用的 `8080` 冲突。
-- 当前下一步应优先推进展示大屏进一步真实化，再看用户管理操作接口。
+- 后续更像是“以现有项目为基础的半重写”，而不是继续小步补丁式迭代。
 
 ## 待解决的问题
-- 旧 handoff / spec / 历史文档里仍残留部分“温度预测”与旧接口路径表述，后续可继续收口，但不影响当前代码真相源。
-- 展示大屏当前仍是“真实概览 + mock 底板”的混合状态。
-- 用户管理目前只完成真实展示闭环，新增、编辑、启停等操作接口仍待补齐。
-- 过程文档（`.explore/`、`NEXT-SESSION-PROMPT.md`）尚未形成新的 resume-ready handoff 并提交到 git。
+- 当前 MySQL 凭据与文档中的 `root/123456` 不一致，导致新 `schema.sql` 不能直接导入验证。
+- Java 实体、Mapper、Service、Controller 仍围绕旧模型实现，尚未与新 `schema.sql` 对齐。
+- 前端 `PredictionView.vue`、`DataView.vue`、`frontend/src/api/grain.js` 仍沿用旧预测口径。
+- `workflow.md` 仍是早期骨架表述，后续可继续收口，但不影响恢复。
 
 ## 下一步
-- 先推进展示大屏进一步真实化，优先替换更多 mock 指标、预警与说明文案。
-- 再评估是否补用户新增、编辑、状态切换等正式操作接口。
-- 如进入收尾阶段，再统一清理旧交接记录中的旧口径表述。
+- 先确认可用的 MySQL 账号密码，实际执行新的 `schema.sql`。
+- 再按新表结构改后端实体、Mapper、Service、Controller。
+- 最后改前端预测页、导入页和 API 适配层。
 
 ## 最新 handoff
-- `.explore/grain-platform-bootstrap/handoffs/2026-04-07-009-multi-metric-prediction-and-dashboard-realization-resume-ready.md`
+- `.explore/grain-platform-bootstrap/handoffs/2026-04-08-011-schema-refactor-resume-ready.md`
 
 ## 最小活跃上下文摘要
-- 已完成指标选项真实接口、多指标独立预测、文档主真相源同步，以及仪表盘剩余核心 mock 的真实化；下一步优先继续做展示大屏真实化，再决定是否补用户管理正式操作接口。
+- 当前已经完成真相源重写和 `schema.sql` 重构，但代码仍停留在旧预测模型；下一次应先完成数据库实际导入验证，再进入后端和前端的半重写改造。

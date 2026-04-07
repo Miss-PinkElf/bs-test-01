@@ -1,11 +1,13 @@
 # Handoff 索引
 
 ## 最新 handoff
-- [2026-04-07-009-multi-metric-prediction-and-dashboard-realization-resume-ready](E:\Learn\Vs\Code\bs-test-01\.explore\grain-platform-bootstrap\handoffs\2026-04-07-009-multi-metric-prediction-and-dashboard-realization-resume-ready.md)
+- [2026-04-08-011-schema-refactor-resume-ready](E:\Learn\Vs\Code\bs-test-01\.explore\grain-platform-bootstrap\handoffs\2026-04-08-011-schema-refactor-resume-ready.md)
 
 ## Handoff 列表
 
-- `2026-04-07-009-multi-metric-prediction-and-dashboard-realization-resume-ready` | 阶段：多指标独立预测 + 仪表盘真实化 + 文档同步 / 可恢复 | 状态：latest
+- `2026-04-08-011-schema-refactor-resume-ready` | 阶段：schema 重构完成 / 可恢复 | 状态：latest
+- `2026-04-08-010-rolling-forecast-pivot-resume-ready` | 阶段：滚动预测闭环方向切换 + 真相源重写 / 可恢复 | 状态：superseded
+- `2026-04-07-009-multi-metric-prediction-and-dashboard-realization-resume-ready` | 阶段：多指标独立预测 + 仪表盘真实化 + 文档同步 / 可恢复 | 状态：superseded
 - `2026-04-07-008-prediction-history-and-user-page-real-api-resume-ready` | 阶段：预测页真实归档回显 + 用户页真实接口展示 / 可恢复 | 状态：superseded
 - `2026-04-07-007-import-mock-data-and-startup-fixes-resume-ready` | 阶段：导入、mock 数据、8081 收口与启动脚本修复 / 可恢复 | 状态：superseded
 - `2026-04-07-006-controller-logs-and-resume-ready` | 阶段：后端 Controller 日志与注释补充 / 可恢复 | 状态：superseded
