@@ -20,6 +20,23 @@
         limit 1
     </select>
 
+    <select id="selectAllUsers" resultType="com.grain.platform.dto.user.UserListItemResponse">
+        select u.id,
+               u.username,
+               u.display_name,
+               coalesce(group_concat(distinct r.role_code order by r.id separator ','), '') as role_codes,
+               coalesce(group_concat(distinct r.role_name order by r.id separator ','), '') as role_names,
+               w.warehouse_name,
+               u.status,
+               u.last_login_at
+        from sys_user u
+                 left join sys_user_role ur on u.id = ur.user_id
+                 left join sys_role r on ur.role_id = r.id
+                 left join warehouse w on u.warehouse_id = w.id
+        group by u.id, u.username, u.display_name, w.warehouse_name, u.status, u.last_login_at
+        order by u.id asc
+    </select>
+
     <update id="updateLastLoginAt">
         update sys_user
         set last_login_at = now()

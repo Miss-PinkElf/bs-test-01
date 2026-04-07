@@ -11,4 +11,12 @@
         where ur.user_id = #{userId}
         order by r.id asc
     </select>
+
+    <select id="selectAllRoleOptions" resultType="com.grain.platform.dto.user.RoleOptionResponse">
+        select role_code,
+               role_name,
+               role_desc
+        from sys_role
+        order by id asc
+    </select>
 </mapper>

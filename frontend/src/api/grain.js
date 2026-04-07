@@ -251,6 +251,57 @@ export async function fetchPredictionTasks() {
   return tasks;
 }
 
+function splitCsvValue(value) {
+  return value ? String(value).split(",").filter(Boolean) : [];
+}
+
+function normalizeUser(item) {
+  return {
+    id: item.id,
+    username: item.username || "-",
+    displayName: item.displayName || "-",
+    roleCodes: splitCsvValue(item.roleCodes),
+    roleNames: splitCsvValue(item.roleNames),
+    warehouseName: item.warehouseName || "平台级",
+    status: item.status || "ACTIVE",
+    lastLoginAt: item.lastLoginAt || "-"
+  };
+}
+
+function normalizeRoleOption(item) {
+  return {
+    roleCode: item.roleCode || "-",
+    roleName: item.roleName || "-",
+    roleDesc: item.roleDesc || "暂无说明"
+  };
+}
+
+export async function fetchUsers() {
+  console.info("[User] 调用用户列表接口");
+
+  const raw = await request({
+    url: "/api/users",
+    method: "get"
+  });
+
+  const users = Array.isArray(raw) ? raw.map(normalizeUser) : [];
+  console.info("[User] 用户列表返回", { count: users.length });
+  return users;
+}
+
+export async function fetchRoleOptions() {
+  console.info("[User] 调用角色选项接口");
+
+  const raw = await request({
+    url: "/api/roles/options",
+    method: "get"
+  });
+
+  const roles = Array.isArray(raw) ? raw.map(normalizeRoleOption) : [];
+  console.info("[User] 角色选项返回", { count: roles.length });
+  return roles;
+}
+
 export function getMetricOptions() {
   return [
     { value: "temperature", label: "温度" },
