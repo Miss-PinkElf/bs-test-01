@@ -5,6 +5,7 @@ $scriptRoot = $PSScriptRoot
 & (Join-Path $scriptRoot "check-env.ps1")
 
 Write-Host "准备启动前后端（联调端口固定为 8081）..." -ForegroundColor Cyan
+Write-Host "后端启动前会自动检查并清理 8081 端口占用。" -ForegroundColor Cyan
 
 $backendScript = Join-Path $scriptRoot "start-backend.ps1"
 $frontendScript = Join-Path $scriptRoot "start-frontend.ps1"

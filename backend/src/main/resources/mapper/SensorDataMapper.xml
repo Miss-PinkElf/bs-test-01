@@ -63,6 +63,7 @@
             metric_value,
             collected_at,
             source_type,
+            source_batch_no,
             quality_flag,
             remark,
             created_by
@@ -72,9 +73,37 @@
             #{metricValue},
             #{collectedAt},
             #{sourceType},
+            #{sourceBatchNo},
             #{qualityFlag},
             #{remark},
             #{createdBy}
         )
+    </insert>
+
+    <insert id="insertBatch">
+        insert into sensor_data (
+            warehouse_id,
+            metric_code,
+            metric_value,
+            collected_at,
+            source_type,
+            source_batch_no,
+            quality_flag,
+            remark,
+            created_by
+        ) values
+        <foreach collection="list" item="item" separator=",">
+            (
+                #{item.warehouseId},
+                #{item.metricCode},
+                #{item.metricValue},
+                #{item.collectedAt},
+                #{item.sourceType},
+                #{item.sourceBatchNo},
+                #{item.qualityFlag},
+                #{item.remark},
+                #{item.createdBy}
+            )
+        </foreach>
     </insert>
 </mapper>

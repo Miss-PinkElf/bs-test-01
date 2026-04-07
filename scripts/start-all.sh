@@ -6,6 +6,7 @@ SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 chmod +x "${SCRIPT_DIR}/start-backend.sh" "${SCRIPT_DIR}/start-frontend.sh"
 
 echo "准备启动前后端（联调端口固定为 8081）..."
+echo "后端启动前会自动检查并清理 8081 端口占用。"
 echo "将打开两个新的 Terminal 窗口分别启动前后端。"
 
 osascript <<EOF

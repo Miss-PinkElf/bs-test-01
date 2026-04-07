@@ -33,30 +33,32 @@ function handleLogout() {
 <template>
   <el-container class="console-shell">
     <el-aside width="248px" class="console-aside">
-      <div class="brand-panel">
-        <div class="brand-mark">粮</div>
-        <div>
-          <div class="brand-title">粮仓环境数据平台</div>
-          <div class="brand-subtitle">Vue 正式实现骨架</div>
+      <div class="aside-main">
+        <div class="brand-panel">
+          <div class="brand-mark">粮</div>
+          <div>
+            <div class="brand-title">粮仓环境数据平台</div>
+            <div class="brand-subtitle">Vue 正式实现骨架</div>
+          </div>
         </div>
-      </div>
 
-      <el-menu
-        class="console-menu"
-        :default-active="route.path"
-        router
-        background-color="transparent"
-        text-color="#d7edf3"
-        active-text-color="#ffffff"
-      >
-        <el-menu-item
-          v-for="item in navItems"
-          :key="item.path"
-          :index="item.path"
+        <el-menu
+          class="console-menu"
+          :default-active="route.path"
+          router
+          background-color="transparent"
+          text-color="#d7edf3"
+          active-text-color="#ffffff"
         >
-          {{ item.label }}
-        </el-menu-item>
-      </el-menu>
+          <el-menu-item
+            v-for="item in navItems"
+            :key="item.path"
+            :index="item.path"
+          >
+            {{ item.label }}
+          </el-menu-item>
+        </el-menu>
+      </div>
 
       <div class="aside-footer">
         <div class="aside-tip">答辩演示入口</div>

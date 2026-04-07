@@ -1,4 +1,5 @@
-import { request } from "./http";
+import axios from "axios";
+import { API_BASE_URL, request } from "./http";
 
 const metricNameMap = {
   temperature: "温度",
@@ -168,6 +169,31 @@ export async function createSensorData(payload) {
   });
 
   return normalizeSensorData(raw);
+}
+
+export async function importSensorData(file) {
+  const formData = new FormData();
+  formData.append("file", file);
+
+  const response = await axios.post(`${API_BASE_URL}/api/sensor-data/import`, formData, {
+    headers: {
+      "Content-Type": "multipart/form-data"
+    }
+  });
+
+  return unwrapImportResult(response.data);
+}
+
+export function downloadSensorTemplate() {
+  window.open(`${API_BASE_URL}/api/sensor-data/import/template`, "_blank");
+}
+
+function unwrapImportResult(payload) {
+  if (payload?.code === 200) {
+    return payload.data;
+  }
+
+  throw new Error(payload?.message || "导入失败");
 }
 
 export async function predictTemperature(payload) {

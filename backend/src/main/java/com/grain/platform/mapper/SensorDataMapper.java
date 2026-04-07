@@ -14,4 +14,6 @@ public interface SensorDataMapper {
     List<SensorDataPointDto> selectRecentByMetric(@Param("warehouseId") Long warehouseId, @Param("metricCode") String metricCode);
 
     void insert(SensorData sensorData);
+
+    void insertBatch(@Param("list") List<SensorData> sensorDataList);
 }

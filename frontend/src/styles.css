@@ -36,10 +36,14 @@ body {
 .console-aside {
   display: flex;
   flex-direction: column;
-  justify-content: space-between;
   padding: 20px 18px;
   color: #fff;
   background: linear-gradient(180deg, #102d28 0%, #16443b 52%, #0f2e29 100%);
+}
+
+.aside-main {
+  display: grid;
+  gap: 12px;
 }
 
 .brand-panel {
@@ -74,6 +78,7 @@ body {
 
 .console-menu {
   border-right: none !important;
+  margin-top: 6px;
 }
 
 .console-menu .el-menu-item {
@@ -88,6 +93,7 @@ body {
 }
 
 .aside-footer {
+  margin-top: auto;
   padding: 16px 8px 8px;
 }
 
@@ -181,6 +187,25 @@ body {
 .panel-title {
   font-size: 17px;
   font-weight: 700;
+}
+
+.panel-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.toolbar-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+}
+
+.dialog-footer {
+  display: flex;
+  justify-content: flex-end;
+  gap: 12px;
 }
 
 .stack-list {

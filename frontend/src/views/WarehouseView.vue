@@ -4,6 +4,7 @@ import { ElMessage } from "element-plus";
 import { createWarehouse, fetchWarehouses } from "../api/grain";
 
 const loading = ref(false);
+const dialogVisible = ref(false);
 const warehouses = ref([]);
 const form = reactive({
   warehouseCode: "",
@@ -30,6 +31,20 @@ const summaryCards = computed(() => [
 
 const selectedWarehouse = computed(() => warehouses.value[0] || null);
 
+function resetForm() {
+  form.warehouseCode = "";
+  form.warehouseName = "";
+  form.location = "";
+  form.capacityTon = 500;
+  form.managerName = "";
+  form.status = "ACTIVE";
+}
+
+function openCreateDialog() {
+  resetForm();
+  dialogVisible.value = true;
+}
+
 async function loadWarehouses() {
   loading.value = true;
 
@@ -43,12 +58,8 @@ async function loadWarehouses() {
 async function submit() {
   await createWarehouse(form);
   ElMessage.success("仓库已写入数据库");
-  form.warehouseCode = "";
-  form.warehouseName = "";
-  form.location = "";
-  form.capacityTon = 500;
-  form.managerName = "";
-  form.status = "ACTIVE";
+  dialogVisible.value = false;
+  resetForm();
   await loadWarehouses();
 }
 
@@ -74,35 +85,16 @@ onMounted(loadWarehouses);
       <el-col :xs="24" :xl="16">
         <el-card class="panel-card" shadow="never">
           <template #header>
-            <div class="panel-title">新增仓库</div>
+            <div class="panel-header">
+              <div class="panel-title">仓库档案维护</div>
+              <el-button type="primary" @click="openCreateDialog">新增仓库</el-button>
+            </div>
           </template>
 
-          <el-form label-position="top" class="form-grid-2">
-            <el-form-item label="仓库编码">
-              <el-input v-model="form.warehouseCode" placeholder="例如 WH-A03" />
-            </el-form-item>
-            <el-form-item label="仓库名称">
-              <el-input v-model="form.warehouseName" placeholder="请输入仓库名称" />
-            </el-form-item>
-            <el-form-item label="仓库位置">
-              <el-input v-model="form.location" placeholder="请输入仓库位置" />
-            </el-form-item>
-            <el-form-item label="容量（吨）">
-              <el-input-number v-model="form.capacityTon" :min="1" :step="10" />
-            </el-form-item>
-            <el-form-item label="负责人">
-              <el-input v-model="form.managerName" placeholder="请输入负责人" />
-            </el-form-item>
-            <el-form-item label="状态">
-              <el-select v-model="form.status">
-                <el-option label="运行中" value="ACTIVE" />
-                <el-option label="关注" value="WARNING" />
-                <el-option label="维护中" value="MAINTENANCE" />
-              </el-select>
-            </el-form-item>
-          </el-form>
-
-          <el-button type="primary" @click="submit">保存仓库</el-button>
+          <div class="compact-lines">
+            <div>手动新增仓库已收口为弹出框，便于保持列表页更整洁。</div>
+            <div>新增完成后会自动刷新当前仓库列表与概览卡片。</div>
+          </div>
         </el-card>
       </el-col>
 
@@ -140,5 +132,39 @@ onMounted(loadWarehouses);
         <el-table-column prop="status" label="状态" />
       </el-table>
     </el-card>
+
+    <el-dialog v-model="dialogVisible" title="新增仓库" width="720px">
+      <el-form label-position="top" class="form-grid-2">
+        <el-form-item label="仓库编码">
+          <el-input v-model="form.warehouseCode" placeholder="例如 WH-A03" />
+        </el-form-item>
+        <el-form-item label="仓库名称">
+          <el-input v-model="form.warehouseName" placeholder="请输入仓库名称" />
+        </el-form-item>
+        <el-form-item label="仓库位置">
+          <el-input v-model="form.location" placeholder="请输入仓库位置" />
+        </el-form-item>
+        <el-form-item label="容量（吨）">
+          <el-input-number v-model="form.capacityTon" :min="1" :step="10" />
+        </el-form-item>
+        <el-form-item label="负责人">
+          <el-input v-model="form.managerName" placeholder="请输入负责人" />
+        </el-form-item>
+        <el-form-item label="状态">
+          <el-select v-model="form.status">
+            <el-option label="运行中" value="ACTIVE" />
+            <el-option label="关注" value="WARNING" />
+            <el-option label="维护中" value="MAINTENANCE" />
+          </el-select>
+        </el-form-item>
+      </el-form>
+
+      <template #footer>
+        <div class="dialog-footer">
+          <el-button @click="dialogVisible = false">取消</el-button>
+          <el-button type="primary" @click="submit">保存仓库</el-button>
+        </div>
+      </template>
+    </el-dialog>
   </div>
 </template>

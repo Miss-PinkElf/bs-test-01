@@ -1,4 +1,35 @@
 $ErrorActionPreference = "Stop"
+
+function Clear-Port {
+    param(
+        [int]$Port
+    )
+
+    $connections = Get-NetTCPConnection -LocalPort $Port -ErrorAction SilentlyContinue |
+        Where-Object { $_.State -in @("Listen", "Established") } |
+        Select-Object -ExpandProperty OwningProcess -Unique
+
+    if (-not $connections) {
+        Write-Host "端口 $Port 当前空闲。" -ForegroundColor Green
+        return
+    }
+
+    foreach ($pid in $connections) {
+        try {
+            $process = Get-Process -Id $pid -ErrorAction Stop
+            Write-Host "检测到端口 $Port 被进程占用，正在关闭 PID=$pid ($($process.ProcessName)) ..." -ForegroundColor Yellow
+            Stop-Process -Id $pid -Force
+            Write-Host "已释放端口 $Port。" -ForegroundColor Green
+        }
+        catch {
+            Write-Host "关闭占用端口 $Port 的进程失败：PID=$pid" -ForegroundColor Red
+            throw
+        }
+    }
+}
+
+Clear-Port -Port 8081
+
 $backendPath = Join-Path $PSScriptRoot "..\backend"
 Set-Location $backendPath
 

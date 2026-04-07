@@ -1,6 +1,8 @@
 package com.grain.platform.service;
 
 import com.grain.platform.dto.sensor.SensorDataCreateRequest;
+import com.grain.platform.dto.sensor.SensorDataImportResultDto;
+import com.grain.platform.dto.sensor.SensorDataImportRowDto;
 import com.grain.platform.dto.sensor.SensorDataPointDto;
 import com.grain.platform.dto.sensor.SensorTrendPointDto;
 import com.grain.platform.dto.sensor.SensorTrendResponse;
@@ -8,18 +10,23 @@ import com.grain.platform.entity.SensorData;
 import com.grain.platform.mapper.SensorDataMapper;
 import com.grain.platform.vo.common.IdVO;
 import org.springframework.stereotype.Service;
+import org.springframework.web.multipart.MultipartFile;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
+import java.util.ArrayList;
 import java.util.List;
+import java.util.UUID;
 
 @Service
 public class SensorDataService {
 
     private final SensorDataMapper sensorDataMapper;
+    private final SensorDataImportService sensorDataImportService;
 
-    public SensorDataService(SensorDataMapper sensorDataMapper) {
+    public SensorDataService(SensorDataMapper sensorDataMapper, SensorDataImportService sensorDataImportService) {
         this.sensorDataMapper = sensorDataMapper;
+        this.sensorDataImportService = sensorDataImportService;
     }
 
     public List<SensorDataPointDto> list(Long warehouseId, String metricCode) {
@@ -51,6 +58,43 @@ public class SensorDataService {
         );
         sensorDataMapper.insert(sensorData);
         return new IdVO(sensorData.getId());
+    }
+
+    public SensorDataImportResultDto importData(MultipartFile file) {
+        try {
+            List<SensorDataImportRowDto> rows = sensorDataImportService.parse(file);
+            if (rows.isEmpty()) {
+                throw new IllegalArgumentException("导入文件为空或没有有效数据");
+            }
+
+            String batchNo = "BATCH-" + UUID.randomUUID().toString().substring(0, 8).toUpperCase();
+            List<SensorData> sensorDataList = rows.stream()
+                    .map(item -> new SensorData(
+                            null,
+                            item.warehouseId(),
+                            item.metricCode(),
+                            BigDecimal.valueOf(item.metricValue()),
+                            item.collectedAt(),
+                            "IMPORT",
+                            batchNo,
+                            "NORMAL",
+                            item.remark(),
+                            1L,
+                            null,
+                            null
+                    ))
+                    .toList();
+            sensorDataMapper.insertBatch(sensorDataList);
+            return new SensorDataImportResultDto(sensorDataList.size(), 0, batchNo, List.of());
+        } catch (Exception ex) {
+            List<String> errors = new ArrayList<>();
+            errors.add(ex.getMessage());
+            return new SensorDataImportResultDto(0, 1, null, errors);
+        }
+    }
+
+    public String getImportTemplate() {
+        return sensorDataImportService.getCsvTemplate();
     }
 
     public List<SensorDataPointDto> listRecentTemperatureHistory(Long warehouseId) {
