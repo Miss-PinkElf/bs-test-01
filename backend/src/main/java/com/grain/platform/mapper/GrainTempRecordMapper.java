@@ -10,6 +10,14 @@ import java.util.List;
 
 @Mapper
 public interface GrainTempRecordMapper {
+    void insert(GrainTempRecord record);
+
+    void update(GrainTempRecord record);
+
+    void deleteById(@Param("id") Long id);
+
+    GrainTempRecord selectEntityById(@Param("id") Long id);
+
     void upsertBatch(@Param("list") List<GrainTempRecord> list);
 
     List<GrainTempRecordItemDto> selectByCondition(@Param("warehouseId") Long warehouseId,
@@ -17,4 +25,7 @@ public interface GrainTempRecordMapper {
                                                    @Param("endTime") LocalDateTime endTime,
                                                    @Param("zoneCode") String zoneCode,
                                                    @Param("layerNo") Integer layerNo);
+
+    List<GrainTempRecordItemDto> selectByWarehouseAndCollectedAt(@Param("warehouseId") Long warehouseId,
+                                                                 @Param("collectedAt") LocalDateTime collectedAt);
 }

@@ -180,21 +180,30 @@ Invoke-WebRequest -UseBasicParsing "http://127.0.0.1:8081/api/grain-temp/summari
 
 - [x] `backend/`：`mvn -q -DskipTests compile`
 - [x] `frontend/`：`npm run build`
-- [ ] `/api/dashboard/overview` 运行态 smoke（当前被本地 MySQL 认证失败阻塞）
-- [ ] `/api/grain-temp/import/template` 下载 smoke（当前被后端启动失败阻塞）
-- [ ] 固定 XLSX 导入 smoke（当前被后端启动失败阻塞）
-- [ ] 旧 CSV 兼容 smoke（当前被后端启动失败阻塞）
+- [x] `/api/dashboard/overview` 运行态 smoke
+- [x] `/api/grain-temp/import/template` 下载 smoke
+- [x] 固定 XLSX 导入 smoke
+- [x] 旧 CSV 兼容 smoke
+- [x] 旧行式 `.xls` 兼容 smoke
+- [x] `/api/predictions/tasks` 与 `/api/predictions/tasks/1` 只读 smoke
 
 ## 9. 下一步建议
 
-1. 先按本清单补完运行态 smoke。
-2. 若固定模板会长期作为老师演示样例，再补一份真实样例文件到仓库内。
-3. 若后续频繁回归，可再补一个 PowerShell 脚本串起“启动后端 + 下载模板 + 导入 + 查询首页概览”。
+1. 收口本机 MySQL 的本地启动方案：要么恢复为 `root/123456`，要么在脚本中统一接管空密码覆盖。
+2. 若后续频繁回归，可补一个 PowerShell 脚本串起“启动后端 + 下载模板 + 导入 + 查询首页概览 + 兼容格式导入”。
+3. 若固定模板会长期作为老师演示样例，再补一份真实样例文件到仓库内。
 
-## 10. 当前阻塞记录
+## 10. 本轮运行态验证记录
 
 - 时间：2026-04-08
-- 现象：`mvn -q spring-boot:run -Dspring-boot.run.arguments=--server.port=8081` 启动失败，未进入接口 smoke 阶段。
-- 已定位原因：Spring Boot 在执行数据库初始化脚本时获取 MySQL 连接失败。
-- 关键报错：`Access denied for user ''root''@''localhost'' (using password: YES)`
-- 结论：当前固定 XLSX 模板代码已通过静态编译与前端构建，但运行态 smoke 受本机 MySQL 认证问题阻塞；该阻塞不是本轮模板解析逻辑直接导致。
+- 现象：仓库默认配置 `root/123456` 在当前机器失效，`spring-boot:run` 初次启动时报 `Access denied for user 'root'@'localhost' (using password: YES)`。
+- 已定位原因：当前机器上的 MySQL 可用登录方式是 `root` 空密码，而不是仓库默认密码。
+- 本轮处理：使用 `SPRING_DATASOURCE_PASSWORD=''` 临时覆盖启动后端，并由 Spring SQL 初始化自动补齐最新 `schema.sql`。
+- 运行态结果：
+  - `/api/dashboard/overview` 返回 `warehouseCount`、`grainSummaryCount`、`realAlertCount`、`predictionAlertCount`、`archivedPredictionCount`、`latestAlerts`、`latestGrainSummaries`、`warehouseHealthList`
+  - `latestAlerts` 同时出现 `sourceType = REAL` 和 `sourceType = PREDICTION`
+  - 固定模板下载成功，生成 `grain-temp-fixed-template.xlsx`
+  - 固定模板导入成功，新增批次 `BATCH-GRAIN-47204552`
+  - 旧 CSV 导入成功，新增批次 `BATCH-GRAIN-FDEFEE5A`
+  - 旧行式 `.xls` 导入成功，新增批次 `BATCH-GRAIN-F9CEB1BF`
+  - 导入完成后首页概览已联动更新，`grainSummaryCount = 30`

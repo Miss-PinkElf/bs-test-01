@@ -36,6 +36,13 @@
         order by sd.collected_at asc
     </select>
 
+    <select id="selectById" resultType="com.grain.platform.entity.SensorData">
+        select *
+        from sensor_data
+        where id = #{id}
+        limit 1
+    </select>
+
     <select id="selectRecentByMetric" resultMap="sensorPointMap">
         select sd.id,
                sd.warehouse_id,
@@ -79,6 +86,26 @@
             #{createdBy}
         )
     </insert>
+
+    <update id="update" parameterType="com.grain.platform.entity.SensorData">
+        update sensor_data
+        set warehouse_id = #{warehouseId},
+            metric_code = #{metricCode},
+            metric_value = #{metricValue},
+            collected_at = #{collectedAt},
+            source_type = #{sourceType},
+            source_batch_no = #{sourceBatchNo},
+            quality_flag = #{qualityFlag},
+            remark = #{remark},
+            created_by = #{createdBy}
+        where id = #{id}
+    </update>
+
+    <delete id="deleteById">
+        delete
+        from sensor_data
+        where id = #{id}
+    </delete>
 
     <insert id="insertBatch">
         insert into sensor_data (

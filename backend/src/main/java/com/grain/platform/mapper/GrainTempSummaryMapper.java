@@ -12,6 +12,9 @@ import java.util.List;
 public interface GrainTempSummaryMapper {
     void upsert(GrainTempSummary summary);
 
+    void deleteByWarehouseAndCollectedAt(@Param("warehouseId") Long warehouseId,
+                                         @Param("collectedAt") LocalDateTime collectedAt);
+
     List<GrainTempSummaryItemDto> selectByCondition(@Param("warehouseId") Long warehouseId,
                                                     @Param("startTime") LocalDateTime startTime,
                                                     @Param("endTime") LocalDateTime endTime);

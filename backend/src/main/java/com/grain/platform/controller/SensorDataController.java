@@ -4,6 +4,7 @@ import com.grain.platform.common.ApiResponse;
 import com.grain.platform.dto.sensor.SensorDataCreateRequest;
 import com.grain.platform.dto.sensor.SensorDataImportResultDto;
 import com.grain.platform.dto.sensor.SensorDataPointDto;
+import com.grain.platform.dto.sensor.SensorDataUpdateRequest;
 import com.grain.platform.dto.sensor.SensorTrendResponse;
 import com.grain.platform.service.SensorDataService;
 import com.grain.platform.vo.common.IdVO;
@@ -13,8 +14,11 @@ import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
@@ -72,6 +76,24 @@ public class SensorDataController {
         IdVO response = sensorDataService.create(request);
         log.info("新增环境数据成功，id={}", response.id());
         return ApiResponse.success(response);
+    }
+
+    // 编辑环境数据。
+    @PutMapping("/{id}")
+    public ApiResponse<IdVO> update(@PathVariable Long id, @Valid @RequestBody SensorDataUpdateRequest request) {
+        log.info("调用编辑环境数据接口，id={}, warehouseId={}, metricCode={}", id, request.warehouseId(), request.metricCode());
+        IdVO response = sensorDataService.update(id, request);
+        log.info("编辑环境数据成功，id={}", response.id());
+        return ApiResponse.success(response);
+    }
+
+    // 删除环境数据。
+    @DeleteMapping("/{id}")
+    public ApiResponse<Void> delete(@PathVariable Long id) {
+        log.info("调用删除环境数据接口，id={}", id);
+        sensorDataService.delete(id);
+        log.info("删除环境数据成功，id={}", id);
+        return ApiResponse.success(null);
     }
 
     // 批量导入环境数据。

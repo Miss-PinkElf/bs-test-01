@@ -4,6 +4,7 @@ import com.grain.platform.dto.sensor.SensorDataCreateRequest;
 import com.grain.platform.dto.sensor.SensorDataImportResultDto;
 import com.grain.platform.dto.sensor.SensorDataImportRowDto;
 import com.grain.platform.dto.sensor.SensorDataPointDto;
+import com.grain.platform.dto.sensor.SensorDataUpdateRequest;
 import com.grain.platform.dto.sensor.SensorTrendPointDto;
 import com.grain.platform.dto.sensor.SensorTrendResponse;
 import com.grain.platform.entity.SensorData;
@@ -60,6 +61,26 @@ public class SensorDataService {
         return new IdVO(sensorData.getId());
     }
 
+    public IdVO update(Long id, SensorDataUpdateRequest request) {
+        SensorData sensorData = requireSensorData(id);
+        sensorData.setWarehouseId(request.warehouseId());
+        sensorData.setMetricCode(request.metricCode());
+        sensorData.setMetricValue(BigDecimal.valueOf(request.metricValue()));
+        sensorData.setCollectedAt(request.collectedAt() == null ? LocalDateTime.now() : request.collectedAt());
+        sensorData.setSourceType("MANUAL");
+        sensorData.setSourceBatchNo(null);
+        sensorData.setQualityFlag("NORMAL");
+        sensorData.setRemark(null);
+        sensorData.setCreatedBy(1L);
+        sensorDataMapper.update(sensorData);
+        return new IdVO(sensorData.getId());
+    }
+
+    public void delete(Long id) {
+        requireSensorData(id);
+        sensorDataMapper.deleteById(id);
+    }
+
     public SensorDataImportResultDto importData(MultipartFile file) {
         try {
             List<SensorDataImportRowDto> rows = sensorDataImportService.parse(file);
@@ -99,5 +120,13 @@ public class SensorDataService {
 
     public List<SensorDataPointDto> listRecentTemperatureHistory(Long warehouseId) {
         return sensorDataMapper.selectRecentByMetric(warehouseId, "temperature");
+    }
+
+    private SensorData requireSensorData(Long id) {
+        SensorData sensorData = sensorDataMapper.selectById(id);
+        if (sensorData == null) {
+            throw new IllegalArgumentException("环境数据不存在：" + id);
+        }
+        return sensorData;
     }
 }

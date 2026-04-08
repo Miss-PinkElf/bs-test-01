@@ -28,6 +28,13 @@
         limit 1
     </select>
 
+    <select id="selectById" resultMap="grainTempPointMap">
+        select *
+        from grain_temp_point
+        where id = #{id}
+        limit 1
+    </select>
+
     <insert id="insert" parameterType="com.grain.platform.entity.GrainTempPoint" useGeneratedKeys="true" keyProperty="id">
         insert into grain_temp_point (
             warehouse_id,

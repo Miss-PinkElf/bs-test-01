@@ -6,7 +6,7 @@ import jakarta.validation.constraints.NotNull;
 
 import java.time.LocalDateTime;
 
-public record SensorDataCreateRequest(
+public record SensorDataUpdateRequest(
         @NotNull(message = "仓库不能为空")
         Long warehouseId,
         @NotBlank(message = "指标编码不能为空")

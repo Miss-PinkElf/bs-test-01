@@ -58,3 +58,7 @@
 ### [#15] 2026-04-08
 - 决策：粮温导入在本轮先采用“行式模板”完成数据库优先 MVP，而不是直接实现复杂矩阵式固定 XLS 模板。
 - 原因：本轮目标是优先跑通“导入 -> 原始入库 -> 汇总生成 -> 按天预测 -> 归档 -> 双线图”的可演示主链；先用更简单的导入形态降低实现风险，后续再向老师更偏好的固定模板靠拢。
+
+### [#16] 2026-04-09
+- 决策：数据主线 CRUD 与温度联动重算的实施过程，统一以 `docs/superpowers/plans/2026-04-09-data-crud-and-temperature-recompute.md` 作为执行参考，并在 `.explore/grain-platform-bootstrap/` 中显式引用。
+- 原因：用户要求通过 `context-budget-explore` 持续沉淀过程；若计划只留在 `docs/` 目录而不回链到 mission 真相源，后续 handoff / resume 时容易漏掉本轮实施边界和验证目标。

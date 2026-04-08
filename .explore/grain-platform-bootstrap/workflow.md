@@ -42,7 +42,7 @@
 7. Checkpoint 与交付说明
 
 ## 当前阶段
-- Apply second round completed / Pause-ready
+- Apply data CRUD completed / Pause-ready
 
 ## 本轮补充进展
 - 已完成数据库优先 MVP 第一轮落地：
@@ -62,6 +62,9 @@
   - 首页仪表盘已切到真实预警 + 预测预警口径
   - 固定粮温模板已升级为 `XLSX` 下载与矩阵解析
   - 已新增回归验证清单并定位运行态阻塞为本机 MySQL 认证失败
+- 已补数据主线 CRUD 执行计划：
+  - 执行参考计划：`docs/superpowers/plans/2026-04-09-data-crud-and-temperature-recompute.md`
+  - 本计划用于约束 `grain_temp_record` CRUD、`sensor_data` CRUD 与温度变更后的汇总/真实预警联动重算
 ## 退出条件
 - 用户可直接查看最新真相源、状态记录和 handoff 恢复上下文。
 - 用户下次可直接从“恢复 MySQL 认证可用性 -> 补运行态 smoke”继续推进，而无需重复核对首页和固定模板改造状态。

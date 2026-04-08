@@ -71,6 +71,13 @@
             analysis_remark = values(analysis_remark)
     </insert>
 
+    <delete id="deleteByWarehouseAndCollectedAt">
+        delete
+        from grain_temp_summary
+        where warehouse_id = #{warehouseId}
+          and collected_at = #{collectedAt}
+    </delete>
+
     <select id="selectByCondition" resultType="com.grain.platform.dto.grain.GrainTempSummaryItemDto">
         select s.id as id,
                s.warehouse_id as warehouseId,

@@ -6,6 +6,8 @@ import org.apache.ibatis.annotations.Param;
 
 @Mapper
 public interface GrainTempPointMapper {
+    GrainTempPoint selectById(@Param("id") Long id);
+
     GrainTempPoint selectByUniqueKey(@Param("warehouseId") Long warehouseId,
                                      @Param("zoneCode") String zoneCode,
                                      @Param("layerNo") Integer layerNo,

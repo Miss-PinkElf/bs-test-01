@@ -71,6 +71,23 @@ function normalizeSensorData(item) {
   };
 }
 
+function normalizeGrainRecord(item) {
+  return {
+    id: item.id,
+    warehouseId: item.warehouseId,
+    warehouseName: item.warehouseName || "-",
+    pointId: item.pointId ?? null,
+    pointName: item.pointName || "-",
+    zoneCode: item.zoneCode || "",
+    layerNo: item.layerNo ?? null,
+    pointNo: item.pointNo ?? null,
+    collectedAt: item.collectedAt || "",
+    temperatureValue: item.temperatureValue ?? null,
+    sourceType: item.sourceType || "MANUAL",
+    qualityFlag: item.qualityFlag || "NORMAL"
+  };
+}
+
 function normalizeDashboardSummary(item) {
   return {
     id: item.id ?? null,
@@ -241,6 +258,26 @@ export async function createSensorData(payload) {
   });
 }
 
+export async function updateSensorData(id, payload) {
+  return request({
+    url: `/api/sensor-data/${id}`,
+    method: "put",
+    data: {
+      warehouseId: payload.warehouseId,
+      metricCode: payload.metricCode,
+      metricValue: Number(payload.metricValue),
+      collectedAt: payload.collectedAt || undefined
+    }
+  });
+}
+
+export async function deleteSensorData(id) {
+  return request({
+    url: `/api/sensor-data/${id}`,
+    method: "delete"
+  });
+}
+
 export async function importSensorData(file) {
   const formData = new FormData();
   formData.append("file", file);
@@ -270,6 +307,63 @@ export async function fetchGrainTempSummaries(params = {}) {
   });
 
   return Array.isArray(raw) ? raw.map(normalizeGrainSummary) : [];
+}
+
+export async function fetchGrainTempRecords(params = {}) {
+  const raw = await request({
+    url: "/api/grain-temp/records",
+    method: "get",
+    params: {
+      warehouseId: params.warehouseId || undefined,
+      startTime: params.startTime || undefined,
+      endTime: params.endTime || undefined,
+      zoneCode: params.zoneCode || undefined,
+      layerNo: params.layerNo || undefined
+    }
+  });
+
+  return Array.isArray(raw) ? raw.map(normalizeGrainRecord) : [];
+}
+
+export async function createGrainTempRecord(payload) {
+  return request({
+    url: "/api/grain-temp/records",
+    method: "post",
+    data: {
+      warehouseId: payload.warehouseId,
+      zoneCode: payload.zoneCode,
+      layerNo: Number(payload.layerNo),
+      pointNo: Number(payload.pointNo),
+      collectedAt: payload.collectedAt,
+      temperatureValue: Number(payload.temperatureValue),
+      probeCode: payload.probeCode || undefined,
+      remark: payload.remark || undefined
+    }
+  });
+}
+
+export async function updateGrainTempRecord(id, payload) {
+  return request({
+    url: `/api/grain-temp/records/${id}`,
+    method: "put",
+    data: {
+      warehouseId: payload.warehouseId,
+      zoneCode: payload.zoneCode,
+      layerNo: Number(payload.layerNo),
+      pointNo: Number(payload.pointNo),
+      collectedAt: payload.collectedAt,
+      temperatureValue: Number(payload.temperatureValue),
+      probeCode: payload.probeCode || undefined,
+      remark: payload.remark || undefined
+    }
+  });
+}
+
+export async function deleteGrainTempRecord(id) {
+  return request({
+    url: `/api/grain-temp/records/${id}`,
+    method: "delete"
+  });
 }
 
 export async function importGrainTemp(file) {

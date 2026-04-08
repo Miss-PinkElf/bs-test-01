@@ -3,14 +3,21 @@ package com.grain.platform.controller;
 import com.grain.platform.common.ApiResponse;
 import com.grain.platform.dto.grain.GrainTempImportResultDto;
 import com.grain.platform.dto.grain.GrainTempRecordItemDto;
+import com.grain.platform.dto.grain.GrainTempRecordUpsertRequest;
 import com.grain.platform.dto.grain.GrainTempSummaryItemDto;
 import com.grain.platform.service.GrainTempService;
+import com.grain.platform.vo.common.IdVO;
+import jakarta.validation.Valid;
 import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PutMapping;
+import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
@@ -42,6 +49,23 @@ public class GrainTempController {
                 .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=grain-temp-fixed-template.xlsx")
                 .contentType(MediaType.parseMediaType("application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"))
                 .body(content);
+    }
+
+    @PostMapping("/records")
+    public ApiResponse<IdVO> createRecord(@Valid @RequestBody GrainTempRecordUpsertRequest request) {
+        return ApiResponse.success(grainTempService.createRecord(request));
+    }
+
+    @PutMapping("/records/{id}")
+    public ApiResponse<IdVO> updateRecord(@PathVariable Long id,
+                                          @Valid @RequestBody GrainTempRecordUpsertRequest request) {
+        return ApiResponse.success(grainTempService.updateRecord(id, request));
+    }
+
+    @DeleteMapping("/records/{id}")
+    public ApiResponse<Void> deleteRecord(@PathVariable Long id) {
+        grainTempService.deleteRecord(id);
+        return ApiResponse.success(null);
     }
 
     @GetMapping("/records")

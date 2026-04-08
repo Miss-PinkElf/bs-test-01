@@ -255,3 +255,30 @@
   - 再按 `zzz-docs/验证/数据库优先MVP-回归验证清单.md` 完成首页概览、模板下载、固定 XLSX 导入和旧 CSV 兼容 smoke。
 - 可以从活跃上下文移除的内容：
   - 两次 `spring-boot:run` 拉起与日志抓取的中间过程输出。
+
+## 2026-04-09-013
+- 当前阶段：Apply data CRUD completed / Pause-ready
+- 本轮完成内容：
+  - 恢复本机 MySQL 默认可用凭据为 `root/123456`，并确认 `application.yml` 可直接连通。
+  - 补齐数据库优先 MVP 运行态 smoke：首页概览、固定模板下载、固定 XLSX 导入、旧 CSV / 旧行式 `.xls` 兼容、预测任务只读查询。
+  - 新增数据主线 CRUD 实施计划：`docs/superpowers/plans/2026-04-09-data-crud-and-temperature-recompute.md`。
+  - 完成 `grain_temp_record` CRUD、`sensor_data` CRUD。
+  - 完成温度原始记录变更后的 `grain_temp_summary` 与真实预警联动重算。
+  - 升级 `frontend/src/views/DataView.vue` 为粮温 / 普通环境统一维护页。
+- 本轮决策与原因：
+  - 温度 CRUD 作用于原始记录层，而不是汇总层，保证“原始数据 -> 汇总 -> 预警”的主链清晰。
+  - 普通环境数据继续使用单值 CRUD，不增加额外汇总层，控制范围。
+  - CRUD 实施计划显式回链到 `.explore` 真相源，降低 handoff / resume 成本。
+- 本轮沉淀经验：
+  - 运行态联动验证比单纯编译更重要，尤其是“数据改动是否能反映到首页聚合和预警”。
+  - 对前端手工录入接口，`LocalDateTime` 的 JSON 时间格式要明确约束，否则页面选择器与后端会直接不兼容。
+- 待解决问题：
+  - `spring.sql.init.mode=always` 仍会在每次后端启动时重置演示库。
+  - 仓库 / 用户管理 CRUD 还未补完整。
+  - PowerShell 验收脚本仍未落地。
+- 下一步：
+  - 评估并收口本地初始化策略。
+  - 若继续做后台管理闭环，优先仓库 CRUD，再做用户 CRUD。
+  - 若先补验收能力，则补 PowerShell 验收脚本。
+- 可以从活跃上下文移除的内容：
+  - 温度 CRUD 联动验证时创建、更新、删除的临时测试数据细节。

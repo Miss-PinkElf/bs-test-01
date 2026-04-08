@@ -4,6 +4,57 @@
         "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
 <mapper namespace="com.grain.platform.mapper.GrainTempRecordMapper">
 
+    <insert id="insert" parameterType="com.grain.platform.entity.GrainTempRecord" useGeneratedKeys="true" keyProperty="id">
+        insert into grain_temp_record (
+            warehouse_id,
+            point_id,
+            collected_at,
+            temperature_value,
+            source_type,
+            batch_no,
+            quality_flag,
+            remark,
+            created_by
+        ) values (
+            #{warehouseId},
+            #{pointId},
+            #{collectedAt},
+            #{temperatureValue},
+            #{sourceType},
+            #{batchNo},
+            #{qualityFlag},
+            #{remark},
+            #{createdBy}
+        )
+    </insert>
+
+    <update id="update" parameterType="com.grain.platform.entity.GrainTempRecord">
+        update grain_temp_record
+        set warehouse_id = #{warehouseId},
+            point_id = #{pointId},
+            collected_at = #{collectedAt},
+            temperature_value = #{temperatureValue},
+            source_type = #{sourceType},
+            batch_no = #{batchNo},
+            quality_flag = #{qualityFlag},
+            remark = #{remark},
+            created_by = #{createdBy}
+        where id = #{id}
+    </update>
+
+    <delete id="deleteById">
+        delete
+        from grain_temp_record
+        where id = #{id}
+    </delete>
+
+    <select id="selectEntityById" resultType="com.grain.platform.entity.GrainTempRecord">
+        select *
+        from grain_temp_record
+        where id = #{id}
+        limit 1
+    </select>
+
     <insert id="upsertBatch">
         insert into grain_temp_record (
             warehouse_id,
@@ -60,5 +111,26 @@
           and (#{zoneCode} is null or #{zoneCode} = '' or p.zone_code = #{zoneCode})
           and (#{layerNo} is null or p.layer_no = #{layerNo})
         order by r.collected_at desc, p.layer_no asc, p.point_no asc
+    </select>
+
+    <select id="selectByWarehouseAndCollectedAt" resultType="com.grain.platform.dto.grain.GrainTempRecordItemDto">
+        select r.id as id,
+               r.warehouse_id as warehouseId,
+               w.warehouse_name as warehouseName,
+               r.point_id as pointId,
+               p.point_name as pointName,
+               p.zone_code as zoneCode,
+               p.layer_no as layerNo,
+               p.point_no as pointNo,
+               date_format(r.collected_at, '%Y-%m-%d %H:%i:%s') as collectedAt,
+               r.temperature_value as temperatureValue,
+               r.source_type as sourceType,
+               r.quality_flag as qualityFlag
+        from grain_temp_record r
+                 join grain_temp_point p on r.point_id = p.id
+                 join warehouse w on r.warehouse_id = w.id
+        where r.warehouse_id = #{warehouseId}
+          and r.collected_at = #{collectedAt}
+        order by p.layer_no asc, p.point_no asc
     </select>
 </mapper>
