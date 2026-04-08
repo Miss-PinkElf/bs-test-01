@@ -7,18 +7,30 @@
     <resultMap id="predictionTaskMap" type="com.grain.platform.entity.PredictionTask">
         <id property="id" column="id"/>
         <result property="taskNo" column="task_no"/>
+        <result property="parentTaskId" column="parent_task_id"/>
+        <result property="taskRound" column="task_round"/>
         <result property="warehouseId" column="warehouse_id"/>
         <result property="metricCode" column="metric_code"/>
+        <result property="dataSourceType" column="data_source_type"/>
+        <result property="targetType" column="target_type"/>
         <result property="algorithmCode" column="algorithm_code"/>
         <result property="algorithmName" column="algorithm_name"/>
-        <result property="futureSteps" column="future_steps"/>
+        <result property="trainStartTime" column="train_start_time"/>
+        <result property="trainEndTime" column="train_end_time"/>
+        <result property="forecastStartTime" column="forecast_start_time"/>
+        <result property="forecastEndTime" column="forecast_end_time"/>
+        <result property="basedOnActualEndTime" column="based_on_actual_end_time"/>
+        <result property="forecastDays" column="forecast_days"/>
         <result property="sampleSize" column="sample_size"/>
+        <result property="triggerType" column="trigger_type"/>
+        <result property="adjustStatus" column="adjust_status"/>
         <result property="status" column="status"/>
         <result property="riskLevel" column="risk_level"/>
         <result property="requestedBy" column="requested_by"/>
         <result property="requestedAt" column="requested_at"/>
         <result property="completedAt" column="completed_at"/>
         <result property="summary" column="summary"/>
+        <result property="remark" column="remark"/>
         <result property="createdAt" column="created_at"/>
         <result property="updatedAt" column="updated_at"/>
     </resultMap>
@@ -26,32 +38,56 @@
     <insert id="insert" parameterType="com.grain.platform.entity.PredictionTask" useGeneratedKeys="true" keyProperty="id">
         insert into prediction_task (
             task_no,
+            parent_task_id,
+            task_round,
             warehouse_id,
             metric_code,
+            data_source_type,
+            target_type,
             algorithm_code,
             algorithm_name,
-            future_steps,
+            train_start_time,
+            train_end_time,
+            forecast_start_time,
+            forecast_end_time,
+            based_on_actual_end_time,
+            forecast_days,
             sample_size,
+            trigger_type,
+            adjust_status,
             status,
             risk_level,
             requested_by,
             requested_at,
             completed_at,
-            summary
+            summary,
+            remark
         ) values (
             #{taskNo},
+            #{parentTaskId},
+            #{taskRound},
             #{warehouseId},
             #{metricCode},
+            #{dataSourceType},
+            #{targetType},
             #{algorithmCode},
             #{algorithmName},
-            #{futureSteps},
+            #{trainStartTime},
+            #{trainEndTime},
+            #{forecastStartTime},
+            #{forecastEndTime},
+            #{basedOnActualEndTime},
+            #{forecastDays},
             #{sampleSize},
+            #{triggerType},
+            #{adjustStatus},
             #{status},
             #{riskLevel},
             #{requestedBy},
             #{requestedAt},
             #{completedAt},
-            #{summary}
+            #{summary},
+            #{remark}
         )
     </insert>
 

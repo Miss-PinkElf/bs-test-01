@@ -1,0 +1,52 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.grain.platform.mapper.GrainTempPointMapper">
+
+    <resultMap id="grainTempPointMap" type="com.grain.platform.entity.GrainTempPoint">
+        <id property="id" column="id"/>
+        <result property="warehouseId" column="warehouse_id"/>
+        <result property="probeCode" column="probe_code"/>
+        <result property="zoneCode" column="zone_code"/>
+        <result property="layerNo" column="layer_no"/>
+        <result property="pointNo" column="point_no"/>
+        <result property="pointName" column="point_name"/>
+        <result property="status" column="status"/>
+        <result property="remark" column="remark"/>
+        <result property="createdAt" column="created_at"/>
+        <result property="updatedAt" column="updated_at"/>
+    </resultMap>
+
+    <select id="selectByUniqueKey" resultMap="grainTempPointMap">
+        select *
+        from grain_temp_point
+        where warehouse_id = #{warehouseId}
+          and zone_code = #{zoneCode}
+          and layer_no = #{layerNo}
+          and point_no = #{pointNo}
+        limit 1
+    </select>
+
+    <insert id="insert" parameterType="com.grain.platform.entity.GrainTempPoint" useGeneratedKeys="true" keyProperty="id">
+        insert into grain_temp_point (
+            warehouse_id,
+            probe_code,
+            zone_code,
+            layer_no,
+            point_no,
+            point_name,
+            status,
+            remark
+        ) values (
+            #{warehouseId},
+            #{probeCode},
+            #{zoneCode},
+            #{layerNo},
+            #{pointNo},
+            #{pointName},
+            #{status},
+            #{remark}
+        )
+    </insert>
+</mapper>

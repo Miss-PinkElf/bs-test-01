@@ -7,7 +7,7 @@ spring:
   datasource:
     url: jdbc:mysql://localhost:3306/grain_env_predict?useUnicode=true&characterEncoding=UTF-8&connectionCollation=utf8mb4_general_ci&serverTimezone=Asia/Shanghai
     username: root
-    password: 
+    password: 123456
     driver-class-name: com.mysql.cj.jdbc.Driver
   sql:
     init:

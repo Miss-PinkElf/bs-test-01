@@ -50,7 +50,7 @@ function normalizeWarehouse(item) {
 }
 
 function normalizeSensorData(item) {
-  const metricCode = item.metricCode || item.metricCode || "temperature";
+  const metricCode = item.metricCode || DEFAULT_METRIC_CODE;
 
   return {
     id: item.id,
@@ -65,12 +65,40 @@ function normalizeSensorData(item) {
   };
 }
 
+function normalizeGrainSummary(item) {
+  return {
+    id: item.id,
+    warehouseId: item.warehouseId,
+    warehouseName: item.warehouseName || "-",
+    collectedAt: item.collectedAt,
+    avgTemp: item.avgTemp ?? null,
+    maxTemp: item.maxTemp ?? null,
+    minTemp: item.minTemp ?? null,
+    layer1Avg: item.layer1Avg ?? null,
+    layer2Avg: item.layer2Avg ?? null,
+    layer3Avg: item.layer3Avg ?? null,
+    layer4Avg: item.layer4Avg ?? null,
+    warningLevel: item.warningLevel || "NORMAL",
+    warningFlag: Boolean(item.warningFlag),
+    warningMessage: item.warningMessage || "",
+    analysisResult: item.analysisResult || ""
+  };
+}
+
 function normalizePredictionPoint(item, index) {
   return {
+    id: item.id || null,
+    phaseType: item.phaseType || "FUTURE",
     stepIndex: item.stepIndex || index + 1,
-    predictedTime: item.predictedTime || item.time,
+    resultTime: item.resultTime || item.predictedTime || item.time,
     actualValue: item.actualValue ?? null,
-    predictedValue: item.predictedValue ?? item.value ?? null
+    predictedValue: item.predictedValue ?? item.value ?? null,
+    errorValue: item.errorValue ?? null,
+    errorRate: item.errorRate ?? null,
+    warningLevel: item.warningLevel || "NORMAL",
+    warningFlag: Boolean(item.warningFlag),
+    warningMessage: item.warningMessage || "",
+    isCorrected: Boolean(item.isCorrected)
   };
 }
 
@@ -138,7 +166,7 @@ export async function fetchWarehouses() {
 }
 
 export async function createWarehouse(payload) {
-  const raw = await request({
+  return request({
     url: "/api/warehouses",
     method: "post",
     data: {
@@ -150,18 +178,15 @@ export async function createWarehouse(payload) {
       status: payload.status
     }
   });
-
-  return raw;
 }
 
 export async function fetchSensorData(params = {}) {
-  const metricCode = params.metricCode || params.metricCode;
   const raw = await request({
     url: "/api/sensor-data",
     method: "get",
     params: {
       warehouseId: params.warehouseId || undefined,
-      metricCode: metricCode || undefined
+      metricCode: params.metricCode || undefined
     }
   });
 
@@ -169,18 +194,16 @@ export async function fetchSensorData(params = {}) {
 }
 
 export async function createSensorData(payload) {
-  const raw = await request({
+  return request({
     url: "/api/sensor-data",
     method: "post",
     data: {
       warehouseId: payload.warehouseId,
-      metricCode: payload.metricCode || payload.metricCode,
+      metricCode: payload.metricCode,
       metricValue: Number(payload.metricValue),
       collectedAt: payload.collectedAt || undefined
     }
   });
-
-  return normalizeSensorData(raw);
 }
 
 export async function importSensorData(file) {
@@ -200,6 +223,37 @@ export function downloadSensorTemplate() {
   window.open(`${API_BASE_URL}/api/sensor-data/import/template`, "_blank");
 }
 
+export async function fetchGrainTempSummaries(params = {}) {
+  const raw = await request({
+    url: "/api/grain-temp/summaries",
+    method: "get",
+    params: {
+      warehouseId: params.warehouseId || undefined,
+      startTime: params.startTime || undefined,
+      endTime: params.endTime || undefined
+    }
+  });
+
+  return Array.isArray(raw) ? raw.map(normalizeGrainSummary) : [];
+}
+
+export async function importGrainTemp(file) {
+  const formData = new FormData();
+  formData.append("file", file);
+
+  const response = await axios.post(`${API_BASE_URL}/api/grain-temp/import`, formData, {
+    headers: {
+      "Content-Type": "multipart/form-data"
+    }
+  });
+
+  return unwrapImportResult(response.data);
+}
+
+export function downloadGrainTempTemplate() {
+  window.open(`${API_BASE_URL}/api/grain-temp/import/template`, "_blank");
+}
+
 function unwrapImportResult(payload) {
   if (payload?.code === 200) {
     return payload.data;
@@ -213,63 +267,63 @@ function normalizePredictionTask(item) {
     ? item.resultList.map(normalizePredictionPoint)
     : [];
   const metricCode = item?.metricCode || DEFAULT_METRIC_CODE;
-
   const maxThreshold = item?.maxThreshold ?? null;
 
   return {
     taskId: item?.taskId || null,
     taskNo: item?.taskNo || "TEMP-DEMO",
+    parentTaskId: item?.parentTaskId ?? null,
+    taskRound: item?.taskRound ?? 1,
+    warehouseId: item?.warehouseId ?? null,
+    warehouseName: item?.warehouseName || "-",
     metricCode,
     metricName: item?.metricName || metricNameMap[metricCode] || metricCode,
     unit: item?.unit || "",
     maxThreshold,
+    targetType: item?.targetType || "AVG_TEMP",
+    dataSourceType: item?.dataSourceType || "GRAIN_TEMP_SUMMARY",
+    algorithmCode: item?.algorithmCode || "LINEAR_REGRESSION",
     algorithmName: item?.algorithmName || "线性回归",
+    trainStartTime: item?.trainStartTime || "",
+    trainEndTime: item?.trainEndTime || "",
+    forecastStartTime: item?.forecastStartTime || "",
+    forecastEndTime: item?.forecastEndTime || "",
+    basedOnActualEndTime: item?.basedOnActualEndTime || "",
+    forecastDays: item?.forecastDays ?? 0,
+    triggerType: item?.triggerType || "INITIAL",
+    adjustStatus: item?.adjustStatus || "UNADJUSTED",
     riskLevel: item?.riskLevel || calcRiskLevel(resultList, maxThreshold),
     requestedAt: item?.requestedAt || new Date().toISOString(),
+    completedAt: item?.completedAt || "",
     summary: item?.summary || "预测执行完成",
     resultList
   };
 }
 
 export async function predictMetric(payload) {
-  const metricCode = payload.metricCode || DEFAULT_METRIC_CODE;
-  console.info("[Prediction] 调用预测接口", {
-    warehouseId: payload.warehouseId,
-    metricCode,
-    futureSteps: Number(payload.futureSteps)
-  });
-
   const raw = await request({
     url: "/api/predictions",
     method: "post",
     data: {
       warehouseId: payload.warehouseId,
-      metricCode,
-      futureSteps: Number(payload.futureSteps)
+      metricCode: payload.metricCode || DEFAULT_METRIC_CODE,
+      targetType: payload.targetType || "AVG_TEMP",
+      trainStartTime: payload.trainStartTime || undefined,
+      trainEndTime: payload.trainEndTime || undefined,
+      forecastDays: Number(payload.forecastDays)
     }
   });
 
-  const task = normalizePredictionTask(raw);
-  console.info("[Prediction] 预测接口返回", {
-    taskId: task.taskId,
-    metricCode: task.metricCode,
-    riskLevel: task.riskLevel,
-    resultCount: task.resultList.length
-  });
-  return task;
+  return normalizePredictionTask(raw);
 }
 
 export async function fetchPredictionTasks() {
-  console.info("[Prediction] 调用预测历史列表接口");
-
   const raw = await request({
     url: "/api/predictions/tasks",
     method: "get"
   });
 
-  const tasks = Array.isArray(raw) ? raw.map(normalizePredictionTask) : [];
-  console.info("[Prediction] 预测历史列表返回", { count: tasks.length });
-  return tasks;
+  return Array.isArray(raw) ? raw.map(normalizePredictionTask) : [];
 }
 
 function splitCsvValue(value) {
@@ -298,29 +352,21 @@ function normalizeRoleOption(item) {
 }
 
 export async function fetchUsers() {
-  console.info("[User] 调用用户列表接口");
-
   const raw = await request({
     url: "/api/users",
     method: "get"
   });
 
-  const users = Array.isArray(raw) ? raw.map(normalizeUser) : [];
-  console.info("[User] 用户列表返回", { count: users.length });
-  return users;
+  return Array.isArray(raw) ? raw.map(normalizeUser) : [];
 }
 
 export async function fetchRoleOptions() {
-  console.info("[User] 调用角色选项接口");
-
   const raw = await request({
     url: "/api/roles/options",
     method: "get"
   });
 
-  const roles = Array.isArray(raw) ? raw.map(normalizeRoleOption) : [];
-  console.info("[User] 角色选项返回", { count: roles.length });
-  return roles;
+  return Array.isArray(raw) ? raw.map(normalizeRoleOption) : [];
 }
 
 function normalizeMetricOption(item) {
@@ -336,14 +382,10 @@ function normalizeMetricOption(item) {
 }
 
 export async function fetchMetricOptions() {
-  console.info("[Metric] 调用指标选项接口");
-
   const raw = await request({
     url: "/api/metrics/options",
     method: "get"
   });
 
-  const options = Array.isArray(raw) ? raw.map(normalizeMetricOption) : [];
-  console.info("[Metric] 指标选项返回", { count: options.length });
-  return options;
+  return Array.isArray(raw) ? raw.map(normalizeMetricOption) : [];
 }

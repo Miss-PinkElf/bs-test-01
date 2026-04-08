@@ -42,15 +42,22 @@
 7. Checkpoint 与交付说明
 
 ## 当前阶段
-- Align completed for DB-first MVP pivot; Resume-ready for Apply
+- Apply first round completed for DB-first MVP; Pause-ready for next iteration
 
 ## 本轮补充进展
-- 已确认主线再次调整：本期不做“预测->修正->再预测”业务链，改为扩展能力预留。
-- 已确认本期不拆独立归档表，继续使用 `prediction_task + prediction_result`。
-- 已确认湿度/二氧化碳保留简单线，支持文件导入与手工录入。
-- 已确认预测页保留双线图并支持前端可选预测天数。
-- 已将上述决策写入 `.explore` 与最新 handoff。
+- 已完成数据库优先 MVP 第一轮落地：
+  - 新 `schema.sql` 已真实导库验证通过
+  - 后端预测主链已切到 `grain_temp_summary + prediction_task + prediction_result`
+  - 新增粮温导入与汇总查询接口
+  - 前端预测页已切到“可选预测天数 + 实际值/预测值双线图”
+  - 前端数据页已区分“粮温主线 / 普通环境数据”
+- 已完成构建与运行级验证：
+  - 前端 `npm run build` 通过
+  - 后端本地启动成功
+  - 粮温汇总接口与预测接口烟雾测试通过
+  - 预测接口已成功生成新归档任务
+- 已补充 `.gitignore`，忽略项目内临时 Maven 仓库与本地 settings 文件。
 
 ## 退出条件
 - 用户可直接查看最新真相源、状态记录和 handoff 恢复上下文。
-- 用户可直接从确认 MySQL 凭据、导入 schema、改后端与前端双线图继续推进。
+- 用户下次可直接从“首页仪表盘口径补齐 / 固定 XLS 模板细化”继续推进，而无需重复做导库与第一轮改造。

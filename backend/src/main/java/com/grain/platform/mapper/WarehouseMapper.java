@@ -11,5 +11,7 @@ public interface WarehouseMapper {
 
     List<Warehouse> selectOptions();
 
+    Warehouse selectById(Long id);
+
     void insert(Warehouse warehouse);
 }

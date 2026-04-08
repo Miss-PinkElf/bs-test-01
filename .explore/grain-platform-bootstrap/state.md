@@ -1,7 +1,7 @@
 # 当前状态
 
 ## 当前阶段
-- Align completed for DB-first MVP pivot (Route 1)
+- Apply first round completed for DB-first MVP; Pause-ready for next iteration
 
 ## 已确认的事实
 - 用户要求使用 `context-budget-explore` 记录过程。
@@ -15,7 +15,17 @@
 - 已确认湿度与二氧化碳保留简单单值模型，支持文件导入与手工录入两种入口。
 - 已确认前端预测页支持“可选预测天数”，图表展示“实际值 + 预测值”两条线。
 - 当前正式前端路线仍是 `frontend/`，`frontend-next/` 仅作静态原型参考。
-- `backend/src/main/resources/db/schema.sql` 已是新结构，但真实导库验证仍受 MySQL 凭据阻塞。
+- 已完成当前主线版本的 PRD 与数据库设计重写。
+- 已将旧版开发指导版 PRD、旧版 PRD、旧版数据库定稿和旧版接口设计归档到 `zzz-docs/Archive/`。
+- 已确认当前本地 MySQL 可用凭据为 `root/123456`，并已用 `utf8mb4` 成功执行新 `schema.sql`。
+- 已完成第一轮数据库优先 MVP 改造：
+  - 后端预测链已切到 `grain_temp_summary + prediction_task + prediction_result`
+  - 新增粮温导入/汇总查询接口：`/api/grain-temp/import`、`/api/grain-temp/summaries`
+  - 前端 `PredictionView.vue`、`DataView.vue`、`frontend/src/api/grain.js` 已切到新主线交互
+- 已完成验证：
+  - `frontend/` 已通过 `npm run build`
+  - 后端已成功启动并通过本地烟雾测试命中粮温汇总接口与预测接口
+  - 烟雾测试已生成新预测归档任务：`prediction_task.id = 5`
 
 ## 工作假设
 - 以毕业设计 MVP 为目标，先做可演示的软件平台，不接入真实硬件。
@@ -25,19 +35,21 @@
 - 后续更像是“以现有项目为基础的半重写”，并以当前新主线作为唯一开发依据。
 
 ## 待解决的问题
-- 当前 MySQL 凭据与文档中的 `root/123456` 不一致，导致新 `schema.sql` 不能直接导入验证。
-- 后端 Java 实体、Mapper、Service、Controller 仍围绕旧预测口径，未切到数据库优先 MVP 口径。
-- 前端 `PredictionView.vue`、`DataView.vue`、`frontend/src/api/grain.js` 仍是旧交互与旧接口结构。
-- 多份旧文档仍强调修正链，需以最新 handoff 与本状态文件作为恢复优先真相源。
+- 粮温导入当前为数据库优先 MVP 的“行式模板”实现，尚未升级为老师更偏好的复杂矩阵式 XLS 模板解析。
+- 仪表盘首页的预警与统计仍主要沿旧查询口径，尚未完全切到“真实高温预警 + 预测高温预警”的新主线展示。
+- 预测修正字段已保留，但本期仍未实现修正入口与修正页，这与当前范围收口一致。
+- 旧版 PRD、数据库定稿、旧接口设计已归档；历史 handoff/checkpoint 中仍保留旧文件名，属于历史上下文，不应作为当前真相源。
 
 ## 下一步
-- 先确认可用的 MySQL 账号密码，实际执行新的 `schema.sql`。
-- 再按“本期不做修正链入口”的口径改后端实体、Mapper、Service、Controller。
-- 同步改前端预测页（可选天数 + 实际/预测双线图）和导入页/API 适配层。
-- 最后回写真相源文档中的主线描述，避免后续继续冲突。
+- 补仪表盘首页，让预警与统计优先展示：
+  - `grain_temp_summary.warning_*`
+  - `prediction_result.warning_*`
+- 继续完善粮温导入模板，从当前 MVP 行式模板升级到更贴近老师预期的固定 XLS 模板。
+- 增补后端/前端的回归验证清单，并视需要补充测试或脚本化验收。
+- 继续收口仍带旧口径的辅助文档，避免后续继续冲突。
 
 ## 最新 handoff
-- `.explore/grain-platform-bootstrap/handoffs/2026-04-08-013-pause-ready-db-first-mvp.md`
+- `.explore/grain-platform-bootstrap/handoffs/2026-04-08-014-db-first-mvp-apply-round1-pause-ready.md`
 
 ## 最小活跃上下文摘要
-- 当前已完成“主线二次变更”对齐：本期数据库优先、修正链降级为扩展、不拆独立归档表；下一次应先完成导库验证，再按新口径改后端和前端。
+- 当前已完成数据库优先 MVP 的第一轮落地：新 schema 已导入验证，后端与前端主链已切到粮温导入/汇总/按天预测/双线图/预测归档口径；下一次应优先补首页口径与固定 XLS 模板细化。

@@ -16,6 +16,9 @@ Thumbs.db
 
 # Backend: Spring Boot / Maven / MyBatis
 backend/target/
+backend/.m2/
+.mvn-local-settings.xml
+backend/.mvn-local-settings.xml
 *.class
 *.jar
 *.war

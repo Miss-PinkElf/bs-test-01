@@ -43,6 +43,13 @@
         order by id asc
     </select>
 
+    <select id="selectById" resultMap="warehouseResultMap">
+        select *
+        from warehouse
+        where id = #{id}
+        limit 1
+    </select>
+
     <insert id="insert" parameterType="com.grain.platform.entity.Warehouse" useGeneratedKeys="true" keyProperty="id">
         insert into warehouse (
             warehouse_code,

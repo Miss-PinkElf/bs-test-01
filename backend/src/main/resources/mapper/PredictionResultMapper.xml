@@ -4,35 +4,64 @@
         "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
 <mapper namespace="com.grain.platform.mapper.PredictionResultMapper">
 
+    <resultMap id="predictionResultMap" type="com.grain.platform.entity.PredictionResult">
+        <id property="id" column="id"/>
+        <result property="taskId" column="task_id"/>
+        <result property="phaseType" column="phase_type"/>
+        <result property="stepIndex" column="step_index"/>
+        <result property="resultTime" column="result_time"/>
+        <result property="actualValue" column="actual_value"/>
+        <result property="predictedValue" column="predicted_value"/>
+        <result property="errorValue" column="error_value"/>
+        <result property="errorRate" column="error_rate"/>
+        <result property="warningLevel" column="warning_level"/>
+        <result property="warningFlag" column="warning_flag"/>
+        <result property="warningMessage" column="warning_message"/>
+        <result property="isCorrected" column="is_corrected"/>
+        <result property="remark" column="remark"/>
+        <result property="createdAt" column="created_at"/>
+        <result property="updatedAt" column="updated_at"/>
+    </resultMap>
+
     <insert id="insertBatch">
         insert into prediction_result (
             task_id,
+            phase_type,
             step_index,
-            predicted_time,
+            result_time,
             actual_value,
-            predicted_value
+            predicted_value,
+            error_value,
+            error_rate,
+            warning_level,
+            warning_flag,
+            warning_message,
+            is_corrected,
+            remark
         ) values
         <foreach collection="list" item="item" separator=",">
             (
                 #{item.taskId},
+                #{item.phaseType},
                 #{item.stepIndex},
-                #{item.predictedTime},
+                #{item.resultTime},
                 #{item.actualValue},
-                #{item.predictedValue}
+                #{item.predictedValue},
+                #{item.errorValue},
+                #{item.errorRate},
+                #{item.warningLevel},
+                #{item.warningFlag},
+                #{item.warningMessage},
+                #{item.isCorrected},
+                #{item.remark}
             )
         </foreach>
     </insert>
 
-    <select id="selectByTaskId" resultType="com.grain.platform.entity.PredictionResult">
-        select id,
-               task_id,
-               step_index,
-               predicted_time,
-               actual_value,
-               predicted_value,
-               created_at
+    <select id="selectByTaskId" resultMap="predictionResultMap">
+        select *
         from prediction_result
         where task_id = #{taskId}
-        order by step_index asc
+        order by result_time asc, step_index asc
     </select>
 </mapper>

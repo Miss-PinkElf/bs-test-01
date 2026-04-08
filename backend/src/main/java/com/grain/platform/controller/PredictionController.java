@@ -28,17 +28,17 @@ public class PredictionController {
         this.predictionService = predictionService;
     }
 
-    // 执行指标预测。
     @PostMapping
     public ApiResponse<PredictionTaskResponse> predict(@Valid @RequestBody PredictionRequest request) {
-        log.info("调用指标预测接口，warehouseId={}, metricCode={}, futureSteps={}", request.warehouseId(), request.metricCode(), request.futureSteps());
+        log.info("调用滚动预测接口，warehouseId={}, metricCode={}, targetType={}, forecastDays={}",
+                request.warehouseId(), request.metricCode(), request.targetType(), request.forecastDays());
         PredictionTaskResponse response = predictionService.predict(request);
         int resultCount = response.resultList() == null ? 0 : response.resultList().size();
-        log.info("指标预测成功，taskId={}, metricCode={}, riskLevel={}, resultCount={}", response.taskId(), response.metricCode(), response.riskLevel(), resultCount);
+        log.info("滚动预测成功，taskId={}, metricCode={}, riskLevel={}, resultCount={}",
+                response.taskId(), response.metricCode(), response.riskLevel(), resultCount);
         return ApiResponse.success(response);
     }
 
-    // 查询预测任务列表。
     @GetMapping("/tasks")
     public ApiResponse<List<PredictionTaskResponse>> listTasks() {
         log.info("调用预测任务列表接口");
@@ -47,7 +47,6 @@ public class PredictionController {
         return ApiResponse.success(response);
     }
 
-    // 查询预测任务详情。
     @GetMapping("/tasks/{taskId}")
     public ApiResponse<PredictionTaskResponse> getTask(@PathVariable Long taskId) {
         log.info("调用预测任务详情接口，taskId={}", taskId);
