@@ -4,11 +4,12 @@ import java.util.List;
 
 public record DashboardOverviewResponse(
         int warehouseCount,
-        int todayDataCount,
-        int alertCount,
+        int grainSummaryCount,
+        int realAlertCount,
+        int predictionAlertCount,
         int archivedPredictionCount,
         List<DashboardAlertItemResponse> latestAlerts,
-        List<DashboardRecentSensorResponse> recentSensorRecords,
+        List<DashboardLatestSummaryResponse> latestGrainSummaries,
         List<DashboardWarehouseHealthResponse> warehouseHealthList
 ) {
 }

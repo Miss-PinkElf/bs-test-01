@@ -47,8 +47,8 @@ public class GrainTempService {
         return grainTempImportService.importData(file);
     }
 
-    public String getImportTemplate() {
-        return grainTempImportService.getCsvTemplate();
+    public byte[] getImportTemplate() throws IOException {
+        return grainTempImportService.getExcelTemplate();
     }
 
     public List<PredictionPointDto> listPredictionSeries(Long warehouseId,

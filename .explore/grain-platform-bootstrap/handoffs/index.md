@@ -1,12 +1,12 @@
 # Handoff 索引
 
 ## 最新 handoff
-- [2026-04-08-014-db-first-mvp-apply-round1-pause-ready](E:\Learn\Vs\Code\bs-test-01\.explore\grain-platform-bootstrap\handoffs\2026-04-08-014-db-first-mvp-apply-round1-pause-ready.md)
+- [2026-04-08-015-dashboard-and-fixed-template-pause-ready](D:\Users\Mobius\Desktop\mine\AAA-code\bs-test-01\.explore\grain-platform-bootstrap\handoffs\2026-04-08-015-dashboard-and-fixed-template-pause-ready.md)
 
 ## Handoff 列表
 
-- `2026-04-08-014-db-first-mvp-apply-round1-pause-ready` | 阶段：数据库优先 MVP 第一轮落地完成 / 暂停恢复入口 | 状态：latest
-
+- `2026-04-08-015-dashboard-and-fixed-template-pause-ready` | 阶段：首页口径切换 + 固定 XLSX 模板升级 / 暂停恢复入口 | 状态：latest
+- `2026-04-08-014-db-first-mvp-apply-round1-pause-ready` | 阶段：数据库优先 MVP 第一轮落地完成 / 暂停恢复入口 | 状态：superseded
 - `2026-04-08-013-pause-ready-db-first-mvp` | 阶段：暂停恢复入口（数据库优先 MVP）| 状态：superseded
 - `2026-04-08-012-db-first-mvp-mainline-pivot-resume-ready` | 阶段：主线二次收口（数据库优先 MVP）/ 可恢复 | 状态：superseded
 - `2026-04-08-011-schema-refactor-resume-ready` | 阶段：schema 重构完成 / 可恢复 | 状态：superseded

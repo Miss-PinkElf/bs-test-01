@@ -4,6 +4,10 @@ public record DashboardWarehouseHealthResponse(
         Long warehouseId,
         String warehouseName,
         Integer healthScore,
-        String riskLevel
+        String riskLevel,
+        String realWarningLevel,
+        String predictionWarningLevel,
+        Double latestAvgTemp,
+        Double latestForecastValue
 ) {
 }

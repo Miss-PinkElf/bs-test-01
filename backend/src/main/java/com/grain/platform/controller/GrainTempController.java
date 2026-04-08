@@ -17,7 +17,6 @@ import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.io.IOException;
-import java.nio.charset.StandardCharsets;
 import java.time.LocalDateTime;
 import java.util.List;
 
@@ -37,11 +36,11 @@ public class GrainTempController {
     }
 
     @GetMapping("/import/template")
-    public ResponseEntity<byte[]> downloadTemplate() {
-        byte[] content = grainTempService.getImportTemplate().getBytes(StandardCharsets.UTF_8);
+    public ResponseEntity<byte[]> downloadTemplate() throws IOException {
+        byte[] content = grainTempService.getImportTemplate();
         return ResponseEntity.ok()
-                .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=grain-temp-template.csv")
-                .contentType(new MediaType("text", "csv", StandardCharsets.UTF_8))
+                .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=grain-temp-fixed-template.xlsx")
+                .contentType(MediaType.parseMediaType("application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"))
                 .body(content);
     }
 

@@ -8,70 +8,175 @@
         select count(*) from warehouse where status != 'DISABLED'
     </select>
 
-    <select id="countTodaySensorData" resultType="int">
-        select count(*) from sensor_data where date(collected_at) = curdate()
+    <select id="countGrainTempSummaryCount" resultType="int">
+        select count(*) from grain_temp_summary
+    </select>
+
+    <select id="countLatestRealAlertCount" resultType="int">
+        select count(*)
+        from grain_temp_summary s
+                 join (
+            select warehouse_id, max(collected_at) as latest_collected_at
+            from grain_temp_summary
+            group by warehouse_id
+        ) latest_summary
+                      on latest_summary.warehouse_id = s.warehouse_id
+                          and latest_summary.latest_collected_at = s.collected_at
+        where s.warning_flag = 1
+    </select>
+
+    <select id="countLatestPredictionAlertCount" resultType="int">
+        select count(*)
+        from prediction_result pr
+                 join (
+            select warehouse_id, max(id) as latest_task_id
+            from prediction_task
+            group by warehouse_id
+        ) latest_task on latest_task.latest_task_id = pr.task_id
+        where pr.phase_type = 'FUTURE'
+          and pr.warning_flag = 1
     </select>
 
     <select id="countArchivedPredictionCount" resultType="int">
         select count(*) from prediction_task
     </select>
 
-    <select id="selectLatestAlerts" resultType="com.grain.platform.dto.dashboard.DashboardAlertItemResponse">
-        select concat(w.warehouse_name, ' ', sm.metric_name, ' 接近阈值') as title,
-               case
-                   when sd.metric_value >= sm.max_threshold then 'WARNING'
-                   else 'ATTENTION'
-                   end as level,
-               concat('最新值 ', sd.metric_value, sm.unit, '，阈值上限 ', sm.max_threshold, sm.unit) as description
-        from sensor_data sd
-                 join warehouse w on sd.warehouse_id = w.id
-                 join sensor_metric sm on sd.metric_code = sm.metric_code
-        where sm.max_threshold is not null
-          and sd.metric_value >= sm.max_threshold * 0.9
-        order by sd.collected_at desc
-        limit 5
+    <select id="selectLatestRealAlerts" resultType="com.grain.platform.dto.dashboard.DashboardAlertItemResponse">
+        select concat(w.warehouse_name, ' 实时粮温预警') as title,
+               s.warning_level as level,
+               'REAL' as sourceType,
+               w.warehouse_name as warehouseName,
+               date_format(s.collected_at, '%Y-%m-%d %H:%i:%s') as eventTime,
+               coalesce(
+                       s.warning_message,
+                       concat('整仓均温 ', s.avg_temp, '°C，最高温 ', s.max_temp, '°C')
+               ) as description
+        from grain_temp_summary s
+                 join warehouse w on s.warehouse_id = w.id
+                 join (
+            select warehouse_id, max(collected_at) as latest_collected_at
+            from grain_temp_summary
+            group by warehouse_id
+        ) latest_summary
+                      on latest_summary.warehouse_id = s.warehouse_id
+                          and latest_summary.latest_collected_at = s.collected_at
+        where s.warning_flag = 1
+        order by s.collected_at desc, s.max_temp desc
+        limit 4
     </select>
 
-    <select id="selectRecentSensorRecords" resultType="com.grain.platform.dto.dashboard.DashboardRecentSensorResponse">
-        select sd.id as id,
+    <select id="selectLatestPredictionAlerts" resultType="com.grain.platform.dto.dashboard.DashboardAlertItemResponse">
+        select concat(w.warehouse_name, ' 预测高温预警') as title,
+               pr.warning_level as level,
+               'PREDICTION' as sourceType,
                w.warehouse_name as warehouseName,
-               sm.metric_name as metricName,
-               sd.metric_value as metricValue,
-               date_format(sd.collected_at, '%Y-%m-%d %H:%i:%s') as collectedAt,
-               sd.quality_flag as qualityFlag
-        from sensor_data sd
-                 join warehouse w on sd.warehouse_id = w.id
-                 join sensor_metric sm on sd.metric_code = sm.metric_code
-        order by sd.collected_at desc, sd.id desc
-        limit 8
+               date_format(pr.result_time, '%Y-%m-%d %H:%i:%s') as eventTime,
+               coalesce(
+                       pr.warning_message,
+                       concat('预测值 ', pr.predicted_value, '°C')
+               ) as description
+        from prediction_result pr
+                 join prediction_task pt on pt.id = pr.task_id
+                 join warehouse w on pt.warehouse_id = w.id
+                 join (
+            select warehouse_id, max(id) as latest_task_id
+            from prediction_task
+            group by warehouse_id
+        ) latest_task on latest_task.latest_task_id = pt.id
+        where pr.phase_type = 'FUTURE'
+          and pr.warning_flag = 1
+        order by pr.result_time desc, pr.predicted_value desc
+        limit 4
+    </select>
+
+    <select id="selectLatestGrainSummaries" resultType="com.grain.platform.dto.dashboard.DashboardLatestSummaryResponse">
+        select s.id as id,
+               s.warehouse_id as warehouseId,
+               w.warehouse_name as warehouseName,
+               s.avg_temp as avgTemp,
+               s.max_temp as maxTemp,
+               s.min_temp as minTemp,
+               date_format(s.collected_at, '%Y-%m-%d %H:%i:%s') as collectedAt,
+               s.warning_level as warningLevel,
+               s.warning_flag as warningFlag,
+               s.warning_message as warningMessage
+        from grain_temp_summary s
+                 join warehouse w on s.warehouse_id = w.id
+                 join (
+            select warehouse_id, max(collected_at) as latest_collected_at
+            from grain_temp_summary
+            group by warehouse_id
+        ) latest_summary
+                      on latest_summary.warehouse_id = s.warehouse_id
+                          and latest_summary.latest_collected_at = s.collected_at
+        order by s.warning_flag desc, s.collected_at desc, s.max_temp desc
+        limit 6
     </select>
 
     <select id="selectWarehouseHealthList" resultType="com.grain.platform.dto.dashboard.DashboardWarehouseHealthResponse">
         select w.id as warehouseId,
                w.warehouse_name as warehouseName,
                case
-                   when ifnull(metric_risk.max_ratio, 0) >= 1 then 68
-                   when ifnull(metric_risk.max_ratio, 0) >= 0.9 then 82
-                   else 95
+                   when w.status = 'MAINTENANCE' then 72
+                   when greatest(ifnull(real_warning.level_score, 1), ifnull(prediction_warning.level_score, 1)) = 3 then 68
+                   when greatest(ifnull(real_warning.level_score, 1), ifnull(prediction_warning.level_score, 1)) = 2 then 84
+                   else 96
                    end as healthScore,
                case
                    when w.status = 'MAINTENANCE' then 'MAINTENANCE'
-                   when ifnull(metric_risk.max_ratio, 0) >= 1 then 'WARNING'
-                   when ifnull(metric_risk.max_ratio, 0) >= 0.9 then 'ATTENTION'
+                   when greatest(ifnull(real_warning.level_score, 1), ifnull(prediction_warning.level_score, 1)) = 3 then 'WARNING'
+                   when greatest(ifnull(real_warning.level_score, 1), ifnull(prediction_warning.level_score, 1)) = 2 then 'ATTENTION'
                    else 'NORMAL'
-                   end as riskLevel
+                   end as riskLevel,
+               case ifnull(real_warning.level_score, 1)
+                   when 3 then 'WARNING'
+                   when 2 then 'ATTENTION'
+                   else 'NORMAL'
+                   end as realWarningLevel,
+               case ifnull(prediction_warning.level_score, 1)
+                   when 3 then 'WARNING'
+                   when 2 then 'ATTENTION'
+                   else 'NORMAL'
+                   end as predictionWarningLevel,
+               real_warning.latest_avg_temp as latestAvgTemp,
+               prediction_warning.latest_forecast_value as latestForecastValue
         from warehouse w
                  left join (
-            select sd.warehouse_id,
-                   max(case
-                           when sm.max_threshold is not null and sm.max_threshold > 0
-                               then sd.metric_value / sm.max_threshold
-                           else 0
-                       end) as max_ratio
-            from sensor_data sd
-                     join sensor_metric sm on sd.metric_code = sm.metric_code
-            group by sd.warehouse_id
-        ) metric_risk on metric_risk.warehouse_id = w.id
+            select s.warehouse_id,
+                   case s.warning_level
+                       when 'WARNING' then 3
+                       when 'ATTENTION' then 2
+                       else 1
+                       end as level_score,
+                   s.avg_temp as latest_avg_temp
+            from grain_temp_summary s
+                     join (
+                select warehouse_id, max(collected_at) as latest_collected_at
+                from grain_temp_summary
+                group by warehouse_id
+            ) latest_summary
+                          on latest_summary.warehouse_id = s.warehouse_id
+                              and latest_summary.latest_collected_at = s.collected_at
+        ) real_warning on real_warning.warehouse_id = w.id
+                 left join (
+            select pt.warehouse_id,
+                   max(case pr.warning_level
+                           when 'WARNING' then 3
+                           when 'ATTENTION' then 2
+                           else 1
+                       end) as level_score,
+                   max(pr.predicted_value) as latest_forecast_value
+            from prediction_task pt
+                     join (
+                select warehouse_id, max(id) as latest_task_id
+                from prediction_task
+                group by warehouse_id
+            ) latest_task on latest_task.latest_task_id = pt.id
+                     left join prediction_result pr
+                               on pr.task_id = pt.id
+                                   and pr.phase_type = 'FUTURE'
+            group by pt.warehouse_id
+        ) prediction_warning on prediction_warning.warehouse_id = w.id
         where w.status != 'DISABLED'
         order by healthScore asc, w.id asc
         limit 6

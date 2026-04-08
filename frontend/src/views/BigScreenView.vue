@@ -13,10 +13,30 @@ onMounted(async () => {
     const overview = await fetchOverview();
 
     metrics.value = [
-      { ...mockScreenMetrics[0], value: String(overview.warehouseCount).padStart(2, "0") },
-      { ...mockScreenMetrics[1], value: String(overview.todayDataCount) },
-      { ...mockScreenMetrics[2], value: String(overview.alertCount).padStart(2, "0") },
-      { ...mockScreenMetrics[3], value: String(overview.archivedPredictionCount || 0) }
+      {
+        ...mockScreenMetrics[0],
+        label: "在线粮仓",
+        value: String(overview.warehouseCount).padStart(2, "0"),
+        note: "当前纳入演示范围的仓库数量"
+      },
+      {
+        ...mockScreenMetrics[1],
+        label: "粮温汇总",
+        value: String(overview.grainSummaryCount || 0),
+        note: "粮温主线已归档的汇总记录数"
+      },
+      {
+        ...mockScreenMetrics[2],
+        label: "重点预警",
+        value: String((overview.realAlertCount || 0) + (overview.predictionAlertCount || 0)).padStart(2, "0"),
+        note: "真实预警与预测预警合计数量"
+      },
+      {
+        ...mockScreenMetrics[3],
+        label: "已归档预测",
+        value: String(overview.archivedPredictionCount || 0),
+        note: "已留痕的预测任务数量"
+      }
     ];
 
     if (overview.latestAlerts.length > 0) {
@@ -62,8 +82,8 @@ onMounted(async () => {
 
           <div class="compact-lines">
             <div>当前大屏用于答辩演示，不额外扩展机器人、硬件接入或复杂算法。</div>
-            <div>正式系统主流程聚焦登录、数据管理、图表展示、温度预测和结果归档。</div>
-            <div>后续 Vue 页面会逐步用真实接口替换静态展示信息。</div>
+            <div>正式系统主流程聚焦粮温导入、真实预警、温度预测和结果归档。</div>
+            <div>首页和大屏都已优先切到真实预警与预测预警口径。</div>
           </div>
         </el-card>
       </el-col>

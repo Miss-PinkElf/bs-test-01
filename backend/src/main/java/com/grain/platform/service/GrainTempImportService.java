@@ -18,10 +18,12 @@ import org.apache.poi.ss.usermodel.Row;
 import org.apache.poi.ss.usermodel.Sheet;
 import org.apache.poi.ss.usermodel.Workbook;
 import org.apache.poi.ss.usermodel.WorkbookFactory;
+import org.apache.poi.xssf.usermodel.XSSFWorkbook;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.io.BufferedReader;
+import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.math.BigDecimal;
@@ -47,6 +49,8 @@ public class GrainTempImportService {
             + "1,2026-04-08 08:40:00,A,1,2,24.5,CABLE-A,第一层测点\n"
             + "1,2026-04-08 08:40:00,A,2,1,24.8,CABLE-A,第二层测点\n";
     private static final String UTF8_BOM = "\uFEFF";
+    private static final int FIXED_TEMPLATE_POINT_COUNT = 4;
+    private static final int FIXED_TEMPLATE_LAYER_COUNT = 4;
 
     private final GrainTempPointMapper grainTempPointMapper;
     private final GrainTempRecordMapper grainTempRecordMapper;
@@ -133,6 +137,55 @@ public class GrainTempImportService {
 
     public String getCsvTemplate() {
         return UTF8_BOM + CSV_TEMPLATE;
+    }
+
+    public byte[] getExcelTemplate() throws IOException {
+        try (XSSFWorkbook workbook = new XSSFWorkbook(); ByteArrayOutputStream outputStream = new ByteArrayOutputStream()) {
+            Sheet sheet = workbook.createSheet("粮温固定模板");
+
+            createRow(sheet, 0, "粮温固定模板", "请填写基础信息与测点矩阵；下方汇总区可留空");
+            createRow(sheet, 1, "warehouseId", "1");
+            createRow(sheet, 2, "collectedAt", "2026-04-08 08:40:00");
+            createRow(sheet, 3, "说明", "每个 zoneCode + probeCode 为一个矩阵区块，按层号填写行、按点位填写列");
+            createZoneBlock(sheet, 5, "A", "CABLE-A");
+            createZoneBlock(sheet, 13, "B", "CABLE-B");
+            createRow(sheet, 21, "汇总分析（系统自动生成，可留空）", "avgTemp/maxTemp/warningLevel 等由系统导入后自动生成");
+
+            for (int column = 0; column <= 5; column++) {
+                sheet.autoSizeColumn(column);
+            }
+
+            workbook.write(outputStream);
+            return outputStream.toByteArray();
+        }
+    }
+
+    private void createRow(Sheet sheet, int rowIndex, String first, String second) {
+        Row row = sheet.createRow(rowIndex);
+        row.createCell(0).setCellValue(first);
+        row.createCell(1).setCellValue(second);
+    }
+
+    private void createZoneBlock(Sheet sheet, int startRowIndex, String zoneCode, String probeCode) {
+        Row metaRow = sheet.createRow(startRowIndex);
+        metaRow.createCell(0).setCellValue("zoneCode");
+        metaRow.createCell(1).setCellValue(zoneCode);
+        metaRow.createCell(2).setCellValue("probeCode");
+        metaRow.createCell(3).setCellValue(probeCode);
+
+        Row headerRow = sheet.createRow(startRowIndex + 1);
+        headerRow.createCell(0).setCellValue("层号/点位");
+        for (int pointNo = 1; pointNo <= FIXED_TEMPLATE_POINT_COUNT; pointNo++) {
+            headerRow.createCell(pointNo).setCellValue(pointNo);
+        }
+
+        for (int layerNo = 1; layerNo <= FIXED_TEMPLATE_LAYER_COUNT; layerNo++) {
+            Row dataRow = sheet.createRow(startRowIndex + 1 + layerNo);
+            dataRow.createCell(0).setCellValue(layerNo);
+            for (int pointNo = 1; pointNo <= FIXED_TEMPLATE_POINT_COUNT; pointNo++) {
+                dataRow.createCell(pointNo).setCellValue(24.0 + layerNo * 0.4 + pointNo * 0.2);
+            }
+        }
     }
 
     private GrainTempSummary buildSummary(Long warehouseId,
@@ -227,38 +280,198 @@ public class GrainTempImportService {
     }
 
     private List<ImportRow> parseExcel(MultipartFile file) throws IOException {
-        List<ImportRow> rows = new ArrayList<>();
         DataFormatter formatter = new DataFormatter();
         try (Workbook workbook = WorkbookFactory.create(file.getInputStream())) {
             Sheet sheet = workbook.getSheetAt(0);
-            for (int i = 1; i <= sheet.getLastRowNum(); i++) {
-                Row row = sheet.getRow(i);
-                if (row == null || isRowBlank(row, formatter)) {
-                    continue;
-                }
-                rows.add(new ImportRow(
-                        parseLong(formatter.formatCellValue(row.getCell(0)), i + 1, "warehouseId"),
-                        parseDateTimeCell(row.getCell(1), formatter, i + 1),
-                        formatter.formatCellValue(row.getCell(2)).trim(),
-                        parseInteger(formatter.formatCellValue(row.getCell(3)), i + 1, "layerNo"),
-                        parseInteger(formatter.formatCellValue(row.getCell(4)), i + 1, "pointNo"),
-                        parseDouble(formatter.formatCellValue(row.getCell(5)), i + 1, "temperatureValue"),
-                        formatter.formatCellValue(row.getCell(6)).trim(),
-                        formatter.formatCellValue(row.getCell(7)).trim()
-                ));
+            if (isFixedTemplateSheet(sheet, formatter)) {
+                return parseFixedTemplate(sheet, formatter);
             }
+            return parseRowStyleSheet(sheet, formatter);
         } catch (Exception ex) {
             if (ex instanceof IOException ioException) {
                 throw ioException;
             }
             throw new IllegalArgumentException("粮温 Excel 解析失败：" + ex.getMessage(), ex);
         }
+    }
+
+    private boolean isFixedTemplateSheet(Sheet sheet, DataFormatter formatter) {
+        boolean hasWarehouseId = false;
+        boolean hasZoneCode = false;
+        int maxRow = Math.min(sheet.getLastRowNum(), 12);
+        for (int index = 0; index <= maxRow; index++) {
+            String firstCell = getCellText(sheet.getRow(index), 0, formatter);
+            if ("warehouseId".equalsIgnoreCase(firstCell)) {
+                hasWarehouseId = true;
+            }
+            if ("zoneCode".equalsIgnoreCase(firstCell)) {
+                hasZoneCode = true;
+            }
+        }
+        return hasWarehouseId && hasZoneCode;
+    }
+
+    private List<ImportRow> parseFixedTemplate(Sheet sheet, DataFormatter formatter) {
+        Long warehouseId = null;
+        LocalDateTime collectedAt = null;
+        for (int index = 0; index <= Math.min(sheet.getLastRowNum(), 10); index++) {
+            Row row = sheet.getRow(index);
+            String firstCell = getCellText(row, 0, formatter);
+            if ("warehouseId".equalsIgnoreCase(firstCell)) {
+                warehouseId = parseLong(getCellText(row, 1, formatter), index + 1, "warehouseId");
+            }
+            if ("collectedAt".equalsIgnoreCase(firstCell)) {
+                collectedAt = parseDateTimeCell(row.getCell(1), formatter, index + 1);
+            }
+        }
+
+        if (warehouseId == null || collectedAt == null) {
+            throw new IllegalArgumentException("固定模板缺少 warehouseId 或 collectedAt 基础信息");
+        }
+
+        List<ImportRow> rows = new ArrayList<>();
+        int rowIndex = 0;
+        while (rowIndex <= sheet.getLastRowNum()) {
+            Row row = sheet.getRow(rowIndex);
+            String firstCell = getCellText(row, 0, formatter);
+            if ("zoneCode".equalsIgnoreCase(firstCell)) {
+                rowIndex = parseZoneMatrixBlock(sheet, formatter, rowIndex, warehouseId, collectedAt, rows);
+                continue;
+            }
+            if (firstCell.contains("汇总分析")) {
+                break;
+            }
+            rowIndex++;
+        }
+
+        if (rows.isEmpty()) {
+            throw new IllegalArgumentException("固定模板中未解析到任何测点温度数据");
+        }
         return rows;
     }
 
-    private boolean isRowBlank(Row row, DataFormatter formatter) {
-        for (int i = 0; i < 8; i++) {
-            Cell cell = row.getCell(i);
+    private int parseZoneMatrixBlock(Sheet sheet,
+                                     DataFormatter formatter,
+                                     int zoneRowIndex,
+                                     Long warehouseId,
+                                     LocalDateTime collectedAt,
+                                     List<ImportRow> resultRows) {
+        Row zoneRow = sheet.getRow(zoneRowIndex);
+        String zoneCode = requireText(extractNamedValue(zoneRow, formatter, "zoneCode"), zoneRowIndex + 1, "zoneCode");
+        String probeCode = extractNamedValue(zoneRow, formatter, "probeCode");
+
+        int headerRowIndex = zoneRowIndex + 1;
+        while (headerRowIndex <= sheet.getLastRowNum() && isRowBlank(sheet.getRow(headerRowIndex), formatter, 6)) {
+            headerRowIndex++;
+        }
+
+        Row headerRow = sheet.getRow(headerRowIndex);
+        String headerLabel = getCellText(headerRow, 0, formatter);
+        if (!(headerLabel.contains("层号") || "layerNo".equalsIgnoreCase(headerLabel))) {
+            throw new IllegalArgumentException("第 " + (headerRowIndex + 1) + " 行不是有效的测点矩阵表头，应以“层号/点位”开头");
+        }
+
+        List<Integer> pointNumbers = new ArrayList<>();
+        int columnIndex = 1;
+        while (true) {
+            String pointNoText = getCellText(headerRow, columnIndex, formatter);
+            if (pointNoText.isBlank()) {
+                break;
+            }
+            pointNumbers.add(parseInteger(pointNoText, headerRowIndex + 1, "pointNo"));
+            columnIndex++;
+        }
+        if (pointNumbers.isEmpty()) {
+            throw new IllegalArgumentException("第 " + (headerRowIndex + 1) + " 行没有有效的点位表头");
+        }
+
+        int dataRowIndex = headerRowIndex + 1;
+        while (dataRowIndex <= sheet.getLastRowNum()) {
+            Row dataRow = sheet.getRow(dataRowIndex);
+            String firstCell = getCellText(dataRow, 0, formatter);
+            if (firstCell.isBlank()) {
+                return dataRowIndex + 1;
+            }
+            if ("zoneCode".equalsIgnoreCase(firstCell) || firstCell.contains("汇总分析")) {
+                return dataRowIndex;
+            }
+
+            Integer layerNo = parseInteger(firstCell, dataRowIndex + 1, "layerNo");
+            for (int pointIndex = 0; pointIndex < pointNumbers.size(); pointIndex++) {
+                String valueText = getCellText(dataRow, pointIndex + 1, formatter);
+                if (valueText.isBlank()) {
+                    continue;
+                }
+                resultRows.add(new ImportRow(
+                        warehouseId,
+                        collectedAt,
+                        zoneCode,
+                        layerNo,
+                        pointNumbers.get(pointIndex),
+                        parseDouble(valueText, dataRowIndex + 1, "temperatureValue"),
+                        probeCode,
+                        "固定模板导入"
+                ));
+            }
+            dataRowIndex++;
+        }
+        return dataRowIndex;
+    }
+
+    private List<ImportRow> parseRowStyleSheet(Sheet sheet, DataFormatter formatter) {
+        List<ImportRow> rows = new ArrayList<>();
+        for (int i = 1; i <= sheet.getLastRowNum(); i++) {
+            Row row = sheet.getRow(i);
+            if (row == null || isRowBlank(row, formatter, 8)) {
+                continue;
+            }
+            rows.add(new ImportRow(
+                    parseLong(getCellText(row, 0, formatter), i + 1, "warehouseId"),
+                    parseDateTimeCell(row.getCell(1), formatter, i + 1),
+                    getCellText(row, 2, formatter),
+                    parseInteger(getCellText(row, 3, formatter), i + 1, "layerNo"),
+                    parseInteger(getCellText(row, 4, formatter), i + 1, "pointNo"),
+                    parseDouble(getCellText(row, 5, formatter), i + 1, "temperatureValue"),
+                    getCellText(row, 6, formatter),
+                    getCellText(row, 7, formatter)
+            ));
+        }
+        return rows;
+    }
+
+    private String extractNamedValue(Row row, DataFormatter formatter, String fieldName) {
+        if (row == null) {
+            return "";
+        }
+        int lastCell = Math.max(row.getLastCellNum(), 0);
+        for (int cellIndex = 0; cellIndex < lastCell - 1; cellIndex++) {
+            if (fieldName.equalsIgnoreCase(getCellText(row, cellIndex, formatter))) {
+                return getCellText(row, cellIndex + 1, formatter);
+            }
+        }
+        return "";
+    }
+
+    private String requireText(String raw, int rowIndex, String fieldName) {
+        if (raw == null || raw.isBlank()) {
+            throw new IllegalArgumentException("第 " + rowIndex + " 行字段 " + fieldName + " 不能为空");
+        }
+        return raw.trim();
+    }
+
+    private String getCellText(Row row, int cellIndex, DataFormatter formatter) {
+        if (row == null || row.getCell(cellIndex) == null) {
+            return "";
+        }
+        return formatter.formatCellValue(row.getCell(cellIndex)).trim();
+    }
+
+    private boolean isRowBlank(Row row, DataFormatter formatter, int scanLength) {
+        if (row == null) {
+            return true;
+        }
+        for (int index = 0; index < scanLength; index++) {
+            Cell cell = row.getCell(index);
             if (cell != null && cell.getCellType() != CellType.BLANK && !formatter.formatCellValue(cell).isBlank()) {
                 return false;
             }

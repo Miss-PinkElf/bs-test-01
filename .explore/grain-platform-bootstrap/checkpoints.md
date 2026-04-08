@@ -229,3 +229,29 @@
   - 再细化粮温固定模板导入。
 - 可以从活跃上下文移除的内容：
   - 本轮关于 `.gitignore` 是否缺项的检查过程。
+## 2026-04-08-012
+- 当前阶段：Apply second round / Pause-ready
+- 本轮完成内容：
+  - 完成首页仪表盘口径切换：后端 `dashboard` 聚合改为优先展示 `grain_temp_summary.warning_*` 与 `prediction_result.warning_*`。
+  - 完成前端首页与大屏同步：`DashboardView.vue`、`BigScreenView.vue`、`frontend/src/api/grain.js` 已切到真实预警/预测预警口径。
+  - 完成固定模板粮温导入升级：
+    - `/api/grain-temp/import/template` 改为下载固定 `XLSX` 模板
+    - `GrainTempImportService` 已支持“基础信息 + 层号/点位矩阵”解析
+    - 保留旧 CSV / 行式 Excel 兼容能力
+  - 新增 `zzz-docs/验证/数据库优先MVP-回归验证清单.md`，沉淀首页与固定模板回归项。
+  - 完成静态验证：`backend/` 的 `mvn -q -DskipTests compile` 与 `frontend/` 的 `npm run build` 均通过。
+  - 尝试补运行态 smoke，已定位阻塞：Spring Boot 启动时本地 MySQL 认证失败，报错 `Access denied for user 'root'@'localhost' (using password: YES)`。
+- 本轮决策与原因：
+  - 固定模板采用“兼容升级”而不是推翻重做，避免已跑通的数据库优先 MVP 主链回退。
+  - 当前以“能安全暂停并明确恢复起点”为优先，不继续深挖 MySQL 本机配置。
+- 本轮沉淀经验：
+  - 编译通过不代表运行态 smoke 可直接放行；数据库凭据漂移会在 `spring-boot:run` 阶段才暴露。
+  - 首页统计口径和导入模板改造完成后，应立即补回归清单，否则下次恢复仍会遗漏验证范围。
+- 待解决问题：
+  - 本机 MySQL 当前拒绝 `root/123456`，导致后端运行态 smoke 无法继续。
+  - 固定模板下载与导入的运行态 smoke 仍待在数据库恢复后补齐。
+- 下一步：
+  - 先恢复 MySQL 可用凭据或本地连接配置。
+  - 再按 `zzz-docs/验证/数据库优先MVP-回归验证清单.md` 完成首页概览、模板下载、固定 XLSX 导入和旧 CSV 兼容 smoke。
+- 可以从活跃上下文移除的内容：
+  - 两次 `spring-boot:run` 拉起与日志抓取的中间过程输出。

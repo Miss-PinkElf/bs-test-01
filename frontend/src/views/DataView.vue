@@ -249,7 +249,7 @@ onBeforeUnmount(() => {
           </el-radio-group>
 
           <div class="compact-lines" style="margin-top: 12px">
-            <div v-if="mode === 'grain'">当前展示粮温汇总结果，支持固定模板导入并自动生成层温与整仓汇总。</div>
+            <div v-if="mode === 'grain'">当前展示粮温汇总结果，支持固定 XLSX 模板导入并自动生成层温与整仓汇总。</div>
             <div v-else>当前展示湿度 / 二氧化碳等普通环境数据，支持手工录入、导入、查询与图表。</div>
           </div>
         </el-card>
@@ -313,7 +313,10 @@ onBeforeUnmount(() => {
 
       <div class="compact-lines">
         <div v-if="mode === 'grain'">
-          粮温模板字段：warehouseId、collectedAt、zoneCode、layerNo、pointNo、temperatureValue、probeCode、remark。
+          粮温固定模板结构：上方填写 warehouseId、collectedAt；中间按 zoneCode + probeCode 分区块填写“层号/点位”矩阵；下方汇总区可留空。
+        </div>
+        <div v-if="mode === 'grain'">
+          当前后端已兼容固定 XLSX 模板，也兼容旧 CSV / 行式 Excel 以避免已跑通的 MVP 回退。
         </div>
         <div v-else>
           普通环境模板字段：warehouseId、metricCode、metricValue、collectedAt、remark。
@@ -413,3 +416,6 @@ onBeforeUnmount(() => {
     </el-dialog>
   </div>
 </template>
+
+
+

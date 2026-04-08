@@ -42,7 +42,7 @@
 7. Checkpoint 与交付说明
 
 ## 当前阶段
-- Apply first round completed for DB-first MVP; Pause-ready for next iteration
+- Apply second round completed / Pause-ready
 
 ## 本轮补充进展
 - 已完成数据库优先 MVP 第一轮落地：
@@ -58,6 +58,11 @@
   - 预测接口已成功生成新归档任务
 - 已补充 `.gitignore`，忽略项目内临时 Maven 仓库与本地 settings 文件。
 
+- 已完成第二轮首页与固定模板升级：
+  - 首页仪表盘已切到真实预警 + 预测预警口径
+  - 固定粮温模板已升级为 `XLSX` 下载与矩阵解析
+  - 已新增回归验证清单并定位运行态阻塞为本机 MySQL 认证失败
 ## 退出条件
 - 用户可直接查看最新真相源、状态记录和 handoff 恢复上下文。
-- 用户下次可直接从“首页仪表盘口径补齐 / 固定 XLS 模板细化”继续推进，而无需重复做导库与第一轮改造。
+- 用户下次可直接从“恢复 MySQL 认证可用性 -> 补运行态 smoke”继续推进，而无需重复核对首页和固定模板改造状态。
+

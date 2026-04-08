@@ -26,7 +26,8 @@ public class DashboardController {
     public ApiResponse<DashboardOverviewResponse> overview() {
         log.info("调用仪表盘概览接口");
         DashboardOverviewResponse response = dashboardService.getOverview();
-        log.info("获取仪表盘概览成功，warehouseCount={}, alertCount={}", response.warehouseCount(), response.alertCount());
+        log.info("获取仪表盘概览成功，warehouseCount={}, realAlertCount={}, predictionAlertCount={}",
+                response.warehouseCount(), response.realAlertCount(), response.predictionAlertCount());
         return ApiResponse.success(response);
     }
 }

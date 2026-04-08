@@ -25,14 +25,20 @@ function normalizeAlert(item) {
   if (typeof item === "string") {
     return {
       title: item,
-      level: "中",
+      level: "ATTENTION",
+      sourceType: "REAL",
+      warehouseName: "-",
+      eventTime: "",
       description: "当前演示后端仅返回简化预警文本，正式版会升级为结构化预警对象。"
     };
   }
 
   return {
     title: item.title || "预警信息",
-    level: item.level || "中",
+    level: item.level || "ATTENTION",
+    sourceType: item.sourceType || "REAL",
+    warehouseName: item.warehouseName || "-",
+    eventTime: item.eventTime || "",
     description: item.description || "暂无详细描述"
   };
 }
@@ -62,6 +68,34 @@ function normalizeSensorData(item) {
     collectedAt: item.collectedAt,
     sourceType: item.sourceType || "MANUAL",
     qualityFlag: item.qualityFlag || "NORMAL"
+  };
+}
+
+function normalizeDashboardSummary(item) {
+  return {
+    id: item.id ?? null,
+    warehouseId: item.warehouseId ?? null,
+    warehouseName: item.warehouseName || "-",
+    avgTemp: item.avgTemp ?? null,
+    maxTemp: item.maxTemp ?? null,
+    minTemp: item.minTemp ?? null,
+    collectedAt: item.collectedAt || "",
+    warningLevel: item.warningLevel || "NORMAL",
+    warningFlag: Boolean(item.warningFlag),
+    warningMessage: item.warningMessage || ""
+  };
+}
+
+function normalizeDashboardWarehouseHealth(item) {
+  return {
+    warehouseId: item.warehouseId ?? null,
+    warehouseName: item.warehouseName || "-",
+    healthScore: item.healthScore ?? 0,
+    riskLevel: item.riskLevel || "NORMAL",
+    realWarningLevel: item.realWarningLevel || "NORMAL",
+    predictionWarningLevel: item.predictionWarningLevel || "NORMAL",
+    latestAvgTemp: item.latestAvgTemp ?? null,
+    latestForecastValue: item.latestForecastValue ?? null
   };
 }
 
@@ -141,17 +175,18 @@ export async function fetchOverview() {
 
   return {
     warehouseCount: raw.warehouseCount || 0,
-    todayDataCount: raw.todayDataCount || 0,
-    alertCount: raw.alertCount || 0,
+    grainSummaryCount: raw.grainSummaryCount || 0,
+    realAlertCount: raw.realAlertCount || 0,
+    predictionAlertCount: raw.predictionAlertCount || 0,
     archivedPredictionCount: raw.archivedPredictionCount || 0,
     latestAlerts: Array.isArray(raw.latestAlerts)
       ? raw.latestAlerts.map(normalizeAlert)
       : [],
-    recentSensorRecords: Array.isArray(raw.recentSensorRecords)
-      ? raw.recentSensorRecords.map(normalizeSensorData)
+    latestGrainSummaries: Array.isArray(raw.latestGrainSummaries)
+      ? raw.latestGrainSummaries.map(normalizeDashboardSummary)
       : [],
     warehouseHealthList: Array.isArray(raw.warehouseHealthList)
-      ? raw.warehouseHealthList
+      ? raw.warehouseHealthList.map(normalizeDashboardWarehouseHealth)
       : []
   };
 }

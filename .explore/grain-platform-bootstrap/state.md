@@ -1,7 +1,7 @@
 # 当前状态
 
 ## 当前阶段
-- Apply first round completed for DB-first MVP; Pause-ready for next iteration
+- Apply second round completed / Pause-ready
 
 ## 已确认的事实
 - 用户要求使用 `context-budget-explore` 记录过程。
@@ -22,9 +22,20 @@
   - 后端预测链已切到 `grain_temp_summary + prediction_task + prediction_result`
   - 新增粮温导入/汇总查询接口：`/api/grain-temp/import`、`/api/grain-temp/summaries`
   - 前端 `PredictionView.vue`、`DataView.vue`、`frontend/src/api/grain.js` 已切到新主线交互
+- 已完成第二轮首页口径改造：
+  - 后端 `dashboard` 聚合已切到 `grain_temp_summary.warning_*` 与 `prediction_result.warning_*`
+  - 前端 `DashboardView.vue` 已优先展示真实预警、预测预警、最新粮温汇总与仓库风险
+  - `BigScreenView.vue` 已同步新首页统计口径，避免继续消费旧字段
+- 已完成第三轮固定模板升级：
+  - 粮温模板下载已切到固定 `XLSX` 模板
+  - 后端 `GrainTempImportService` 已支持固定模板的“基础信息 + 层号/点位矩阵”解析
+  - 旧 CSV / 行式 Excel 兼容逻辑保留，避免已跑通 MVP 回退
+  - `DataView.vue` 已更新固定模板导入说明
+- 已补回归验证清单：`zzz-docs/验证/数据库优先MVP-回归验证清单.md`
 - 已完成验证：
   - `frontend/` 已通过 `npm run build`
-  - 后端已成功启动并通过本地烟雾测试命中粮温汇总接口与预测接口
+  - `backend/` 已通过 `mvn -q -DskipTests compile`
+  - 后端此前已成功启动并通过本地烟雾测试命中粮温汇总接口与预测接口
   - 烟雾测试已生成新预测归档任务：`prediction_task.id = 5`
 
 ## 工作假设
@@ -35,21 +46,20 @@
 - 后续更像是“以现有项目为基础的半重写”，并以当前新主线作为唯一开发依据。
 
 ## 待解决的问题
-- 粮温导入当前为数据库优先 MVP 的“行式模板”实现，尚未升级为老师更偏好的复杂矩阵式 XLS 模板解析。
-- 仪表盘首页的预警与统计仍主要沿旧查询口径，尚未完全切到“真实高温预警 + 预测高温预警”的新主线展示。
+- 固定 XLSX 模板已实现，但运行态 smoke 目前被本地 MySQL 认证失败阻塞。
+- 首页虽然已切到预警优先口径，但接口级 smoke case 与自动化回归脚本仍需补齐。
 - 预测修正字段已保留，但本期仍未实现修正入口与修正页，这与当前范围收口一致。
 - 旧版 PRD、数据库定稿、旧接口设计已归档；历史 handoff/checkpoint 中仍保留旧文件名，属于历史上下文，不应作为当前真相源。
 
 ## 下一步
-- 补仪表盘首页，让预警与统计优先展示：
-  - `grain_temp_summary.warning_*`
-  - `prediction_result.warning_*`
-- 继续完善粮温导入模板，从当前 MVP 行式模板升级到更贴近老师预期的固定 XLS 模板。
-- 增补后端/前端的回归验证清单，并视需要补充测试或脚本化验收。
+- 先恢复本地 MySQL 可用凭据，再按 `zzz-docs/验证/数据库优先MVP-回归验证清单.md` 补首页概览、模板下载、固定 XLSX 导入与旧 CSV 兼容的运行态 smoke。
+- 视需要补一个 PowerShell 脚本，串起固定模板下载、导入和首页概览检查。
 - 继续收口仍带旧口径的辅助文档，避免后续继续冲突。
 
 ## 最新 handoff
-- `.explore/grain-platform-bootstrap/handoffs/2026-04-08-014-db-first-mvp-apply-round1-pause-ready.md`
+- `.explore/grain-platform-bootstrap/handoffs/2026-04-08-015-dashboard-and-fixed-template-pause-ready.md`
 
 ## 最小活跃上下文摘要
-- 当前已完成数据库优先 MVP 的第一轮落地：新 schema 已导入验证，后端与前端主链已切到粮温导入/汇总/按天预测/双线图/预测归档口径；下一次应优先补首页口径与固定 XLS 模板细化。
+- 当前已完成数据库优先 MVP 第一轮落地、首页仪表盘预警优先切换和固定 XLSX 粮温模板升级；下一次应先恢复 MySQL 认证可用性，再补运行态 smoke 与必要的脚本化验收。
+
+
