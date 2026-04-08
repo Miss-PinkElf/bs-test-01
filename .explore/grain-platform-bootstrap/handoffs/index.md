@@ -1,11 +1,13 @@
 # Handoff 索引
 
 ## 最新 handoff
-- [2026-04-08-011-schema-refactor-resume-ready](E:\Learn\Vs\Code\bs-test-01\.explore\grain-platform-bootstrap\handoffs\2026-04-08-011-schema-refactor-resume-ready.md)
+- [2026-04-08-013-pause-ready-db-first-mvp](E:\Learn\Vs\Code\bs-test-01\.explore\grain-platform-bootstrap\handoffs\2026-04-08-013-pause-ready-db-first-mvp.md)
 
 ## Handoff 列表
 
-- `2026-04-08-011-schema-refactor-resume-ready` | 阶段：schema 重构完成 / 可恢复 | 状态：latest
+- `2026-04-08-013-pause-ready-db-first-mvp` | 阶段：暂停恢复入口（数据库优先 MVP）| 状态：latest
+- `2026-04-08-012-db-first-mvp-mainline-pivot-resume-ready` | 阶段：主线二次收口（数据库优先 MVP）/ 可恢复 | 状态：superseded
+- `2026-04-08-011-schema-refactor-resume-ready` | 阶段：schema 重构完成 / 可恢复 | 状态：superseded
 - `2026-04-08-010-rolling-forecast-pivot-resume-ready` | 阶段：滚动预测闭环方向切换 + 真相源重写 / 可恢复 | 状态：superseded
 - `2026-04-07-009-multi-metric-prediction-and-dashboard-realization-resume-ready` | 阶段：多指标独立预测 + 仪表盘真实化 + 文档同步 / 可恢复 | 状态：superseded
 - `2026-04-07-008-prediction-history-and-user-page-real-api-resume-ready` | 阶段：预测页真实归档回显 + 用户页真实接口展示 / 可恢复 | 状态：superseded
