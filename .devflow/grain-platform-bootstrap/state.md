@@ -39,7 +39,7 @@
   - 旧 CSV / 行式 Excel 兼容逻辑保留，避免已跑通 MVP 回退
   - `DataView.vue` 已更新固定模板导入说明
 - 已补回归验证清单：`zzz-docs/验证/数据库优先MVP-回归验证清单.md`
-- 已补数据主线 CRUD 实施计划：`docs/superpowers/plans/2026-04-09-data-crud-and-temperature-recompute.md`
+- 已补数据主线 CRUD 实施计划：`.devflow/grain-platform-bootstrap/plans/2026-04-09-data-crud-and-temperature-recompute.md`
 - 已完成验证：
   - `frontend/` 已通过 `npm run build`
   - `backend/` 已通过 `mvn -q -DskipTests compile`
@@ -98,7 +98,7 @@
   - 已完成运行态 smoke：create / update / reset password / delete 完整链路通过，临时验证数据已清理
 - 已完成 PowerShell 验收脚本：
   - 新增 `scripts/run-acceptance-smoke.ps1`，串起后端编译、前端构建、演示库重置、后端启动、用户 CRUD、固定模板下载/导入、旧 CSV/旧行式 Excel 导入、首页概览与预测只读接口检查
-  - 新增计划文档：`docs/superpowers/plans/2026-04-09-acceptance-smoke-script.md`
+  - 新增计划文档：`.devflow/grain-platform-bootstrap/plans/2026-04-09-acceptance-smoke-script.md`
   - 已更新回归验证清单：`zzz-docs/验证/数据库优先MVP-回归验证清单.md`
   - 已完成脚本运行态验证：`powershell` 执行 `./scripts/run-acceptance-smoke.ps1 -SkipStaticChecks` 全链路通过
   - 已完成单独静态验证：`backend/` 执行 `mvn -q -DskipTests compile` 成功，`frontend/` 执行 `npm run build` 成功
@@ -125,11 +125,11 @@
 ## 当前参考计划
 - `.devflow/grain-platform-bootstrap/plans/active-plan-links.md`
 - `.devflow/grain-platform-bootstrap/plans/2026-04-09-init-strategy-and-admin-crud-sequencing.md`
-- `docs/superpowers/plans/2026-04-09-init-strategy-closure.md`
-- `docs/superpowers/plans/2026-04-09-warehouse-crud.md`
-- `docs/superpowers/plans/2026-04-09-user-crud.md`
-- `docs/superpowers/plans/2026-04-09-data-crud-and-temperature-recompute.md`
-- `docs/superpowers/plans/2026-04-09-frontend-list-unification.md`
+- `.devflow/grain-platform-bootstrap/plans/2026-04-09-init-strategy-closure.md`
+- `.devflow/grain-platform-bootstrap/plans/2026-04-09-warehouse-crud.md`
+- `.devflow/grain-platform-bootstrap/plans/2026-04-09-user-crud.md`
+- `.devflow/grain-platform-bootstrap/plans/2026-04-09-data-crud-and-temperature-recompute.md`
+- `.devflow/grain-platform-bootstrap/plans/2026-04-09-frontend-list-unification.md`
 
 ## 最新 handoff
 - `.devflow/grain-platform-bootstrap/handoffs/2026-04-09-020-pause-ready-after-user-crud-and-acceptance-smoke.md`

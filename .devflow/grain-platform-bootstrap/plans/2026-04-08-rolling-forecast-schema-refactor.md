@@ -47,4 +47,5 @@
 - [ ] **Step 2: Confirm mock data covers import, summary, first forecast, correction, alert**
 - [ ] **Step 3: Confirm no old short-horizon assumptions remain in schema comments**
 
-Plan complete and saved to `docs/superpowers/plans/2026-04-08-rolling-forecast-schema-refactor.md`. Ready to execute?
+Plan complete and saved to `.devflow/grain-platform-bootstrap/plans/2026-04-08-rolling-forecast-schema-refactor.md`. Ready to execute?
+

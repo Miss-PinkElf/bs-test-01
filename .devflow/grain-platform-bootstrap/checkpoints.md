@@ -90,7 +90,7 @@
 ## 2026-04-08-006
 - 当前阶段：Resume-ready after schema refactor
 - 本轮完成内容：
-  - 新增 `docs/superpowers/plans/2026-04-08-rolling-forecast-schema-refactor.md`。
+  - 新增 `.devflow/grain-platform-bootstrap/plans/2026-04-08-rolling-forecast-schema-refactor.md`。
   - 重写 `backend/src/main/resources/db/schema.sql` 到粮温滚动预测闭环模型。
   - 在 `schema.sql` 中加入粮温测点、原始记录、汇总分析、滚动预测任务、修正预测结果和高温预警 mock 数据。
   - 新增最新 resume-ready handoff，并同步 `state.md`、`handoffs/index.md`、`NEXT-SESSION-PROMPT.md`。
@@ -261,7 +261,7 @@
 - 本轮完成内容：
   - 恢复本机 MySQL 默认可用凭据为 `root/123456`，并确认 `application.yml` 可直接连通。
   - 补齐数据库优先 MVP 运行态 smoke：首页概览、固定模板下载、固定 XLSX 导入、旧 CSV / 旧行式 `.xls` 兼容、预测任务只读查询。
-  - 新增数据主线 CRUD 实施计划：`docs/superpowers/plans/2026-04-09-data-crud-and-temperature-recompute.md`。
+  - 新增数据主线 CRUD 实施计划：`.devflow/grain-platform-bootstrap/plans/2026-04-09-data-crud-and-temperature-recompute.md`。
   - 完成 `grain_temp_record` CRUD、`sensor_data` CRUD。
   - 完成温度原始记录变更后的 `grain_temp_summary` 与真实预警联动重算。
   - 升级 `frontend/src/views/DataView.vue` 为粮温 / 普通环境统一维护页。
@@ -328,8 +328,8 @@
 ## 2026-04-09-016
 - 当前阶段：Apply / Verify completed for init-strategy closure
 - 本轮完成内容：
-  - 新增设计文档：`docs/superpowers/specs/2026-04-09-init-strategy-closure-design.md`。
-  - 新增实施计划：`docs/superpowers/plans/2026-04-09-init-strategy-closure.md`。
+  - 新增设计文档：`.devflow/grain-platform-bootstrap/spec/2026-04-09-init-strategy-closure-design.md`。
+  - 新增实施计划：`.devflow/grain-platform-bootstrap/plans/2026-04-09-init-strategy-closure.md`。
   - 将 `backend/src/main/resources/application.yml` 的 `spring.sql.init.mode` 从 `always` 改为 `never`。
   - 新增显式重置入口：`scripts/reset-demo-db.ps1`。
   - 更新 `scripts/start-backend.ps1`、`scripts/start-backend.sh`、`README.md`、回归验证清单和 devflow 计划索引，使“默认启动保留数据、显式脚本重置演示库”的口径一致。
@@ -358,7 +358,7 @@
 ## 2026-04-09-017
 - 当前阶段：Apply / Verify completed for warehouse CRUD
 - 本轮完成内容：
-  - 新增实施计划：`docs/superpowers/plans/2026-04-09-warehouse-crud.md`。
+  - 新增实施计划：`.devflow/grain-platform-bootstrap/plans/2026-04-09-warehouse-crud.md`。
   - 后端仓库链已补齐：
     - `WarehouseMapper` / `WarehouseMapper.xml` 新增 `update`、`deleteById`
     - `WarehouseService` 新增 `update`、`delete`
@@ -421,8 +421,8 @@
 ## 2026-04-09-019
 - 当前阶段：Apply / Verify completed for user CRUD
 - 本轮完成内容：
-  - 新增用户 CRUD 设计文档：`docs/superpowers/specs/2026-04-09-user-crud-design.md`。
-  - 新增用户 CRUD 实施计划：`docs/superpowers/plans/2026-04-09-user-crud.md`。
+  - 新增用户 CRUD 设计文档：`.devflow/grain-platform-bootstrap/spec/2026-04-09-user-crud-design.md`。
+  - 新增用户 CRUD 实施计划：`.devflow/grain-platform-bootstrap/plans/2026-04-09-user-crud.md`。
   - 后端已补齐用户新增、编辑、删除、密码重置、多角色维护、所属仓库维护与最后一个启用管理员保护。
   - 前端 `UsersView.vue` 已补齐新增 / 编辑 / 删除 / 重置密码交互，`frontend/src/api/grain.js` 已补齐用户 CRUD API 封装。
   - 修复 `scripts/start-backend.ps1` 的 UTF-8 编码问题，并确认 `powershell.exe` 与 `pwsh.exe` 均可稳定拉起后端。
@@ -448,7 +448,7 @@
 - 当前阶段：Apply / Verify completed for acceptance smoke script
 - 本轮完成内容：
   - 新增一键验收脚本：`scripts/run-acceptance-smoke.ps1`。
-  - 新增计划文档：`docs/superpowers/plans/2026-04-09-acceptance-smoke-script.md`。
+  - 新增计划文档：`.devflow/grain-platform-bootstrap/plans/2026-04-09-acceptance-smoke-script.md`。
   - 更新回归验证清单，补充脚本入口与参数说明。
   - 脚本已串起：后端编译、前端构建、演示库重置、后端启动、用户 CRUD、固定模板下载/导入、旧 CSV 导入、旧行式 Excel 导入、首页概览与预测只读接口检查。
   - 完成运行态验证：执行 `./scripts/run-acceptance-smoke.ps1 -SkipStaticChecks` 全链路通过。

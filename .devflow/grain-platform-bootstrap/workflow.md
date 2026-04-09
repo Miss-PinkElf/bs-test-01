@@ -63,7 +63,7 @@
   - 固定粮温模板已升级为 `XLSX` 下载与矩阵解析
   - 已新增回归验证清单并定位运行态阻塞为本机 MySQL 认证失败
 - 已补数据主线 CRUD 执行计划：
-  - 执行参考计划：`docs/superpowers/plans/2026-04-09-data-crud-and-temperature-recompute.md`
+  - 执行参考计划：`.devflow/grain-platform-bootstrap/plans/2026-04-09-data-crud-and-temperature-recompute.md`
   - 本计划用于约束 `grain_temp_record` CRUD、`sensor_data` CRUD 与温度变更后的汇总/真实预警联动重算
 - 已完成过程记录迁移：
   - `.explore/grain-platform-bootstrap/` 已完整复制到 `.devflow/grain-platform-bootstrap/`

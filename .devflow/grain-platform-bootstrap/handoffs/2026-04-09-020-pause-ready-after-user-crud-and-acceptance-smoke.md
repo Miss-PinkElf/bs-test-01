@@ -32,8 +32,8 @@
 
 ## 本轮完成内容
 
-- [x] 补用户 CRUD 设计文档：`docs/superpowers/specs/2026-04-09-user-crud-design.md`
-- [x] 补用户 CRUD 实施计划：`docs/superpowers/plans/2026-04-09-user-crud.md`
+- [x] 补用户 CRUD 设计文档：`.devflow/grain-platform-bootstrap/spec/2026-04-09-user-crud-design.md`
+- [x] 补用户 CRUD 实施计划：`.devflow/grain-platform-bootstrap/plans/2026-04-09-user-crud.md`
 - [x] 完成用户 CRUD 后端实现与前端交互
 - [x] 获取用户 CRUD 的静态验证与运行态 smoke 证据
 - [x] 补一键 PowerShell 验收脚本：`scripts/run-acceptance-smoke.ps1`
@@ -61,8 +61,8 @@
 | `frontend/src/api/grain.js` | 用户 CRUD 前端 API 封装 | 高 |
 | `scripts/run-acceptance-smoke.ps1` | 一键验收脚本主入口 | 最高 |
 | `scripts/start-backend.ps1` | 后端启动脚本，已修编码与 Maven 仓库策略 | 高 |
-| `docs/superpowers/plans/2026-04-09-acceptance-smoke-script.md` | 验收脚本实施计划 | 中 |
-| `docs/superpowers/specs/2026-04-09-user-crud-design.md` | 用户 CRUD 设计记录 | 中 |
+| `.devflow/grain-platform-bootstrap/plans/2026-04-09-acceptance-smoke-script.md` | 验收脚本实施计划 | 中 |
+| `.devflow/grain-platform-bootstrap/spec/2026-04-09-user-crud-design.md` | 用户 CRUD 设计记录 | 中 |
 | `.devflow/grain-platform-bootstrap/state.md` | 当前主真相源 | 最高 |
 
 ## 风险 / 阻塞项 / 开放问题
@@ -90,8 +90,8 @@
    - `.devflow/grain-platform-bootstrap/handoffs/2026-04-09-020-pause-ready-after-user-crud-and-acceptance-smoke.md`
 3. 按需读取：
    - `.devflow/grain-platform-bootstrap/plans/active-plan-links.md`
-   - `docs/superpowers/plans/2026-04-09-user-crud.md`
-   - `docs/superpowers/plans/2026-04-09-acceptance-smoke-script.md`
+   - `.devflow/grain-platform-bootstrap/plans/2026-04-09-user-crud.md`
+   - `.devflow/grain-platform-bootstrap/plans/2026-04-09-acceptance-smoke-script.md`
    - `zzz-docs/验证/数据库优先MVP-回归验证清单.md`
 4. 从“立即下一步”的第 1 条继续，不要重复实现已完成的用户 CRUD 和验收脚本。
 

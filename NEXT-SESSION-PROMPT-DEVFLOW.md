@@ -9,8 +9,8 @@
 5. `.devflow/grain-platform-bootstrap/handoffs/2026-04-09-020-pause-ready-after-user-crud-and-acceptance-smoke.md`
 6. 按需读取：
    - `.devflow/grain-platform-bootstrap/plans/active-plan-links.md`
-   - `docs/superpowers/plans/2026-04-09-user-crud.md`
-   - `docs/superpowers/plans/2026-04-09-acceptance-smoke-script.md`
+   - `.devflow/grain-platform-bootstrap/plans/2026-04-09-user-crud.md`
+   - `.devflow/grain-platform-bootstrap/plans/2026-04-09-acceptance-smoke-script.md`
    - `zzz-docs/验证/数据库优先MVP-回归验证清单.md`
 
 【当前主线与口径】

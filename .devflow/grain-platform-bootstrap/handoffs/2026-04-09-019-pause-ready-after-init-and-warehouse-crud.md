@@ -88,8 +88,8 @@
    - `.devflow/grain-platform-bootstrap/handoffs/2026-04-09-019-pause-ready-after-init-and-warehouse-crud.md`
 3. 按需读取：
    - `.devflow/grain-platform-bootstrap/plans/active-plan-links.md`
-   - `docs/superpowers/plans/2026-04-09-init-strategy-closure.md`
-   - `docs/superpowers/plans/2026-04-09-warehouse-crud.md`
+   - `.devflow/grain-platform-bootstrap/plans/2026-04-09-init-strategy-closure.md`
+   - `.devflow/grain-platform-bootstrap/plans/2026-04-09-warehouse-crud.md`
 4. 从“立即下一步”的第 1 条继续，不要重复做已完成的初始化收口和仓库 CRUD。
 
 ## 可从活跃上下文移除的内容

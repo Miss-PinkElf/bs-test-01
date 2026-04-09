@@ -23,10 +23,11 @@
 
 ## 4. 文档与计划落盘要求
 
-1. plan 必须创建在 `zzz-doc/zzz-prompt-debug/plan` 目录下。
-2. plan 文件名必须与本次需求强相关，便于后续查找。
-3. 除特殊说明外，过程文档、计划文档都放在 `zzz-doc` 目录下。
-4. 更新问题清单时，必须写清楚：
+1. plan 文件名必须与本次需求强相关，便于后续查找。
+2. 走 `devflow` 时，当前 mission 的 plan / spec / handoff / state / checkpoint 等过程文档，必须优先落在 `.devflow/<mission-slug>/` 下，不能默认写到 `docs/superpowers/`。
+3. 只有在我明确要求产出仓库级公共文档时，才可以写到 `docs/` 或其它公共目录。
+4. 非 `devflow` 的普通说明文档，除特殊说明外，再按现有约定放到对应目录，不要擅自混放。
+5. 更新问题清单时，必须写清楚：
    - 问题现象
    - 问题原因
    - 解决方案
