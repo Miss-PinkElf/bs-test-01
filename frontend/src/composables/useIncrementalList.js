@@ -1,4 +1,4 @@
-import { computed, ref, unref, watch } from "vue";
+import { computed, proxyRefs, ref, unref, watch } from "vue";
 
 function normalizeSource(source) {
   const raw = typeof source === "function" ? source() : unref(source);
@@ -38,12 +38,12 @@ export function useIncrementalList(source, options = {}) {
     { deep: true }
   );
 
-  return {
+  return proxyRefs({
     visibleCount,
     visibleItems,
     total,
     hasMore,
     resetVisibleCount,
     loadMore
-  };
+  });
 }

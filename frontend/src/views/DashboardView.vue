@@ -25,6 +25,7 @@ const alertList = useIncrementalList(() => overview.value.latestAlerts, {
   step: 4,
   initialCount: 4
 });
+const visibleAlerts = computed(() => alertList.visibleItems.filter(Boolean));
 
 const cards = computed(() => [
   { label: "在线粮仓", value: overview.value.warehouseCount, note: "当前纳入演示范围的仓库数量" },
@@ -123,7 +124,7 @@ onMounted(loadOverview);
             >
               <div class="stack-list">
                 <div
-                  v-for="item in alertList.visibleItems"
+                  v-for="item in visibleAlerts"
                   :key="`${item.sourceType}-${item.warehouseName}-${item.eventTime}-${item.title}`"
                   class="list-card"
                 >

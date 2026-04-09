@@ -22,6 +22,17 @@ function normalizeRoleCodes(raw) {
 }
 
 function normalizeAlert(item) {
+  if (!item) {
+    return {
+      title: "预警信息",
+      level: "ATTENTION",
+      sourceType: "REAL",
+      warehouseName: "-",
+      eventTime: "",
+      description: "预警数据缺少明细，已按兜底信息展示。"
+    };
+  }
+
   if (typeof item === "string") {
     return {
       title: item,
@@ -208,7 +219,7 @@ export async function fetchOverview() {
     predictionAlertCount: raw.predictionAlertCount || 0,
     archivedPredictionCount: raw.archivedPredictionCount || 0,
     latestAlerts: Array.isArray(raw.latestAlerts)
-      ? raw.latestAlerts.map(normalizeAlert)
+      ? raw.latestAlerts.filter((item) => item != null).map(normalizeAlert)
       : [],
     latestGrainSummaries: Array.isArray(raw.latestGrainSummaries)
       ? raw.latestGrainSummaries.map(normalizeDashboardSummary)

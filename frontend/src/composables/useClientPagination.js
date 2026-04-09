@@ -1,4 +1,4 @@
-import { computed, ref, unref, watch } from "vue";
+import { computed, proxyRefs, ref, unref, watch } from "vue";
 
 const DEFAULT_PAGE_SIZES = [5, 10, 20, 50];
 
@@ -48,7 +48,7 @@ export function useClientPagination(source, options = {}) {
   watch(total, clampCurrentPage);
   watch(pageSize, clampCurrentPage);
 
-  return {
+  return proxyRefs({
     currentPage,
     pageSize,
     pageSizes,
@@ -57,5 +57,5 @@ export function useClientPagination(source, options = {}) {
     handleCurrentChange,
     handleSizeChange,
     resetPagination
-  };
+  });
 }

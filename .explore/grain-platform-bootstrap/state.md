@@ -65,6 +65,9 @@
   - `DataView.vue` 的粮温原始记录表与环境数据表已改为后端分页联动
   - 环境趋势图已切到 `/api/sensor-data/trend`，避免只渲染当前页数据
   - 静态验证已通过：`backend/` 执行 `mvn -q -DskipTests compile` 成功，`frontend/` 执行 `npm run build` 成功
+- 已修复前端列表统一后的两类运行时 bug：
+  - `DashboardView.vue` 的近期预警渲染已对空预警项做 API 层和页面层双重兜底，避免 `undefined.sourceType`
+  - 分页 / 增量加载 composable 已改为 `proxyRefs` 自动解包，避免 Element Plus 表格收到非数组包装值而触发 `data2 is not iterable`
 
 ## 工作假设
 - 以毕业设计 MVP 为目标，先做可演示的软件平台，不接入真实硬件。
