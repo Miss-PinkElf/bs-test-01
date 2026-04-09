@@ -88,6 +88,17 @@ function normalizeGrainRecord(item) {
   };
 }
 
+function normalizePageResult(raw, itemNormalizer) {
+  const list = Array.isArray(raw?.list) ? raw.list.map(itemNormalizer) : [];
+
+  return {
+    list,
+    pageNum: raw?.pageNum ?? 1,
+    pageSize: raw?.pageSize ?? (list.length || 10),
+    total: raw?.total ?? list.length
+  };
+}
+
 function normalizeDashboardSummary(item) {
   return {
     id: item.id ?? null,
@@ -238,11 +249,31 @@ export async function fetchSensorData(params = {}) {
     method: "get",
     params: {
       warehouseId: params.warehouseId || undefined,
+      metricCode: params.metricCode || undefined,
+      pageNum: params.pageNum || 1,
+      pageSize: params.pageSize || 10
+    }
+  });
+
+  return normalizePageResult(raw, normalizeSensorData);
+}
+
+export async function fetchSensorTrend(params = {}) {
+  const raw = await request({
+    url: "/api/sensor-data/trend",
+    method: "get",
+    params: {
+      warehouseId: params.warehouseId || undefined,
       metricCode: params.metricCode || undefined
     }
   });
 
-  return Array.isArray(raw) ? raw.map(normalizeSensorData) : [];
+  return Array.isArray(raw?.points)
+    ? raw.points.map((item) => ({
+        time: item.time || "",
+        value: item.value ?? null
+      }))
+    : [];
 }
 
 export async function createSensorData(payload) {
@@ -318,11 +349,13 @@ export async function fetchGrainTempRecords(params = {}) {
       startTime: params.startTime || undefined,
       endTime: params.endTime || undefined,
       zoneCode: params.zoneCode || undefined,
-      layerNo: params.layerNo || undefined
+      layerNo: params.layerNo || undefined,
+      pageNum: params.pageNum || 1,
+      pageSize: params.pageSize || 10
     }
   });
 
-  return Array.isArray(raw) ? raw.map(normalizeGrainRecord) : [];
+  return normalizePageResult(raw, normalizeGrainRecord);
 }
 
 export async function createGrainTempRecord(payload) {

@@ -1,6 +1,8 @@
 <script setup>
 import { computed, onMounted, ref } from "vue";
 import { fetchOverview } from "../api/grain";
+import { useClientPagination } from "../composables/useClientPagination";
+import { useIncrementalList } from "../composables/useIncrementalList";
 
 const loading = ref(false);
 const overview = ref({
@@ -12,6 +14,16 @@ const overview = ref({
   latestAlerts: [],
   latestGrainSummaries: [],
   warehouseHealthList: []
+});
+const summaryPagination = useClientPagination(() => overview.value.latestGrainSummaries, {
+  initialPageSize: 5
+});
+const healthPagination = useClientPagination(() => overview.value.warehouseHealthList, {
+  initialPageSize: 5
+});
+const alertList = useIncrementalList(() => overview.value.latestAlerts, {
+  step: 4,
+  initialCount: 4
 });
 
 const cards = computed(() => [
@@ -52,6 +64,12 @@ function formatSourceLabel(sourceType) {
 
 function formatTemperature(value) {
   return value == null ? "-" : `${Number(value).toFixed(2)}°C`;
+}
+
+function handleAlertScroll({ scrollTop, clientHeight, scrollHeight }) {
+  if (scrollTop + clientHeight >= scrollHeight - 24) {
+    alertList.loadMore();
+  }
 }
 
 async function loadOverview() {
@@ -99,23 +117,37 @@ onMounted(loadOverview);
               />
             </template>
 
-            <div class="stack-list">
-              <div
-                v-for="item in overview.latestAlerts"
-                :key="`${item.sourceType}-${item.warehouseName}-${item.eventTime}-${item.title}`"
-                class="list-card"
-              >
-                <div class="list-card-header">
-                  <strong>{{ item.title }}</strong>
-                  <div class="tag-row">
-                    <el-tag :type="resolveSourceTagType(item.sourceType)">{{ formatSourceLabel(item.sourceType) }}</el-tag>
-                    <el-tag :type="resolveLevelTagType(item.level)">{{ item.level }}</el-tag>
+            <el-scrollbar
+              class="alert-scrollbar"
+              @scroll="handleAlertScroll"
+            >
+              <div class="stack-list">
+                <div
+                  v-for="item in alertList.visibleItems"
+                  :key="`${item.sourceType}-${item.warehouseName}-${item.eventTime}-${item.title}`"
+                  class="list-card"
+                >
+                  <div class="list-card-header">
+                    <strong>{{ item.title }}</strong>
+                    <div class="tag-row">
+                      <el-tag :type="resolveSourceTagType(item.sourceType)">{{ formatSourceLabel(item.sourceType) }}</el-tag>
+                      <el-tag :type="resolveLevelTagType(item.level)">{{ item.level }}</el-tag>
+                    </div>
                   </div>
+                  <div class="list-card-meta">{{ item.warehouseName }} · {{ item.eventTime || "时间待补充" }}</div>
+                  <div class="list-card-desc">{{ item.description }}</div>
                 </div>
-                <div class="list-card-meta">{{ item.warehouseName }} · {{ item.eventTime || "时间待补充" }}</div>
-                <div class="list-card-desc">{{ item.description }}</div>
+
+                <div v-if="alertList.hasMore" class="scroll-load-hint">
+                  下滑继续加载更多预警
+                </div>
               </div>
-            </div>
+            </el-scrollbar>
+
+            <el-empty
+              v-if="!loading && overview.latestAlerts.length === 0"
+              description="暂无近期预警"
+            />
           </el-skeleton>
         </el-card>
       </el-col>
@@ -126,22 +158,37 @@ onMounted(loadOverview);
             <div class="panel-title">仓库运行健康度</div>
           </template>
 
-          <div class="stack-list">
-            <div
-              v-for="item in overview.warehouseHealthList"
-              :key="item.warehouseId"
-              class="score-row"
-            >
-              <div>
-                <div class="score-name">{{ item.warehouseName }}</div>
-                <div class="score-note">综合风险：{{ item.riskLevel }}</div>
-                <div class="score-note">实时：{{ item.realWarningLevel }} / 预测：{{ item.predictionWarningLevel }}</div>
-                <div class="score-note">
-                  最新均温：{{ formatTemperature(item.latestAvgTemp) }} / 预测峰值：{{ formatTemperature(item.latestForecastValue) }}
-                </div>
-              </div>
-              <div class="score-badge">{{ item.healthScore }}</div>
-            </div>
+          <el-table :data="healthPagination.pagedItems" stripe v-loading="loading">
+            <el-table-column prop="warehouseName" label="仓库" min-width="120" />
+            <el-table-column prop="healthScore" label="健康分" width="100" />
+            <el-table-column prop="riskLevel" label="综合风险" width="110">
+              <template #default="{ row }">
+                <el-tag :type="resolveLevelTagType(row.riskLevel)">{{ row.riskLevel }}</el-tag>
+              </template>
+            </el-table-column>
+            <el-table-column label="实时 / 预测" min-width="160">
+              <template #default="{ row }">
+                {{ row.realWarningLevel }} / {{ row.predictionWarningLevel }}
+              </template>
+            </el-table-column>
+            <el-table-column label="均温 / 峰值" min-width="180">
+              <template #default="{ row }">
+                {{ formatTemperature(row.latestAvgTemp) }} / {{ formatTemperature(row.latestForecastValue) }}
+              </template>
+            </el-table-column>
+          </el-table>
+
+          <div class="table-pagination">
+            <el-pagination
+              background
+              layout="total, sizes, prev, pager, next"
+              :current-page="healthPagination.currentPage"
+              :page-size="healthPagination.pageSize"
+              :page-sizes="healthPagination.pageSizes"
+              :total="healthPagination.total"
+              @current-change="healthPagination.handleCurrentChange"
+              @size-change="healthPagination.handleSizeChange"
+            />
           </div>
         </el-card>
       </el-col>
@@ -154,7 +201,7 @@ onMounted(loadOverview);
             <div class="panel-title">最新粮温汇总</div>
           </template>
 
-          <el-table :data="overview.latestGrainSummaries" stripe>
+          <el-table :data="summaryPagination.pagedItems" stripe v-loading="loading">
             <el-table-column prop="warehouseName" label="仓库" />
             <el-table-column prop="avgTemp" label="均温">
               <template #default="{ row }">
@@ -173,6 +220,19 @@ onMounted(loadOverview);
             </el-table-column>
             <el-table-column prop="collectedAt" label="汇总时间" />
           </el-table>
+
+          <div class="table-pagination">
+            <el-pagination
+              background
+              layout="total, sizes, prev, pager, next"
+              :current-page="summaryPagination.currentPage"
+              :page-size="summaryPagination.pageSize"
+              :page-sizes="summaryPagination.pageSizes"
+              :total="summaryPagination.total"
+              @current-change="summaryPagination.handleCurrentChange"
+              @size-change="summaryPagination.handleSizeChange"
+            />
+          </div>
         </el-card>
       </el-col>
 

@@ -17,7 +17,7 @@
         <result property="qualityFlag" column="quality_flag"/>
     </resultMap>
 
-    <select id="selectByCondition" resultMap="sensorPointMap">
+    <sql id="sensorSelectColumns">
         select sd.id,
                sd.warehouse_id,
                w.warehouse_name,
@@ -28,12 +28,32 @@
                sd.collected_at,
                sd.source_type,
                sd.quality_flag
+    </sql>
+
+    <sql id="sensorQueryFromWhere">
         from sensor_data sd
                  join warehouse w on sd.warehouse_id = w.id
                  join sensor_metric sm on sd.metric_code = sm.metric_code
         where (#{warehouseId} is null or sd.warehouse_id = #{warehouseId})
           and (#{metricCode} is null or #{metricCode} = '' or sd.metric_code = #{metricCode})
-        order by sd.collected_at asc
+    </sql>
+
+    <select id="selectByCondition" resultMap="sensorPointMap">
+        <include refid="sensorSelectColumns"/>
+        <include refid="sensorQueryFromWhere"/>
+        order by sd.collected_at asc, sd.id asc
+    </select>
+
+    <select id="selectPageByCondition" resultMap="sensorPointMap">
+        <include refid="sensorSelectColumns"/>
+        <include refid="sensorQueryFromWhere"/>
+        order by sd.collected_at desc, sd.id desc
+        limit #{pageSize} offset #{offset}
+    </select>
+
+    <select id="countByCondition" resultType="long">
+        select count(1)
+        <include refid="sensorQueryFromWhere"/>
     </select>
 
     <select id="selectById" resultType="com.grain.platform.entity.SensorData">

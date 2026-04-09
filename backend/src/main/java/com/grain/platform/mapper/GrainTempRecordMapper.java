@@ -26,6 +26,20 @@ public interface GrainTempRecordMapper {
                                                    @Param("zoneCode") String zoneCode,
                                                    @Param("layerNo") Integer layerNo);
 
+    List<GrainTempRecordItemDto> selectPageByCondition(@Param("warehouseId") Long warehouseId,
+                                                       @Param("startTime") LocalDateTime startTime,
+                                                       @Param("endTime") LocalDateTime endTime,
+                                                       @Param("zoneCode") String zoneCode,
+                                                       @Param("layerNo") Integer layerNo,
+                                                       @Param("offset") int offset,
+                                                       @Param("pageSize") int pageSize);
+
+    long countByCondition(@Param("warehouseId") Long warehouseId,
+                          @Param("startTime") LocalDateTime startTime,
+                          @Param("endTime") LocalDateTime endTime,
+                          @Param("zoneCode") String zoneCode,
+                          @Param("layerNo") Integer layerNo);
+
     List<GrainTempRecordItemDto> selectByWarehouseAndCollectedAt(@Param("warehouseId") Long warehouseId,
                                                                  @Param("collectedAt") LocalDateTime collectedAt);
 }

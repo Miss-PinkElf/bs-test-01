@@ -1,6 +1,7 @@
 package com.grain.platform.controller;
 
 import com.grain.platform.common.ApiResponse;
+import com.grain.platform.common.PageResult;
 import com.grain.platform.dto.sensor.SensorDataCreateRequest;
 import com.grain.platform.dto.sensor.SensorDataImportResultDto;
 import com.grain.platform.dto.sensor.SensorDataPointDto;
@@ -42,15 +43,17 @@ public class SensorDataController {
 
     // 查询环境数据列表。
     @GetMapping
-    public ApiResponse<List<SensorDataPointDto>> list(
+    public ApiResponse<PageResult<SensorDataPointDto>> list(
             @RequestParam(required = false) Long warehouseId,
             @RequestParam(required = false) String metricCode,
-            @RequestParam(required = false) String metricType
+            @RequestParam(required = false) String metricType,
+            @RequestParam(defaultValue = "1") Integer pageNum,
+            @RequestParam(defaultValue = "10") Integer pageSize
     ) {
         String finalMetricCode = (metricCode == null || metricCode.isBlank()) ? metricType : metricCode;
-        log.info("调用环境数据列表接口，warehouseId={}, metricCode={}", warehouseId, finalMetricCode);
-        List<SensorDataPointDto> response = sensorDataService.list(warehouseId, finalMetricCode);
-        log.info("获取环境数据列表成功，count={}", response.size());
+        log.info("调用环境数据列表接口，warehouseId={}, metricCode={}, pageNum={}, pageSize={}", warehouseId, finalMetricCode, pageNum, pageSize);
+        PageResult<SensorDataPointDto> response = sensorDataService.listPage(warehouseId, finalMetricCode, pageNum, pageSize);
+        log.info("获取环境数据列表成功，count={}, total={}", response.list().size(), response.total());
         return ApiResponse.success(response);
     }
 

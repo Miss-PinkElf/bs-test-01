@@ -1,5 +1,6 @@
 package com.grain.platform.service;
 
+import com.grain.platform.common.PageResult;
 import com.grain.platform.dto.sensor.SensorDataCreateRequest;
 import com.grain.platform.dto.sensor.SensorDataImportResultDto;
 import com.grain.platform.dto.sensor.SensorDataImportRowDto;
@@ -32,6 +33,17 @@ public class SensorDataService {
 
     public List<SensorDataPointDto> list(Long warehouseId, String metricCode) {
         return sensorDataMapper.selectByCondition(warehouseId, metricCode);
+    }
+
+    public PageResult<SensorDataPointDto> listPage(Long warehouseId, String metricCode, Integer pageNum, Integer pageSize) {
+        int finalPageNum = pageNum == null || pageNum < 1 ? 1 : pageNum;
+        int finalPageSize = pageSize == null || pageSize < 1 ? 10 : pageSize;
+        long total = sensorDataMapper.countByCondition(warehouseId, metricCode);
+        int maxPage = total == 0 ? 1 : (int) Math.ceil((double) total / finalPageSize);
+        finalPageNum = Math.min(finalPageNum, maxPage);
+        int offset = (finalPageNum - 1) * finalPageSize;
+        List<SensorDataPointDto> list = sensorDataMapper.selectPageByCondition(warehouseId, metricCode, offset, finalPageSize);
+        return new PageResult<>(list, finalPageNum, finalPageSize, total);
     }
 
     public SensorTrendResponse trend(Long warehouseId, String metricCode) {

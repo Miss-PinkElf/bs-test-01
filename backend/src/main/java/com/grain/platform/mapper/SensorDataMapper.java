@@ -13,6 +13,13 @@ public interface SensorDataMapper {
 
     List<SensorDataPointDto> selectByCondition(@Param("warehouseId") Long warehouseId, @Param("metricCode") String metricCode);
 
+    List<SensorDataPointDto> selectPageByCondition(@Param("warehouseId") Long warehouseId,
+                                                   @Param("metricCode") String metricCode,
+                                                   @Param("offset") int offset,
+                                                   @Param("pageSize") int pageSize);
+
+    long countByCondition(@Param("warehouseId") Long warehouseId, @Param("metricCode") String metricCode);
+
     List<SensorDataPointDto> selectRecentByMetric(@Param("warehouseId") Long warehouseId, @Param("metricCode") String metricCode);
 
     void insert(SensorData sensorData);

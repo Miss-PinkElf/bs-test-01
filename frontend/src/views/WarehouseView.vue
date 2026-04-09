@@ -2,10 +2,12 @@
 import { computed, onMounted, reactive, ref } from "vue";
 import { ElMessage } from "element-plus";
 import { createWarehouse, fetchWarehouses } from "../api/grain";
+import { useClientPagination } from "../composables/useClientPagination";
 
 const loading = ref(false);
 const dialogVisible = ref(false);
 const warehouses = ref([]);
+const warehousePagination = useClientPagination(warehouses);
 const form = reactive({
   warehouseCode: "",
   warehouseName: "",
@@ -123,7 +125,7 @@ onMounted(loadWarehouses);
         <div class="panel-title">仓库档案列表</div>
       </template>
 
-      <el-table :data="warehouses" stripe v-loading="loading">
+      <el-table :data="warehousePagination.pagedItems" stripe v-loading="loading">
         <el-table-column prop="warehouseCode" label="仓库编码" />
         <el-table-column prop="warehouseName" label="仓库名称" />
         <el-table-column prop="location" label="位置" />
@@ -131,6 +133,19 @@ onMounted(loadWarehouses);
         <el-table-column prop="managerName" label="负责人" />
         <el-table-column prop="status" label="状态" />
       </el-table>
+
+      <div class="table-pagination">
+        <el-pagination
+          background
+          layout="total, sizes, prev, pager, next"
+          :current-page="warehousePagination.currentPage"
+          :page-size="warehousePagination.pageSize"
+          :page-sizes="warehousePagination.pageSizes"
+          :total="warehousePagination.total"
+          @current-change="warehousePagination.handleCurrentChange"
+          @size-change="warehousePagination.handleSizeChange"
+        />
+      </div>
     </el-card>
 
     <el-dialog v-model="dialogVisible" title="新增仓库" width="720px">

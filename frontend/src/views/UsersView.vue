@@ -1,10 +1,13 @@
 <script setup>
 import { computed, onMounted, ref } from "vue";
 import { fetchRoleOptions, fetchUsers } from "../api/grain";
+import { useClientPagination } from "../composables/useClientPagination";
 
 const loading = ref(false);
 const users = ref([]);
 const roles = ref([]);
+
+const userPagination = useClientPagination(users);
 
 const summaryCards = computed(() => [
   { key: "users", label: "系统用户", value: users.value.length, note: "当前数据库中的用户账号数量" },
@@ -59,7 +62,7 @@ onMounted(loadUsersPage);
             <div class="panel-title">用户列表</div>
           </template>
 
-          <el-table :data="users" stripe v-loading="loading">
+          <el-table :data="userPagination.pagedItems" stripe v-loading="loading">
             <el-table-column prop="username" label="用户名" />
             <el-table-column prop="displayName" label="姓名" />
             <el-table-column label="角色">
@@ -71,6 +74,19 @@ onMounted(loadUsersPage);
             <el-table-column prop="status" label="状态" />
             <el-table-column prop="lastLoginAt" label="最近登录" />
           </el-table>
+
+          <div class="table-pagination">
+            <el-pagination
+              background
+              layout="total, sizes, prev, pager, next"
+              :current-page="userPagination.currentPage"
+              :page-size="userPagination.pageSize"
+              :page-sizes="userPagination.pageSizes"
+              :total="userPagination.total"
+              @current-change="userPagination.handleCurrentChange"
+              @size-change="userPagination.handleSizeChange"
+            />
+          </div>
         </el-card>
       </el-col>
 

@@ -1,7 +1,7 @@
 # 当前状态
 
 ## 当前阶段
-- Apply data CRUD completed / Pause-ready
+- Apply frontend list unification + data pagination completed / Pause-ready
 
 ## 已确认的事实
 - 用户要求使用 `context-budget-explore` 记录过程。
@@ -51,6 +51,20 @@
   - `frontend/src/views/DataView.vue` 已升级为数据维护页：粮温模式支持原始测点记录 CRUD，普通环境模式支持湿度 / 二氧化碳 CRUD
   - 已完成静态验证：`backend/` 再次编译通过，`frontend/` 再次构建通过
   - 已完成运行态 smoke：温度记录 create / update / delete 能联动首页真实预警，环境数据 create / update / delete 能联动列表查询
+- 已完成后台页列表展示统一第一轮：
+  - 新增前端组合式工具：`frontend/src/composables/useClientPagination.js`
+  - 新增前端组合式工具：`frontend/src/composables/useIncrementalList.js`
+  - `UsersView.vue`、`WarehouseView.vue`、`DataView.vue`、`PredictionView.vue` 已统一补上 `Element Plus` 表格分页
+  - `PredictionView.vue` 的历史归档记录已由卡片流改为表格分页
+  - `DashboardView.vue` 的仓库健康度已改为表格分页
+  - `DashboardView.vue` 的近期预警已改为 `el-scrollbar` + 下滑增量加载
+  - 前端构建验证已再次通过：`frontend/` 执行 `npm run build` 成功
+- 已完成数据管理页后端分页适配：
+  - `GET /api/grain-temp/records` 已切到分页返回：`PageResult<GrainTempRecordItemDto>`
+  - `GET /api/sensor-data` 已切到分页返回：`PageResult<SensorDataPointDto>`
+  - `DataView.vue` 的粮温原始记录表与环境数据表已改为后端分页联动
+  - 环境趋势图已切到 `/api/sensor-data/trend`，避免只渲染当前页数据
+  - 静态验证已通过：`backend/` 执行 `mvn -q -DskipTests compile` 成功，`frontend/` 执行 `npm run build` 成功
 
 ## 工作假设
 - 以毕业设计 MVP 为目标，先做可演示的软件平台，不接入真实硬件。
@@ -63,6 +77,7 @@
 - 当前 MySQL 凭据与仓库默认配置已一致，但后端仍配置 `spring.sql.init.mode=always`，每次启动都会重建并回填演示库。
 - 首页与导入链路的运行态 smoke 已补齐，但自动化 PowerShell 验收脚本仍未落地。
 - 用户 / 仓库管理仍未补完整 CRUD，本轮只完成了数据主线 CRUD。
+- 后台页列表样式已做第一轮统一，但 `UsersView.vue` 右侧角色说明仍保留卡片说明区；`/screen` 大屏仍未纳入本轮统一范围。
 - 预测修正字段已保留，但本期仍未实现修正入口与修正页，这与当前范围收口一致。
 - 旧版 PRD、数据库定稿、旧接口设计已归档；历史 handoff/checkpoint 中仍保留旧文件名，属于历史上下文，不应作为当前真相源。
 
@@ -70,15 +85,17 @@
 - 评估是否保留 `spring.sql.init.mode=always`；若后续要做稳定联调或保留导入结果，需要把初始化策略改为更可控的方式。
 - 若继续补后台管理闭环，下一优先级应是仓库 CRUD，再是用户 CRUD。
 - 补一个 PowerShell 验收脚本，串起后端启动、固定模板下载、固定模板导入、旧 CSV / 旧行式 Excel 导入和首页概览检查。
+- 若继续统一前端展示，可再决定是否把 `UsersView.vue` 的角色说明卡片也改成表格，以及是否把 `/screen` 大屏纳入同一规范。
 - 继续收口仍带旧口径的辅助文档，避免后续继续冲突。
 
 ## 当前参考计划
 - `docs/superpowers/plans/2026-04-09-data-crud-and-temperature-recompute.md`
+- `docs/superpowers/plans/2026-04-09-frontend-list-unification.md`
 
 ## 最新 handoff
-- `.explore/grain-platform-bootstrap/handoffs/2026-04-09-016-data-crud-and-handoff-ready.md`
+- `.explore/grain-platform-bootstrap/handoffs/2026-04-09-017-frontend-list-unification-and-data-pagination-ready.md`
 
 ## 最小活跃上下文摘要
-- 当前已解除运行态阻塞：本机 MySQL `root` 密码已恢复为 `123456`，后端可按默认配置直接启动；数据库优先 MVP 的首页概览、固定模板下载、固定模板导入、旧 CSV 和旧行式 `.xls` 兼容 smoke 已全部通过。当前还额外完成了数据主线 CRUD：`grain_temp_record` 和 `sensor_data` 已支持页面维护，且温度记录变更会联动重算汇总与真实预警。下一步更值得收口的是初始化策略、后台管理 CRUD 与 PowerShell 验收脚本。
+- 当前已解除运行态阻塞：本机 MySQL `root` 密码已恢复为 `123456`，后端可按默认配置直接启动；数据库优先 MVP 的首页概览、固定模板下载、固定模板导入、旧 CSV 和旧行式 `.xls` 兼容 smoke 已全部通过。当前已完成数据主线 CRUD、后台页第一轮列表统一，以及 `grain_temp_record` / `sensor_data` 两条记录列表的后端分页适配；`DataView.vue` 现在列表走后端分页，环境趋势图走独立趋势接口。下一步更值得收口的是初始化策略、后台管理 CRUD 与 PowerShell 验收脚本。
 
 

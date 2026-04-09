@@ -1,5 +1,6 @@
 package com.grain.platform.service;
 
+import com.grain.platform.common.PageResult;
 import com.grain.platform.dto.grain.GrainTempImportResultDto;
 import com.grain.platform.dto.grain.GrainTempRecordItemDto;
 import com.grain.platform.dto.grain.GrainTempRecordUpsertRequest;
@@ -51,6 +52,31 @@ public class GrainTempService {
                                                     String zoneCode,
                                                     Integer layerNo) {
         return grainTempRecordMapper.selectByCondition(warehouseId, startTime, endTime, zoneCode, layerNo);
+    }
+
+    public PageResult<GrainTempRecordItemDto> listRecordPage(Long warehouseId,
+                                                             LocalDateTime startTime,
+                                                             LocalDateTime endTime,
+                                                             String zoneCode,
+                                                             Integer layerNo,
+                                                             Integer pageNum,
+                                                             Integer pageSize) {
+        int finalPageNum = pageNum == null || pageNum < 1 ? 1 : pageNum;
+        int finalPageSize = pageSize == null || pageSize < 1 ? 10 : pageSize;
+        long total = grainTempRecordMapper.countByCondition(warehouseId, startTime, endTime, zoneCode, layerNo);
+        int maxPage = total == 0 ? 1 : (int) Math.ceil((double) total / finalPageSize);
+        finalPageNum = Math.min(finalPageNum, maxPage);
+        int offset = (finalPageNum - 1) * finalPageSize;
+        List<GrainTempRecordItemDto> list = grainTempRecordMapper.selectPageByCondition(
+                warehouseId,
+                startTime,
+                endTime,
+                zoneCode,
+                layerNo,
+                offset,
+                finalPageSize
+        );
+        return new PageResult<>(list, finalPageNum, finalPageSize, total);
     }
 
     public List<GrainTempSummaryItemDto> listSummaries(Long warehouseId,

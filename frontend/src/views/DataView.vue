@@ -13,12 +13,14 @@ import {
   fetchGrainTempSummaries,
   fetchMetricOptions,
   fetchSensorData,
+  fetchSensorTrend,
   fetchWarehouses,
   importGrainTemp,
   importSensorData,
   updateGrainTempRecord,
   updateSensorData
 } from "../api/grain";
+import { useClientPagination } from "../composables/useClientPagination";
 
 const chartRef = ref();
 const loading = ref(false);
@@ -30,6 +32,8 @@ const rows = ref([]);
 const grainSummaryRows = ref([]);
 const metricOptions = ref([]);
 const editingId = ref(null);
+const envTrendRows = ref([]);
+const grainSummaryPagination = useClientPagination(grainSummaryRows);
 let chart;
 
 const filters = reactive({
@@ -69,6 +73,19 @@ const dialogTitle = computed(() => {
 });
 
 const latestGrainSummary = computed(() => grainSummaryRows.value.at(-1) || null);
+const grainRecordPageState = reactive({
+  pageNum: 1,
+  pageSize: 10,
+  total: 0
+});
+const envRecordPageState = reactive({
+  pageNum: 1,
+  pageSize: 10,
+  total: 0
+});
+const currentRecordPageState = computed(() =>
+  mode.value === "grain" ? grainRecordPageState : envRecordPageState
+);
 
 function formatDateTime(value) {
   return value ? String(value).replace("T", " ") : "-";
@@ -149,16 +166,37 @@ async function loadData() {
     if (mode.value === "grain") {
       const [summaryList, recordList] = await Promise.all([
         fetchGrainTempSummaries({ warehouseId: filters.warehouseId }),
-        fetchGrainTempRecords({ warehouseId: filters.warehouseId })
+        fetchGrainTempRecords({
+          warehouseId: filters.warehouseId,
+          pageNum: grainRecordPageState.pageNum,
+          pageSize: grainRecordPageState.pageSize
+        })
       ]);
       grainSummaryRows.value = summaryList;
-      rows.value = recordList;
+      rows.value = recordList.list;
+      grainRecordPageState.total = recordList.total;
+      grainRecordPageState.pageNum = recordList.pageNum;
+      grainRecordPageState.pageSize = recordList.pageSize;
+      envTrendRows.value = [];
     } else {
       grainSummaryRows.value = [];
-      rows.value = await fetchSensorData({
-        warehouseId: filters.warehouseId,
-        metricCode: filters.metricCode
-      });
+      const [sensorPage, trendList] = await Promise.all([
+        fetchSensorData({
+          warehouseId: filters.warehouseId,
+          metricCode: filters.metricCode,
+          pageNum: envRecordPageState.pageNum,
+          pageSize: envRecordPageState.pageSize
+        }),
+        fetchSensorTrend({
+          warehouseId: filters.warehouseId,
+          metricCode: filters.metricCode
+        })
+      ]);
+      rows.value = sensorPage.list;
+      envRecordPageState.total = sensorPage.total;
+      envRecordPageState.pageNum = sensorPage.pageNum;
+      envRecordPageState.pageSize = sensorPage.pageSize;
+      envTrendRows.value = trendList;
     }
 
     await nextTick();
@@ -261,14 +299,32 @@ function handleTemplateDownload() {
   downloadSensorTemplate();
 }
 
+function handleRecordPageChange(page) {
+  currentRecordPageState.value.pageNum = page;
+  loadData();
+}
+
+function handleRecordPageSizeChange(size) {
+  currentRecordPageState.value.pageSize = size;
+  currentRecordPageState.value.pageNum = 1;
+  loadData();
+}
+
+async function handleSearch() {
+  currentRecordPageState.value.pageNum = 1;
+  await loadData();
+}
+
 async function handleModeChange() {
   editingId.value = null;
 
   if (mode.value === "env") {
     filters.metricCode = getInitialEnvMetricCode();
     resetEnvForm();
+    envRecordPageState.pageNum = 1;
   } else {
     resetGrainForm();
+    grainRecordPageState.pageNum = 1;
   }
 
   await loadData();
@@ -318,10 +374,10 @@ function renderChart() {
   chart.setOption({
     tooltip: { trigger: "axis" },
     grid: { left: 32, right: 18, top: 30, bottom: 28 },
-    xAxis: {
-      type: "category",
-      data: rows.value.map((item) => formatDateTime(item.collectedAt))
-    },
+      xAxis: {
+        type: "category",
+        data: envTrendRows.value.map((item) => formatDateTime(item.time))
+      },
     yAxis: {
       type: "value"
     },
@@ -330,7 +386,7 @@ function renderChart() {
         name: "环境值",
         type: "line",
         smooth: true,
-        data: rows.value.map((item) => item.metricValue),
+        data: envTrendRows.value.map((item) => item.value),
         lineStyle: {
           color: "#0b7a75"
         },
@@ -411,7 +467,7 @@ onBeforeUnmount(() => {
             </el-form-item>
 
             <el-form-item>
-              <el-button type="primary" @click="loadData">查询</el-button>
+              <el-button type="primary" @click="handleSearch">查询</el-button>
             </el-form-item>
           </el-form>
         </el-card>
@@ -470,7 +526,7 @@ onBeforeUnmount(() => {
         <div>预警等级：{{ latestGrainSummary.warningLevel }}，说明：{{ latestGrainSummary.warningMessage || "暂无" }}</div>
       </div>
 
-      <el-table :data="grainSummaryRows" stripe v-loading="loading">
+      <el-table :data="grainSummaryPagination.pagedItems" stripe v-loading="loading">
         <el-table-column prop="warehouseName" label="仓库" />
         <el-table-column prop="avgTemp" label="整仓均温" />
         <el-table-column prop="maxTemp" label="最高温" />
@@ -487,6 +543,19 @@ onBeforeUnmount(() => {
         </el-table-column>
         <el-table-column prop="warningMessage" label="预警说明" min-width="180" />
       </el-table>
+
+      <div class="table-pagination">
+        <el-pagination
+          background
+          layout="total, sizes, prev, pager, next"
+          :current-page="grainSummaryPagination.currentPage"
+          :page-size="grainSummaryPagination.pageSize"
+          :page-sizes="grainSummaryPagination.pageSizes"
+          :total="grainSummaryPagination.total"
+          @current-change="grainSummaryPagination.handleCurrentChange"
+          @size-change="grainSummaryPagination.handleSizeChange"
+        />
+      </div>
     </el-card>
 
     <el-card class="panel-card" shadow="never">
@@ -532,6 +601,19 @@ onBeforeUnmount(() => {
           </template>
         </el-table-column>
       </el-table>
+
+      <div class="table-pagination">
+        <el-pagination
+          background
+          layout="total, sizes, prev, pager, next"
+          :current-page="currentRecordPageState.pageNum"
+          :page-size="currentRecordPageState.pageSize"
+          :page-sizes="[10, 20, 50]"
+          :total="currentRecordPageState.total"
+          @current-change="handleRecordPageChange"
+          @size-change="handleRecordPageSizeChange"
+        />
+      </div>
     </el-card>
 
     <el-dialog v-model="dialogVisible" :title="dialogTitle" width="760px">

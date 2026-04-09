@@ -4,6 +4,32 @@
         "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
 <mapper namespace="com.grain.platform.mapper.GrainTempRecordMapper">
 
+    <sql id="recordSelectColumns">
+        select r.id as id,
+               r.warehouse_id as warehouseId,
+               w.warehouse_name as warehouseName,
+               r.point_id as pointId,
+               p.point_name as pointName,
+               p.zone_code as zoneCode,
+               p.layer_no as layerNo,
+               p.point_no as pointNo,
+               date_format(r.collected_at, '%Y-%m-%d %H:%i:%s') as collectedAt,
+               r.temperature_value as temperatureValue,
+               r.source_type as sourceType,
+               r.quality_flag as qualityFlag
+    </sql>
+
+    <sql id="recordQueryFromWhere">
+        from grain_temp_record r
+                 join grain_temp_point p on r.point_id = p.id
+                 join warehouse w on r.warehouse_id = w.id
+        where (#{warehouseId} is null or r.warehouse_id = #{warehouseId})
+          and (#{startTime} is null or r.collected_at &gt;= #{startTime})
+          and (#{endTime} is null or r.collected_at &lt;= #{endTime})
+          and (#{zoneCode} is null or #{zoneCode} = '' or p.zone_code = #{zoneCode})
+          and (#{layerNo} is null or p.layer_no = #{layerNo})
+    </sql>
+
     <insert id="insert" parameterType="com.grain.platform.entity.GrainTempRecord" useGeneratedKeys="true" keyProperty="id">
         insert into grain_temp_record (
             warehouse_id,
@@ -90,42 +116,25 @@
     </insert>
 
     <select id="selectByCondition" resultType="com.grain.platform.dto.grain.GrainTempRecordItemDto">
-        select r.id as id,
-               r.warehouse_id as warehouseId,
-               w.warehouse_name as warehouseName,
-               r.point_id as pointId,
-               p.point_name as pointName,
-               p.zone_code as zoneCode,
-               p.layer_no as layerNo,
-               p.point_no as pointNo,
-               date_format(r.collected_at, '%Y-%m-%d %H:%i:%s') as collectedAt,
-               r.temperature_value as temperatureValue,
-               r.source_type as sourceType,
-               r.quality_flag as qualityFlag
-        from grain_temp_record r
-                 join grain_temp_point p on r.point_id = p.id
-                 join warehouse w on r.warehouse_id = w.id
-        where (#{warehouseId} is null or r.warehouse_id = #{warehouseId})
-          and (#{startTime} is null or r.collected_at &gt;= #{startTime})
-          and (#{endTime} is null or r.collected_at &lt;= #{endTime})
-          and (#{zoneCode} is null or #{zoneCode} = '' or p.zone_code = #{zoneCode})
-          and (#{layerNo} is null or p.layer_no = #{layerNo})
+        <include refid="recordSelectColumns"/>
+        <include refid="recordQueryFromWhere"/>
         order by r.collected_at desc, p.layer_no asc, p.point_no asc
     </select>
 
+    <select id="selectPageByCondition" resultType="com.grain.platform.dto.grain.GrainTempRecordItemDto">
+        <include refid="recordSelectColumns"/>
+        <include refid="recordQueryFromWhere"/>
+        order by r.collected_at desc, p.layer_no asc, p.point_no asc
+        limit #{pageSize} offset #{offset}
+    </select>
+
+    <select id="countByCondition" resultType="long">
+        select count(1)
+        <include refid="recordQueryFromWhere"/>
+    </select>
+
     <select id="selectByWarehouseAndCollectedAt" resultType="com.grain.platform.dto.grain.GrainTempRecordItemDto">
-        select r.id as id,
-               r.warehouse_id as warehouseId,
-               w.warehouse_name as warehouseName,
-               r.point_id as pointId,
-               p.point_name as pointName,
-               p.zone_code as zoneCode,
-               p.layer_no as layerNo,
-               p.point_no as pointNo,
-               date_format(r.collected_at, '%Y-%m-%d %H:%i:%s') as collectedAt,
-               r.temperature_value as temperatureValue,
-               r.source_type as sourceType,
-               r.quality_flag as qualityFlag
+        <include refid="recordSelectColumns"/>
         from grain_temp_record r
                  join grain_temp_point p on r.point_id = p.id
                  join warehouse w on r.warehouse_id = w.id

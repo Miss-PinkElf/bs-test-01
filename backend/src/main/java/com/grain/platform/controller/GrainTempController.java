@@ -1,6 +1,7 @@
 package com.grain.platform.controller;
 
 import com.grain.platform.common.ApiResponse;
+import com.grain.platform.common.PageResult;
 import com.grain.platform.dto.grain.GrainTempImportResultDto;
 import com.grain.platform.dto.grain.GrainTempRecordItemDto;
 import com.grain.platform.dto.grain.GrainTempRecordUpsertRequest;
@@ -69,14 +70,24 @@ public class GrainTempController {
     }
 
     @GetMapping("/records")
-    public ApiResponse<List<GrainTempRecordItemDto>> listRecords(
+    public ApiResponse<PageResult<GrainTempRecordItemDto>> listRecords(
             @RequestParam(required = false) Long warehouseId,
             @RequestParam(required = false) @DateTimeFormat(pattern = "yyyy-MM-dd HH:mm:ss") LocalDateTime startTime,
             @RequestParam(required = false) @DateTimeFormat(pattern = "yyyy-MM-dd HH:mm:ss") LocalDateTime endTime,
             @RequestParam(required = false) String zoneCode,
-            @RequestParam(required = false) Integer layerNo
+            @RequestParam(required = false) Integer layerNo,
+            @RequestParam(defaultValue = "1") Integer pageNum,
+            @RequestParam(defaultValue = "10") Integer pageSize
     ) {
-        return ApiResponse.success(grainTempService.listRecords(warehouseId, startTime, endTime, zoneCode, layerNo));
+        return ApiResponse.success(grainTempService.listRecordPage(
+                warehouseId,
+                startTime,
+                endTime,
+                zoneCode,
+                layerNo,
+                pageNum,
+                pageSize
+        ));
     }
 
     @GetMapping("/summaries")

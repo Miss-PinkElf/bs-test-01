@@ -2,6 +2,7 @@
 import * as echarts from "echarts";
 import { nextTick, onBeforeUnmount, onMounted, reactive, ref } from "vue";
 import { fetchPredictionTasks, fetchWarehouses, predictMetric } from "../api/grain";
+import { useClientPagination } from "../composables/useClientPagination";
 
 const chartRef = ref();
 const loading = ref(false);
@@ -9,6 +10,10 @@ const historyLoading = ref(false);
 const warehouses = ref([]);
 const predictionHistory = ref([]);
 const selectedTaskId = ref(null);
+const resultPagination = useClientPagination(() => prediction.value.resultList, {
+  initialPageSize: 10
+});
+const historyPagination = useClientPagination(predictionHistory);
 const prediction = ref({
   taskNo: "",
   warehouseName: "",
@@ -47,6 +52,10 @@ function formatDateTime(value) {
 
 function getTargetLabel(value) {
   return targetOptions.find((item) => item.value === value)?.label || value;
+}
+
+function resolveHistoryRowClassName({ row }) {
+  return row.taskId === selectedTaskId.value ? "interactive-table-row is-active-row" : "interactive-table-row";
 }
 
 async function loadWarehouses() {
@@ -233,7 +242,7 @@ onBeforeUnmount(() => {
             <div class="panel-title">预测结果列表</div>
           </template>
 
-          <el-table :data="prediction.resultList" stripe v-loading="loading">
+          <el-table :data="resultPagination.pagedItems" stripe v-loading="loading">
             <el-table-column prop="phaseType" label="阶段" width="90" />
             <el-table-column prop="stepIndex" label="序号" width="90" />
             <el-table-column label="时间">
@@ -254,6 +263,19 @@ onBeforeUnmount(() => {
             <el-table-column prop="warningLevel" label="预警等级" width="110" />
             <el-table-column prop="warningMessage" label="预警说明" min-width="180" />
           </el-table>
+
+          <div class="table-pagination">
+            <el-pagination
+              background
+              layout="total, sizes, prev, pager, next"
+              :current-page="resultPagination.currentPage"
+              :page-size="resultPagination.pageSize"
+              :page-sizes="resultPagination.pageSizes"
+              :total="resultPagination.total"
+              @current-change="resultPagination.handleCurrentChange"
+              @size-change="resultPagination.handleSizeChange"
+            />
+          </div>
         </el-card>
       </el-col>
 
@@ -263,27 +285,39 @@ onBeforeUnmount(() => {
             <div class="panel-title">历史归档记录</div>
           </template>
 
-          <div class="stack-list" v-loading="historyLoading">
-            <div
-              v-for="item in predictionHistory"
-              :key="item.taskId"
-              class="list-card prediction-history-card"
-              :class="{ 'is-active': item.taskId === selectedTaskId }"
-              @click="selectPredictionTask(item)"
-            >
-              <div class="list-card-header">
-                <strong>{{ item.taskNo }}</strong>
-                <el-tag type="info">{{ getTargetLabel(item.targetType) }}</el-tag>
-              </div>
-              <div class="list-card-desc">仓库：{{ item.warehouseName }}</div>
-              <div class="list-card-desc">风险等级：{{ item.riskLevel }}</div>
-              <div class="list-card-desc">预测天数：{{ item.forecastDays }}</div>
-              <div class="list-card-desc">{{ formatDateTime(item.requestedAt) }}</div>
-              <div class="list-card-desc">{{ item.summary }}</div>
-            </div>
-            <el-empty
-              v-if="!historyLoading && predictionHistory.length === 0"
-              description="暂无预测归档记录"
+          <el-table
+            :data="historyPagination.pagedItems"
+            stripe
+            v-loading="historyLoading"
+            :row-class-name="resolveHistoryRowClassName"
+            @row-click="selectPredictionTask"
+          >
+            <el-table-column prop="taskNo" label="任务号" min-width="160" />
+            <el-table-column label="预测对象" min-width="130">
+              <template #default="{ row }">
+                {{ getTargetLabel(row.targetType) }}
+              </template>
+            </el-table-column>
+            <el-table-column prop="warehouseName" label="仓库" min-width="120" />
+            <el-table-column prop="riskLevel" label="风险等级" width="110" />
+            <el-table-column prop="forecastDays" label="预测天数" width="110" />
+            <el-table-column label="执行时间" min-width="160">
+              <template #default="{ row }">
+                {{ formatDateTime(row.requestedAt) }}
+              </template>
+            </el-table-column>
+          </el-table>
+
+          <div class="table-pagination">
+            <el-pagination
+              background
+              layout="total, sizes, prev, pager, next"
+              :current-page="historyPagination.currentPage"
+              :page-size="historyPagination.pageSize"
+              :page-sizes="historyPagination.pageSizes"
+              :total="historyPagination.total"
+              @current-change="historyPagination.handleCurrentChange"
+              @size-change="historyPagination.handleSizeChange"
             />
           </div>
         </el-card>
