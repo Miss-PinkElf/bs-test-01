@@ -202,6 +202,24 @@ body {
   gap: 12px;
 }
 
+.table-toolbar {
+  margin-bottom: 12px;
+}
+
+.table-search-input {
+  flex: 1;
+  min-width: 200px;
+  max-width: 420px;
+}
+
+.data-hint-block {
+  margin-top: 12px;
+}
+
+.summary-latest-hint {
+  margin-bottom: 12px;
+}
+
 .dialog-footer {
   display: flex;
   justify-content: flex-end;
@@ -480,6 +498,25 @@ body {
   border-left: 3px solid #f59e0b;
   border-radius: 12px;
   background: rgba(245, 158, 11, 0.12);
+}
+
+/* 大屏内表格：与深色背景、后台列表展示风格对齐 */
+.screen-page .screen-data-table.el-table {
+  --el-table-bg-color: rgba(255, 255, 255, 0.04);
+  --el-table-tr-bg-color: rgba(255, 255, 255, 0.04);
+  --el-table-header-bg-color: rgba(255, 255, 255, 0.1);
+  --el-table-row-hover-bg-color: rgba(255, 255, 255, 0.08);
+  --el-table-border-color: rgba(223, 243, 239, 0.14);
+  --el-table-text-color: rgba(238, 248, 243, 0.92);
+  color: rgba(238, 248, 243, 0.92);
+}
+
+.screen-page .screen-data-table.el-table th.el-table__cell {
+  color: rgba(238, 248, 243, 0.88);
+}
+
+.screen-page .screen-data-table.el-table .cell {
+  line-height: 1.55;
 }
 
 @media (max-width: 1100px) {

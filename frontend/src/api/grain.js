@@ -283,6 +283,7 @@ export async function fetchSensorData(params = {}) {
     params: {
       warehouseId: params.warehouseId || undefined,
       metricCode: params.metricCode || undefined,
+      keyword: params.keyword || undefined,
       pageNum: params.pageNum || 1,
       pageSize: params.pageSize || 10
     }
@@ -383,6 +384,7 @@ export async function fetchGrainTempRecords(params = {}) {
       endTime: params.endTime || undefined,
       zoneCode: params.zoneCode || undefined,
       layerNo: params.layerNo || undefined,
+      keyword: params.keyword || undefined,
       pageNum: params.pageNum || 1,
       pageSize: params.pageSize || 10
     }

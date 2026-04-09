@@ -12,6 +12,7 @@
 - `.devflow/grain-platform-bootstrap/plans/2026-04-09-acceptance-smoke-script.md`
 - `.devflow/grain-platform-bootstrap/plans/2026-04-09-data-crud-and-temperature-recompute.md`
 - `.devflow/grain-platform-bootstrap/plans/2026-04-09-frontend-list-unification.md`
+- `.devflow/grain-platform-bootstrap/plans/2026-04-10-usersview-and-screen-display-unification.md`
 
 ## 使用约定
 - 若后续进入 devflow 的重型路径，可在 `.devflow/grain-platform-bootstrap/plans/` 下继续新增或拆分计划文件。

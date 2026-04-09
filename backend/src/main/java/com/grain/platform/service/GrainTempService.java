@@ -51,7 +51,7 @@ public class GrainTempService {
                                                     LocalDateTime endTime,
                                                     String zoneCode,
                                                     Integer layerNo) {
-        return grainTempRecordMapper.selectByCondition(warehouseId, startTime, endTime, zoneCode, layerNo);
+        return grainTempRecordMapper.selectByCondition(warehouseId, startTime, endTime, zoneCode, layerNo, null);
     }
 
     public PageResult<GrainTempRecordItemDto> listRecordPage(Long warehouseId,
@@ -59,11 +59,13 @@ public class GrainTempService {
                                                              LocalDateTime endTime,
                                                              String zoneCode,
                                                              Integer layerNo,
+                                                             String keyword,
                                                              Integer pageNum,
                                                              Integer pageSize) {
+        String kw = (keyword == null || keyword.isBlank()) ? null : keyword.trim();
         int finalPageNum = pageNum == null || pageNum < 1 ? 1 : pageNum;
         int finalPageSize = pageSize == null || pageSize < 1 ? 10 : pageSize;
-        long total = grainTempRecordMapper.countByCondition(warehouseId, startTime, endTime, zoneCode, layerNo);
+        long total = grainTempRecordMapper.countByCondition(warehouseId, startTime, endTime, zoneCode, layerNo, kw);
         int maxPage = total == 0 ? 1 : (int) Math.ceil((double) total / finalPageSize);
         finalPageNum = Math.min(finalPageNum, maxPage);
         int offset = (finalPageNum - 1) * finalPageSize;
@@ -73,6 +75,7 @@ public class GrainTempService {
                 endTime,
                 zoneCode,
                 layerNo,
+                kw,
                 offset,
                 finalPageSize
         );

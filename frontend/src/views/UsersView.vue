@@ -1,5 +1,6 @@
 <script setup>
-import { computed, onMounted, reactive, ref } from "vue";
+import { Search } from "@element-plus/icons-vue";
+import { computed, onMounted, reactive, ref, watch } from "vue";
 import { ElMessage, ElMessageBox } from "element-plus";
 import {
   createUser,
@@ -11,6 +12,7 @@ import {
   updateUser
 } from "../api/grain";
 import { useClientPagination } from "../composables/useClientPagination";
+import { filterRows } from "../utils/fuzzyText";
 
 const loading = ref(false);
 const dialogVisible = ref(false);
@@ -20,8 +22,29 @@ const roles = ref([]);
 const warehouses = ref([]);
 const editingUserId = ref(null);
 const passwordTarget = ref(null);
+const userTableKeyword = ref("");
+const roleTableKeyword = ref("");
 
-const userPagination = useClientPagination(users);
+const filteredUsers = computed(() =>
+  filterRows(users.value, userTableKeyword.value, (row) => [
+    row.username,
+    row.displayName,
+    row.phone,
+    ...(row.roleNames || []),
+    row.warehouseName,
+    formatStatus(row.status)
+  ])
+);
+
+const filteredRoles = computed(() =>
+  filterRows(roles.value, roleTableKeyword.value, (row) => [row.roleName, row.roleCode, row.roleDesc])
+);
+
+const userPagination = useClientPagination(filteredUsers);
+
+watch(userTableKeyword, () => {
+  userPagination.resetPagination();
+});
 
 const userForm = reactive({
   username: "",
@@ -233,6 +256,16 @@ onMounted(loadUsersPage);
             </div>
           </template>
 
+          <div class="toolbar-row table-toolbar">
+            <el-input
+              v-model="userTableKeyword"
+              class="table-search-input"
+              clearable
+              placeholder="搜索用户名、姓名、手机号、角色、所属范围、状态"
+              :prefix-icon="Search"
+            />
+          </div>
+
           <el-table :data="userPagination.pagedItems" stripe v-loading="loading">
             <el-table-column prop="username" label="用户名" min-width="120" />
             <el-table-column prop="displayName" label="姓名" min-width="120" />
@@ -276,20 +309,33 @@ onMounted(loadUsersPage);
       </el-col>
 
       <el-col :xs="24" :xl="9">
-        <div class="page-stack">
-          <el-card
-            v-for="item in roles"
-            :key="item.roleCode"
-            class="panel-card"
-            shadow="never"
-          >
-            <div class="list-card-header">
-              <strong>{{ item.roleName }}</strong>
-              <el-tag>{{ item.roleCode }}</el-tag>
+        <el-card class="panel-card" shadow="never">
+          <template #header>
+            <div class="panel-header">
+              <div class="panel-title">角色说明</div>
             </div>
-            <div class="list-card-desc">{{ item.roleDesc }}</div>
-          </el-card>
-        </div>
+          </template>
+
+          <div class="toolbar-row table-toolbar">
+            <el-input
+              v-model="roleTableKeyword"
+              class="table-search-input"
+              clearable
+              placeholder="搜索角色名称、编码、说明"
+              :prefix-icon="Search"
+            />
+          </div>
+
+          <el-table :data="filteredRoles" stripe border v-loading="loading">
+            <el-table-column prop="roleName" label="角色名称" min-width="110" />
+            <el-table-column label="角色编码" min-width="120">
+              <template #default="{ row }">
+                <el-tag size="small" type="info">{{ row.roleCode }}</el-tag>
+              </template>
+            </el-table-column>
+            <el-table-column prop="roleDesc" label="说明" min-width="160" show-overflow-tooltip />
+          </el-table>
+        </el-card>
       </el-col>
     </el-row>
 
@@ -386,8 +432,8 @@ onMounted(loadUsersPage);
     <el-alert
       type="info"
       :closable="false"
-      title="当前说明"
-      description="本轮先补齐用户新增、编辑、删除和密码重置；右侧角色说明区与 /screen 展示统一仍留待后续收口。"
+      title="提示"
+      description="用户列表支持新增、编辑、删除与重置密码；右侧为各角色编码与权限说明，分配角色时请结合业务需要选择。"
     />
   </div>
 </template>

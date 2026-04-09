@@ -1,8 +1,10 @@
 <script setup>
-import { computed, onMounted, ref } from "vue";
+import { Search } from "@element-plus/icons-vue";
+import { computed, onMounted, ref, watch } from "vue";
 import { fetchOverview } from "../api/grain";
 import { useClientPagination } from "../composables/useClientPagination";
 import { useIncrementalList } from "../composables/useIncrementalList";
+import { filterRows } from "../utils/fuzzyText";
 
 const loading = ref(false);
 const overview = ref({
@@ -15,17 +17,64 @@ const overview = ref({
   latestGrainSummaries: [],
   warehouseHealthList: []
 });
-const summaryPagination = useClientPagination(() => overview.value.latestGrainSummaries, {
+const summaryTableKeyword = ref("");
+const healthTableKeyword = ref("");
+const alertKeyword = ref("");
+
+const filteredGrainSummaries = computed(() =>
+  filterRows(overview.value.latestGrainSummaries || [], summaryTableKeyword.value, (row) => [
+    row.warehouseName,
+    row.warningLevel,
+    String(row.avgTemp ?? ""),
+    String(row.maxTemp ?? ""),
+    row.collectedAt
+  ])
+);
+
+const filteredWarehouseHealth = computed(() =>
+  filterRows(overview.value.warehouseHealthList || [], healthTableKeyword.value, (row) => [
+    row.warehouseName,
+    String(row.healthScore ?? ""),
+    row.riskLevel,
+    row.realWarningLevel,
+    row.predictionWarningLevel
+  ])
+);
+
+const filteredAlerts = computed(() =>
+  filterRows(overview.value.latestAlerts || [], alertKeyword.value, (item) => [
+    item.title,
+    item.description,
+    item.warehouseName,
+    item.eventTime,
+    item.level,
+    item.sourceType
+  ])
+);
+
+const summaryPagination = useClientPagination(filteredGrainSummaries, {
   initialPageSize: 5
 });
-const healthPagination = useClientPagination(() => overview.value.warehouseHealthList, {
+const healthPagination = useClientPagination(filteredWarehouseHealth, {
   initialPageSize: 5
 });
-const alertList = useIncrementalList(() => overview.value.latestAlerts, {
+const alertList = useIncrementalList(filteredAlerts, {
   step: 4,
   initialCount: 4
 });
 const visibleAlerts = computed(() => alertList.visibleItems.filter(Boolean));
+
+watch(summaryTableKeyword, () => {
+  summaryPagination.resetPagination();
+});
+
+watch(healthTableKeyword, () => {
+  healthPagination.resetPagination();
+});
+
+watch(alertKeyword, () => {
+  alertList.resetVisibleCount();
+});
 
 const cards = computed(() => [
   { label: "在线粮仓", value: overview.value.warehouseCount, note: "当前纳入演示范围的仓库数量" },
@@ -108,6 +157,16 @@ onMounted(loadOverview);
             <div class="panel-title">近期预警</div>
           </template>
 
+          <div class="toolbar-row table-toolbar">
+            <el-input
+              v-model="alertKeyword"
+              class="table-search-input"
+              clearable
+              placeholder="搜索标题、仓库、说明、等级"
+              :prefix-icon="Search"
+            />
+          </div>
+
           <el-skeleton :loading="loading" animated>
             <template #template>
               <el-skeleton-item
@@ -146,7 +205,7 @@ onMounted(loadOverview);
             </el-scrollbar>
 
             <el-empty
-              v-if="!loading && overview.latestAlerts.length === 0"
+              v-if="!loading && filteredAlerts.length === 0"
               description="暂无近期预警"
             />
           </el-skeleton>
@@ -158,6 +217,16 @@ onMounted(loadOverview);
           <template #header>
             <div class="panel-title">仓库运行健康度</div>
           </template>
+
+          <div class="toolbar-row table-toolbar">
+            <el-input
+              v-model="healthTableKeyword"
+              class="table-search-input"
+              clearable
+              placeholder="搜索仓库、健康分、风险等级"
+              :prefix-icon="Search"
+            />
+          </div>
 
           <el-table :data="healthPagination.pagedItems" stripe v-loading="loading">
             <el-table-column prop="warehouseName" label="仓库" min-width="120" />
@@ -201,6 +270,16 @@ onMounted(loadOverview);
           <template #header>
             <div class="panel-title">最新粮温汇总</div>
           </template>
+
+          <div class="toolbar-row table-toolbar">
+            <el-input
+              v-model="summaryTableKeyword"
+              class="table-search-input"
+              clearable
+              placeholder="搜索仓库、均温、预警等级、时间"
+              :prefix-icon="Search"
+            />
+          </div>
 
           <el-table :data="summaryPagination.pagedItems" stripe v-loading="loading">
             <el-table-column prop="warehouseName" label="仓库" />

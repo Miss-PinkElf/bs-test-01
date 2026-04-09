@@ -76,6 +76,7 @@ public class GrainTempController {
             @RequestParam(required = false) @DateTimeFormat(pattern = "yyyy-MM-dd HH:mm:ss") LocalDateTime endTime,
             @RequestParam(required = false) String zoneCode,
             @RequestParam(required = false) Integer layerNo,
+            @RequestParam(required = false) String keyword,
             @RequestParam(defaultValue = "1") Integer pageNum,
             @RequestParam(defaultValue = "10") Integer pageSize
     ) {
@@ -85,6 +86,7 @@ public class GrainTempController {
                 endTime,
                 zoneCode,
                 layerNo,
+                keyword,
                 pageNum,
                 pageSize
         ));

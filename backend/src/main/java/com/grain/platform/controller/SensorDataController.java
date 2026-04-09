@@ -47,12 +47,13 @@ public class SensorDataController {
             @RequestParam(required = false) Long warehouseId,
             @RequestParam(required = false) String metricCode,
             @RequestParam(required = false) String metricType,
+            @RequestParam(required = false) String keyword,
             @RequestParam(defaultValue = "1") Integer pageNum,
             @RequestParam(defaultValue = "10") Integer pageSize
     ) {
         String finalMetricCode = (metricCode == null || metricCode.isBlank()) ? metricType : metricCode;
-        log.info("调用环境数据列表接口，warehouseId={}, metricCode={}, pageNum={}, pageSize={}", warehouseId, finalMetricCode, pageNum, pageSize);
-        PageResult<SensorDataPointDto> response = sensorDataService.listPage(warehouseId, finalMetricCode, pageNum, pageSize);
+        log.info("调用环境数据列表接口，warehouseId={}, metricCode={}, keyword={}, pageNum={}, pageSize={}", warehouseId, finalMetricCode, keyword, pageNum, pageSize);
+        PageResult<SensorDataPointDto> response = sensorDataService.listPage(warehouseId, finalMetricCode, keyword, pageNum, pageSize);
         log.info("获取环境数据列表成功，count={}, total={}", response.list().size(), response.total());
         return ApiResponse.success(response);
     }

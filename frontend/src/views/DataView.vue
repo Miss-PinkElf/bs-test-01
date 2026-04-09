@@ -1,7 +1,8 @@
 <script setup>
+import { Search } from "@element-plus/icons-vue";
 import * as echarts from "echarts";
 import { ElMessage, ElMessageBox } from "element-plus";
-import { computed, nextTick, onBeforeUnmount, onMounted, reactive, ref } from "vue";
+import { computed, nextTick, onBeforeUnmount, onMounted, reactive, ref, watch } from "vue";
 import {
   createGrainTempRecord,
   createSensorData,
@@ -21,6 +22,7 @@ import {
   updateSensorData
 } from "../api/grain";
 import { useClientPagination } from "../composables/useClientPagination";
+import { filterRows } from "../utils/fuzzyText";
 
 const chartRef = ref();
 const loading = ref(false);
@@ -33,8 +35,30 @@ const grainSummaryRows = ref([]);
 const metricOptions = ref([]);
 const editingId = ref(null);
 const envTrendRows = ref([]);
-const grainSummaryPagination = useClientPagination(grainSummaryRows);
+const grainSummaryKeyword = ref("");
+const grainRecordKeyword = ref("");
+const envRecordKeyword = ref("");
+
+const filteredGrainSummaries = computed(() =>
+  filterRows(grainSummaryRows.value, grainSummaryKeyword.value, (row) => [
+    row.warehouseName,
+    row.warningLevel,
+    row.warningMessage,
+    String(row.avgTemp ?? ""),
+    String(row.maxTemp ?? ""),
+    String(row.minTemp ?? ""),
+    formatDateTime(row.collectedAt)
+  ])
+);
+
+const grainSummaryPagination = useClientPagination(filteredGrainSummaries);
+
+watch(grainSummaryKeyword, () => {
+  grainSummaryPagination.resetPagination();
+});
+
 let chart;
+let recordKeywordTimer;
 
 const filters = reactive({
   warehouseId: "",
@@ -72,7 +96,7 @@ const dialogTitle = computed(() => {
   return isEditing.value ? "编辑普通环境数据" : "手工录入普通环境数据";
 });
 
-const latestGrainSummary = computed(() => grainSummaryRows.value.at(-1) || null);
+const latestGrainSummary = computed(() => filteredGrainSummaries.value.at(-1) || null);
 const grainRecordPageState = reactive({
   pageNum: 1,
   pageSize: 10,
@@ -169,7 +193,8 @@ async function loadData() {
         fetchGrainTempRecords({
           warehouseId: filters.warehouseId,
           pageNum: grainRecordPageState.pageNum,
-          pageSize: grainRecordPageState.pageSize
+          pageSize: grainRecordPageState.pageSize,
+          keyword: grainRecordKeyword.value.trim() || undefined
         })
       ]);
       grainSummaryRows.value = summaryList;
@@ -185,7 +210,8 @@ async function loadData() {
           warehouseId: filters.warehouseId,
           metricCode: filters.metricCode,
           pageNum: envRecordPageState.pageNum,
-          pageSize: envRecordPageState.pageSize
+          pageSize: envRecordPageState.pageSize,
+          keyword: envRecordKeyword.value.trim() || undefined
         }),
         fetchSensorTrend({
           warehouseId: filters.warehouseId,
@@ -330,6 +356,22 @@ async function handleModeChange() {
   await loadData();
 }
 
+function scheduleRecordKeywordReload() {
+  clearTimeout(recordKeywordTimer);
+  recordKeywordTimer = setTimeout(() => {
+    if (mode.value === "grain") {
+      grainRecordPageState.pageNum = 1;
+    } else {
+      envRecordPageState.pageNum = 1;
+    }
+
+    loadData();
+  }, 400);
+}
+
+watch(grainRecordKeyword, scheduleRecordKeywordReload);
+watch(envRecordKeyword, scheduleRecordKeywordReload);
+
 function renderChart() {
   if (!chartRef.value) {
     return;
@@ -346,7 +388,7 @@ function renderChart() {
       grid: { left: 32, right: 18, top: 30, bottom: 28 },
       xAxis: {
         type: "category",
-        data: grainSummaryRows.value.map((item) => formatDateTime(item.collectedAt))
+        data: filteredGrainSummaries.value.map((item) => formatDateTime(item.collectedAt))
       },
       yAxis: { type: "value" },
       series: [
@@ -354,7 +396,7 @@ function renderChart() {
           name: "整仓平均温度",
           type: "line",
           smooth: true,
-          data: grainSummaryRows.value.map((item) => item.avgTemp),
+          data: filteredGrainSummaries.value.map((item) => item.avgTemp),
           lineStyle: { color: "#0b7a75" },
           itemStyle: { color: "#0b7a75" }
         },
@@ -362,7 +404,7 @@ function renderChart() {
           name: "最高温",
           type: "line",
           smooth: true,
-          data: grainSummaryRows.value.map((item) => item.maxTemp),
+          data: filteredGrainSummaries.value.map((item) => item.maxTemp),
           lineStyle: { color: "#ea580c" },
           itemStyle: { color: "#ea580c" }
         }
@@ -410,6 +452,8 @@ onMounted(async () => {
 });
 
 onBeforeUnmount(() => {
+  clearTimeout(recordKeywordTimer);
+
   if (chart) {
     chart.dispose();
   }
@@ -430,7 +474,7 @@ onBeforeUnmount(() => {
             <el-radio-button label="env">普通环境数据</el-radio-button>
           </el-radio-group>
 
-          <div class="compact-lines" style="margin-top: 12px">
+          <div class="compact-lines data-hint-block">
             <div v-if="mode === 'grain'">粮温模式当前维护原始测点记录，系统会自动联动重算层温、整仓汇总和真实预警。</div>
             <div v-else>普通环境模式维护湿度 / 二氧化碳单值记录，支持手工录入、导入、编辑、删除和趋势查询。</div>
           </div>
@@ -521,7 +565,17 @@ onBeforeUnmount(() => {
         <div class="panel-title">粮温汇总结果</div>
       </template>
 
-      <div v-if="latestGrainSummary" class="compact-lines" style="margin-bottom: 12px">
+      <div class="toolbar-row table-toolbar">
+        <el-input
+          v-model="grainSummaryKeyword"
+          class="table-search-input"
+          clearable
+          placeholder="搜索仓库、预警等级、温度、时间"
+          :prefix-icon="Search"
+        />
+      </div>
+
+      <div v-if="latestGrainSummary" class="compact-lines summary-latest-hint">
         <div>最新汇总：{{ latestGrainSummary.warehouseName }} / {{ formatDateTime(latestGrainSummary.collectedAt) }}</div>
         <div>预警等级：{{ latestGrainSummary.warningLevel }}，说明：{{ latestGrainSummary.warningMessage || "暂无" }}</div>
       </div>
@@ -562,6 +616,25 @@ onBeforeUnmount(() => {
       <template #header>
         <div class="panel-title">{{ mode === "grain" ? "粮温原始测点记录" : "环境数据记录" }}</div>
       </template>
+
+      <div class="toolbar-row table-toolbar">
+        <el-input
+          v-if="mode === 'grain'"
+          v-model="grainRecordKeyword"
+          class="table-search-input"
+          clearable
+          placeholder="搜索仓库、区域、层号、点位等（服务端模糊匹配）"
+          :prefix-icon="Search"
+        />
+        <el-input
+          v-else
+          v-model="envRecordKeyword"
+          class="table-search-input"
+          clearable
+          placeholder="搜索仓库、指标名称、指标编码（服务端模糊匹配）"
+          :prefix-icon="Search"
+        />
+      </div>
 
       <el-table v-if="mode === 'grain'" :data="rows" stripe v-loading="loading">
         <el-table-column prop="warehouseName" label="仓库" />

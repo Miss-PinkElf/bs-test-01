@@ -7,7 +7,7 @@
 说明：
 
 - 旧版 `后端接口与DTO-VO-Mapper设计.md` 已归档到 `zzz-docs/Archive/`
-- 若与当前 PRD、当前数据库设计或用户最新口径冲突，以最新 PRD、最新数据库设计和 `.explore` 中最新 handoff 为准
+- 若与当前 PRD、当前数据库设计或用户最新口径冲突，以最新 PRD、最新数据库设计和 `.devflow/grain-platform-bootstrap/` 中最新 `state.md` / handoff 为准
 - 文档中涉及“修正预测”的部分，当前应视为扩展预留，而不是本期必做项
 
 ## 2. 路线说明

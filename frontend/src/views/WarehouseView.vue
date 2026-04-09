@@ -1,15 +1,34 @@
 <script setup>
-import { computed, onMounted, reactive, ref } from "vue";
+import { Search } from "@element-plus/icons-vue";
+import { computed, onMounted, reactive, ref, watch } from "vue";
 import { ElMessage, ElMessageBox } from "element-plus";
 import { createWarehouse, deleteWarehouse, fetchWarehouses, updateWarehouse } from "../api/grain";
 import { useClientPagination } from "../composables/useClientPagination";
+import { filterRows } from "../utils/fuzzyText";
 
 const loading = ref(false);
 const dialogVisible = ref(false);
 const warehouses = ref([]);
 const selectedWarehouseId = ref(null);
 const editingWarehouseId = ref(null);
-const warehousePagination = useClientPagination(warehouses);
+const warehouseTableKeyword = ref("");
+
+const filteredWarehouses = computed(() =>
+  filterRows(warehouses.value, warehouseTableKeyword.value, (row) => [
+    row.warehouseCode,
+    row.warehouseName,
+    row.location,
+    String(row.capacityTon ?? ""),
+    row.managerName,
+    row.status
+  ])
+);
+
+const warehousePagination = useClientPagination(filteredWarehouses);
+
+watch(warehouseTableKeyword, () => {
+  warehousePagination.resetPagination();
+});
 const form = reactive({
   warehouseCode: "",
   warehouseName: "",
@@ -181,6 +200,16 @@ onMounted(loadWarehouses);
       <template #header>
         <div class="panel-title">仓库档案列表</div>
       </template>
+
+      <div class="toolbar-row table-toolbar">
+        <el-input
+          v-model="warehouseTableKeyword"
+          class="table-search-input"
+          clearable
+          placeholder="搜索编码、名称、位置、负责人、状态"
+          :prefix-icon="Search"
+        />
+      </div>
 
       <el-table
         :data="warehousePagination.pagedItems"

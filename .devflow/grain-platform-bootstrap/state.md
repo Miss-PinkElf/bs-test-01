@@ -1,7 +1,7 @@
 # 当前状态
 
 ## 当前阶段
-- Pause-ready after user CRUD and acceptance smoke script
+- Pause-ready after table search、Cursor 规则强化与 handoff 021（2026-04-10）
 
 ## 已确认的事实
 - 用户要求使用 `devflow` 记录过程。
@@ -77,7 +77,7 @@
   - 分页 / 增量加载 composable 已改为 `proxyRefs` 自动解包，避免 Element Plus 表格收到非数组包装值而触发 `data2 is not iterable`
 - 已确认后台管理当前实现边界：
   - `WarehouseController` / `WarehouseView.vue` 已补齐列表、选项、新增、编辑、删除
-  - `UserController` / `UsersView.vue` 当前仍只覆盖用户列表、角色选项与角色说明展示
+  - `UserController` / `UsersView.vue` 已补齐用户 CRUD、角色说明表与列表侧模糊搜索（列表数据为前端过滤）
 - 已完成新的初始化策略验证：
   - `backend/` 执行 `mvn -q -DskipTests compile` 成功
   - `.\scripts\reset-demo-db.ps1` 执行成功
@@ -102,6 +102,19 @@
   - 已更新回归验证清单：`zzz-docs/验证/数据库优先MVP-回归验证清单.md`
   - 已完成脚本运行态验证：`powershell` 执行 `./scripts/run-acceptance-smoke.ps1 -SkipStaticChecks` 全链路通过
   - 已完成单独静态验证：`backend/` 执行 `mvn -q -DskipTests compile` 成功，`frontend/` 执行 `npm run build` 成功
+- 已完成第四轮后台展示统一（用户页角色区 + 答辩大屏）：
+  - `UsersView.vue` 右侧角色说明已由多卡片改为单卡片内 `el-table`（角色名称 / 编码 / 说明），底部提示已改为常态化说明文案
+  - `BigScreenView.vue` 的「展示说明」「重点预警」已改为 `el-table`，卡片头与后台一致使用 `panel-header` + `panel-title`；`styles.css` 新增 `.screen-page .screen-data-table` 深色表格变量
+  - 静态验证：`frontend/` 执行 `npm run build` 成功
+- 已部分收口辅助文档口径：
+  - `zzz-docs/设计文档/后端接口与DTO-VO-Mapper设计-滚动预测版.md` 中冲突时的真相源已由 `.explore` 更正为 `.devflow/.../state.md` 与 handoff
+  - `zzz-docs/设计文档/滚动预测改造-字段与接口变更方案.md` 文首已增加「数据库优先 MVP」口径提示
+- 已为主流 CRUD 列表补「模糊搜索」能力：
+  - 前端工具：`frontend/src/utils/fuzzyText.js`（`filterRows` 子串匹配，ASCII 忽略大小写）
+  - 客户端分页页：`UsersView`（用户 + 角色表）、`WarehouseView`、`DataView` 粮温汇总表、`PredictionView`（结果表 + 历史表）、`DashboardView`（汇总 / 健康度 / 预警列表）均增加 `el-input` 搜索条
+  - 服务端分页：`GET /api/grain-temp/records`、`GET /api/sensor-data` 增加可选 `keyword`，MyBatis `LIKE` 模糊匹配仓库名、点位/区域/层号/指标等；`DataView` 原始记录区输入防抖后触发重新拉页
+- 已强化 Cursor 仓库规则：
+  - `.cursor/rules/project-zh.mdc` §3 增加「实现前对齐」硬约束（触发条件、禁止同轮直接大批量改代码、须先输出理解/方案/待确认、用户豁免语）
 
 ## 工作假设
 - 以毕业设计 MVP 为目标，先做可演示的软件平台，不接入真实硬件。
@@ -111,15 +124,16 @@
 - 后续更像是“以现有项目为基础的半重写”，并以当前新主线作为唯一开发依据。
 
 ## 待解决的问题
-- 用户管理 CRUD 已完成，但 `UsersView.vue` 右侧角色说明卡片区仍未做展示统一。
 - 首页与导入链路、后台管理关键链路已补齐一键验收脚本，但当前脚本在本沙箱内直接执行前端构建时仍可能命中 `esbuild spawn EPERM`；仓库内单独执行 `npm run build` 已通过。
-- 后台页列表样式已做第一轮统一，但 `UsersView.vue` 右侧角色说明仍保留卡片说明区；`/screen` 大屏仍未纳入本轮统一范围。
+- 验收脚本尚未对带 `keyword` 的分页接口做专门断言（可选补一条轻量 smoke）。
 - 预测修正字段已保留，但本期仍未实现修正入口与修正页，这与当前范围收口一致。
+- 用户/仓库列表当前为全量接口 + 前端搜索；若数据量显著增大，可再评估是否增加后端 `keyword`。
+- `/screen` 大屏表格未加本地筛选（可选）。
+- 归档目录、历史 handoff（`.explore/`、`zzz-docs/Archive/` 等）仍可能含旧主线表述，检索时以本 `state.md` 与最新 PRD 为准。
 - 旧版 PRD、数据库定稿、旧接口设计已归档；历史 handoff/checkpoint 中仍保留旧文件名，属于历史上下文，不应作为当前真相源。
 
 ## 下一步
-- 若继续统一前端展示，优先评估是否把 `UsersView.vue` 的角色说明卡片改成表格，以及是否把 `/screen` 大屏纳入同一规范。
-- 继续收口仍带旧口径的辅助文档，避免后续继续冲突。
+- 答辩前可再扫一遍 `zzz-docs/设计文档/` 中非归档文档，按需补「数据库优先 MVP」文首提示或真相源引用。
 - 如需在沙箱环境里重复跑脚本，可优先使用 `-SkipStaticChecks`，静态命令单独执行。
 
 ## 当前参考计划
@@ -130,12 +144,12 @@
 - `.devflow/grain-platform-bootstrap/plans/2026-04-09-user-crud.md`
 - `.devflow/grain-platform-bootstrap/plans/2026-04-09-data-crud-and-temperature-recompute.md`
 - `.devflow/grain-platform-bootstrap/plans/2026-04-09-frontend-list-unification.md`
+- `.devflow/grain-platform-bootstrap/plans/2026-04-10-usersview-and-screen-display-unification.md`
 
 ## 最新 handoff
-- `.devflow/grain-platform-bootstrap/handoffs/2026-04-09-020-pause-ready-after-user-crud-and-acceptance-smoke.md`
+- `.devflow/grain-platform-bootstrap/handoffs/2026-04-10-021-pause-ready-after-table-search-and-cursor-rules.md`
 
 ## 最小活跃上下文摘要
-- 当前已解除运行态阻塞：本机 MySQL `root` 密码已恢复为 `123456`，数据库优先 MVP 的首页概览、固定模板下载、固定模板导入、旧 CSV 和旧行式 `.xls` 兼容 smoke 已全部通过；同时本轮已完成初始化策略收口，默认启动不再自动清库，显式重置走 `scripts/reset-demo-db.ps1`。当前已完成数据主线 CRUD、后台页第一轮列表统一、数据管理页后端分页适配，以及仓库管理 CRUD；`WarehouseView.vue` 现在支持新增 / 编辑 / 删除，仓库接口已补齐 `PUT/DELETE`。当前过程记录已整体迁移到 `.devflow/grain-platform-bootstrap/`，并新增 `NEXT-SESSION-PROMPT.devflow.md` 作为新的恢复提示词副本。下一步应优先评估后台页展示统一与 `/screen` 是否纳入统一规范，并继续收口辅助文档口径。
-- 当前已解除运行态阻塞：本机 MySQL `root` 密码已恢复为 `123456`，数据库优先 MVP 的首页概览、固定模板下载、固定模板导入、旧 CSV 和旧行式 `.xls` 兼容 smoke 已全部通过；同时本轮已完成初始化策略收口，默认启动不再自动清库，显式重置走 `scripts/reset-demo-db.ps1`。当前已完成数据主线 CRUD、后台页第一轮列表统一、数据管理页后端分页适配，以及仓库管理 CRUD；`WarehouseView.vue` 已支持新增 / 编辑 / 删除，仓库接口已补齐 `PUT/DELETE`。本次会话中已完成用户 CRUD 的后端与前端实现，并拿到静态验证与运行态 smoke 证据；同时额外修复了 `scripts/start-backend.ps1` 的 UTF-8 编码问题，确认 `powershell.exe` 与 `pwsh.exe` 都可稳定拉起 `8081`。最新恢复入口仍可参考 `2026-04-09-019-pause-ready-after-init-and-warehouse-crud`，但当前主真相源应以本文件的最新状态为准，下一步直接进入展示统一或文档收口，不需要重复实现用户 CRUD 和验收脚本。
+- 在 020 基础上已落地：主流列表模糊搜索（前端过滤 + `/api/grain-temp/records` 与 `/api/sensor-data` 的 `keyword`）、`.cursor/rules/project-zh.mdc` 对齐门禁强化。恢复时读 021 handoff 与根目录 `NEXT-SESSION-PROMPT-DEVFLOW.md`。新需求默认先对齐再编码（见 mdc §3.2–3.3）；沙箱跑验收可 `-SkipStaticChecks`。
 
 

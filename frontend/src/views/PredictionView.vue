@@ -1,8 +1,10 @@
 <script setup>
+import { Search } from "@element-plus/icons-vue";
 import * as echarts from "echarts";
-import { nextTick, onBeforeUnmount, onMounted, reactive, ref } from "vue";
+import { computed, nextTick, onBeforeUnmount, onMounted, reactive, ref, watch } from "vue";
 import { fetchPredictionTasks, fetchWarehouses, predictMetric } from "../api/grain";
 import { useClientPagination } from "../composables/useClientPagination";
+import { filterRows } from "../utils/fuzzyText";
 
 const chartRef = ref();
 const loading = ref(false);
@@ -10,10 +12,9 @@ const historyLoading = ref(false);
 const warehouses = ref([]);
 const predictionHistory = ref([]);
 const selectedTaskId = ref(null);
-const resultPagination = useClientPagination(() => prediction.value.resultList, {
-  initialPageSize: 10
-});
-const historyPagination = useClientPagination(predictionHistory);
+const resultTableKeyword = ref("");
+const historyTableKeyword = ref("");
+
 const prediction = ref({
   taskNo: "",
   warehouseName: "",
@@ -30,12 +31,6 @@ const prediction = ref({
   resultList: []
 });
 
-const form = reactive({
-  warehouseId: "",
-  targetType: "AVG_TEMP",
-  forecastDays: 7
-});
-
 const targetOptions = [
   { value: "AVG_TEMP", label: "整仓平均温度" },
   { value: "LAYER_1_AVG", label: "第一层平均温度" },
@@ -44,8 +39,6 @@ const targetOptions = [
   { value: "LAYER_4_AVG", label: "第四层平均温度" }
 ];
 
-let chart;
-
 function formatDateTime(value) {
   return value ? String(value).replace("T", " ") : "-";
 }
@@ -53,6 +46,50 @@ function formatDateTime(value) {
 function getTargetLabel(value) {
   return targetOptions.find((item) => item.value === value)?.label || value;
 }
+
+const filteredResultList = computed(() =>
+  filterRows(prediction.value.resultList || [], resultTableKeyword.value, (row) => [
+    row.phaseType,
+    String(row.stepIndex ?? ""),
+    formatDateTime(row.resultTime),
+    row.actualValue,
+    row.predictedValue,
+    row.warningLevel,
+    row.warningMessage
+  ])
+);
+
+const filteredPredictionHistory = computed(() =>
+  filterRows(predictionHistory.value, historyTableKeyword.value, (row) => [
+    row.taskNo,
+    getTargetLabel(row.targetType),
+    row.warehouseName,
+    row.riskLevel,
+    String(row.forecastDays ?? ""),
+    formatDateTime(row.requestedAt)
+  ])
+);
+
+const resultPagination = useClientPagination(filteredResultList, {
+  initialPageSize: 10
+});
+const historyPagination = useClientPagination(filteredPredictionHistory);
+
+watch(resultTableKeyword, () => {
+  resultPagination.resetPagination();
+});
+
+watch(historyTableKeyword, () => {
+  historyPagination.resetPagination();
+});
+
+const form = reactive({
+  warehouseId: "",
+  targetType: "AVG_TEMP",
+  forecastDays: 7
+});
+
+let chart;
 
 function resolveHistoryRowClassName({ row }) {
   return row.taskId === selectedTaskId.value ? "interactive-table-row is-active-row" : "interactive-table-row";
@@ -242,6 +279,16 @@ onBeforeUnmount(() => {
             <div class="panel-title">预测结果列表</div>
           </template>
 
+          <div class="toolbar-row table-toolbar">
+            <el-input
+              v-model="resultTableKeyword"
+              class="table-search-input"
+              clearable
+              placeholder="搜索阶段、时间、实际值、预测值、预警"
+              :prefix-icon="Search"
+            />
+          </div>
+
           <el-table :data="resultPagination.pagedItems" stripe v-loading="loading">
             <el-table-column prop="phaseType" label="阶段" width="90" />
             <el-table-column prop="stepIndex" label="序号" width="90" />
@@ -284,6 +331,16 @@ onBeforeUnmount(() => {
           <template #header>
             <div class="panel-title">历史归档记录</div>
           </template>
+
+          <div class="toolbar-row table-toolbar">
+            <el-input
+              v-model="historyTableKeyword"
+              class="table-search-input"
+              clearable
+              placeholder="搜索任务号、仓库、风险等级、预测天数、时间"
+              :prefix-icon="Search"
+            />
+          </div>
 
           <el-table
             :data="historyPagination.pagedItems"

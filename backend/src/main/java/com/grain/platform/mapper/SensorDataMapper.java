@@ -11,14 +11,19 @@ import java.util.List;
 public interface SensorDataMapper {
     SensorData selectById(@Param("id") Long id);
 
-    List<SensorDataPointDto> selectByCondition(@Param("warehouseId") Long warehouseId, @Param("metricCode") String metricCode);
+    List<SensorDataPointDto> selectByCondition(@Param("warehouseId") Long warehouseId,
+                                               @Param("metricCode") String metricCode,
+                                               @Param("keyword") String keyword);
 
     List<SensorDataPointDto> selectPageByCondition(@Param("warehouseId") Long warehouseId,
                                                    @Param("metricCode") String metricCode,
+                                                   @Param("keyword") String keyword,
                                                    @Param("offset") int offset,
                                                    @Param("pageSize") int pageSize);
 
-    long countByCondition(@Param("warehouseId") Long warehouseId, @Param("metricCode") String metricCode);
+    long countByCondition(@Param("warehouseId") Long warehouseId,
+                          @Param("metricCode") String metricCode,
+                          @Param("keyword") String keyword);
 
     List<SensorDataPointDto> selectRecentByMetric(@Param("warehouseId") Long warehouseId, @Param("metricCode") String metricCode);
 

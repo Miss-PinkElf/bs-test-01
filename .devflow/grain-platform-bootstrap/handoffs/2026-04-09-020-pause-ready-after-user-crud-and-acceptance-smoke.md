@@ -6,7 +6,7 @@
 - mission：grain-platform-bootstrap
 - 当前阶段：Pause-ready after user CRUD and acceptance smoke script
 - handoff 编号：020
-- 是否 superseded：否
+- 是否 superseded：是（由 `2026-04-10-021` 接替）
 
 ## 当前目标
 

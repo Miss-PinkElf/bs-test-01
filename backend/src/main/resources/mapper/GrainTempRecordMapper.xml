@@ -28,6 +28,15 @@
           and (#{endTime} is null or r.collected_at &lt;= #{endTime})
           and (#{zoneCode} is null or #{zoneCode} = '' or p.zone_code = #{zoneCode})
           and (#{layerNo} is null or p.layer_no = #{layerNo})
+        <if test="keyword != null and keyword != ''">
+          and (
+            w.warehouse_name like concat('%', #{keyword}, '%')
+            or p.point_name like concat('%', #{keyword}, '%')
+            or ifnull(p.zone_code, '') like concat('%', #{keyword}, '%')
+            or cast(p.layer_no as char) like concat('%', #{keyword}, '%')
+            or cast(p.point_no as char) like concat('%', #{keyword}, '%')
+          )
+        </if>
     </sql>
 
     <insert id="insert" parameterType="com.grain.platform.entity.GrainTempRecord" useGeneratedKeys="true" keyProperty="id">

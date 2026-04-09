@@ -1,12 +1,36 @@
 <script setup>
-import { onMounted, ref } from "vue";
+import { computed, onMounted, ref } from "vue";
 import { useRouter } from "vue-router";
 import { fetchOverview } from "../api/grain";
 import { mockScreenAlerts, mockScreenMetrics } from "../mock/platform";
 
+const INTRO_ROWS = [
+  {
+    key: "scope",
+    content: "当前大屏用于答辩演示，不额外扩展机器人、硬件接入或复杂算法。"
+  },
+  {
+    key: "mainline",
+    content: "正式系统主流程聚焦粮温导入、真实预警、温度预测和结果归档（数据库优先 MVP）。"
+  },
+  {
+    key: "metrics",
+    content: "指标与首页一致：真实预警、预测预警、粮温汇总与归档预测任务等均已接入概览接口。"
+  }
+];
+
 const router = useRouter();
 const metrics = ref(mockScreenMetrics);
 const alerts = ref(mockScreenAlerts);
+
+const introRows = INTRO_ROWS;
+
+const alertTableRows = computed(() =>
+  alerts.value.map((text, index) => ({
+    id: index,
+    summary: text
+  }))
+);
 
 onMounted(async () => {
   try {
@@ -77,32 +101,29 @@ onMounted(async () => {
       <el-col :xs="24" :xl="15">
         <el-card class="screen-panel" shadow="never">
           <template #header>
-            <div class="panel-title">展示说明</div>
+            <div class="panel-header">
+              <div class="panel-title">展示说明</div>
+            </div>
           </template>
 
-          <div class="compact-lines">
-            <div>当前大屏用于答辩演示，不额外扩展机器人、硬件接入或复杂算法。</div>
-            <div>正式系统主流程聚焦粮温导入、真实预警、温度预测和结果归档。</div>
-            <div>首页和大屏都已优先切到真实预警与预测预警口径。</div>
-          </div>
+          <el-table class="screen-data-table" :data="introRows" stripe border row-key="key">
+            <el-table-column prop="content" label="说明" min-width="280" show-overflow-tooltip />
+          </el-table>
         </el-card>
       </el-col>
 
       <el-col :xs="24" :xl="9">
         <el-card class="screen-panel" shadow="never">
           <template #header>
-            <div class="panel-title">重点预警</div>
+            <div class="panel-header">
+              <div class="panel-title">重点预警</div>
+            </div>
           </template>
 
-          <div class="stack-list">
-            <div
-              v-for="item in alerts"
-              :key="item"
-              class="screen-alert-item"
-            >
-              {{ item }}
-            </div>
-          </div>
+          <el-table class="screen-data-table" :data="alertTableRows" stripe border row-key="id">
+            <el-table-column type="index" label="#" width="52" :index="(i) => i + 1" />
+            <el-table-column prop="summary" label="预警摘要" min-width="200" show-overflow-tooltip />
+          </el-table>
         </el-card>
       </el-col>
     </el-row>

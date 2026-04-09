@@ -36,6 +36,13 @@
                  join sensor_metric sm on sd.metric_code = sm.metric_code
         where (#{warehouseId} is null or sd.warehouse_id = #{warehouseId})
           and (#{metricCode} is null or #{metricCode} = '' or sd.metric_code = #{metricCode})
+        <if test="keyword != null and keyword != ''">
+          and (
+            w.warehouse_name like concat('%', #{keyword}, '%')
+            or sm.metric_name like concat('%', #{keyword}, '%')
+            or sd.metric_code like concat('%', #{keyword}, '%')
+          )
+        </if>
     </sql>
 
     <select id="selectByCondition" resultMap="sensorPointMap">

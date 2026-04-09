@@ -32,22 +32,23 @@ public class SensorDataService {
     }
 
     public List<SensorDataPointDto> list(Long warehouseId, String metricCode) {
-        return sensorDataMapper.selectByCondition(warehouseId, metricCode);
+        return sensorDataMapper.selectByCondition(warehouseId, metricCode, null);
     }
 
-    public PageResult<SensorDataPointDto> listPage(Long warehouseId, String metricCode, Integer pageNum, Integer pageSize) {
+    public PageResult<SensorDataPointDto> listPage(Long warehouseId, String metricCode, String keyword, Integer pageNum, Integer pageSize) {
+        String kw = (keyword == null || keyword.isBlank()) ? null : keyword.trim();
         int finalPageNum = pageNum == null || pageNum < 1 ? 1 : pageNum;
         int finalPageSize = pageSize == null || pageSize < 1 ? 10 : pageSize;
-        long total = sensorDataMapper.countByCondition(warehouseId, metricCode);
+        long total = sensorDataMapper.countByCondition(warehouseId, metricCode, kw);
         int maxPage = total == 0 ? 1 : (int) Math.ceil((double) total / finalPageSize);
         finalPageNum = Math.min(finalPageNum, maxPage);
         int offset = (finalPageNum - 1) * finalPageSize;
-        List<SensorDataPointDto> list = sensorDataMapper.selectPageByCondition(warehouseId, metricCode, offset, finalPageSize);
+        List<SensorDataPointDto> list = sensorDataMapper.selectPageByCondition(warehouseId, metricCode, kw, offset, finalPageSize);
         return new PageResult<>(list, finalPageNum, finalPageSize, total);
     }
 
     public SensorTrendResponse trend(Long warehouseId, String metricCode) {
-        List<SensorTrendPointDto> points = sensorDataMapper.selectByCondition(warehouseId, metricCode)
+        List<SensorTrendPointDto> points = sensorDataMapper.selectByCondition(warehouseId, metricCode, null)
                 .stream()
                 .map(item -> new SensorTrendPointDto(item.getCollectedAt(), item.getMetricValue()))
                 .toList();
