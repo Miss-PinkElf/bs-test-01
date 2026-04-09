@@ -1,13 +1,15 @@
+
 ```
 我现在要休息，看一下当前完成的，有没有需要记录或者更新的文档，
-记得写一个handoff，也就是使用context-budget-explore进行文档的记录，交接，完善，
-handoff,使用context-budget-explore内置的session-handoff
-同时写一个提示词，写到文档里面，这个是根目录的文件：NEXT-SESSION-PROMPT.md，
+记得写一个handoff，也就是使用devflow进行文档的记录，交接，完善，
+handoff，使用devflow这个skills的子skill
+同时写一个提示词，写到文档NEXT-SESSION-PROMPT-DEVFLOW.md里面，就在更目录下面那个，
+记得把这次对话中未完成的，没有讨论完的，类似的记录上
 直接更新即可，让我等会可以直接复制，同时提交一下代码
 ```
 
 export http_proxy=http://127.0.0.1:7897
-export https_proxy=http://127.0.0.1:7897 
+export https_proxy=http://127.0.0.1:7897  
 
 
 ```
