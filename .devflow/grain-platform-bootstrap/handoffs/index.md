@@ -1,11 +1,12 @@
 # Handoff 索引
 
 ## 最新 handoff
-- [2026-04-09-019-pause-ready-after-init-and-warehouse-crud](E:\Learn\Vs\Code\bs-test-01\.devflow\grain-platform-bootstrap\handoffs\2026-04-09-019-pause-ready-after-init-and-warehouse-crud.md)
+- [2026-04-09-020-pause-ready-after-user-crud-and-acceptance-smoke](D:\Users\Mobius\Desktop\mine\AAA-code\bs-test-01\.devflow\grain-platform-bootstrap\handoffs\2026-04-09-020-pause-ready-after-user-crud-and-acceptance-smoke.md)
 
 ## Handoff 列表
 
-- `2026-04-09-019-pause-ready-after-init-and-warehouse-crud` | 阶段：初始化策略收口 + 仓库 CRUD 完成后暂停 | 状态：latest
+- `2026-04-09-020-pause-ready-after-user-crud-and-acceptance-smoke` | 阶段：用户 CRUD + 验收脚本完成后暂停 | 状态：latest
+- `2026-04-09-019-pause-ready-after-init-and-warehouse-crud` | 阶段：初始化策略收口 + 仓库 CRUD 完成后暂停 | 状态：superseded
 - `2026-04-09-018-devflow-migration-ready` | 阶段：devflow 迁移完成 / 新恢复入口 | 状态：superseded
 - `2026-04-09-017-frontend-list-unification-and-data-pagination-ready` | 阶段：后台页列表统一 + 数据管理页后端分页完成 / 暂停恢复入口 | 状态：superseded
 - `2026-04-09-016-data-crud-and-handoff-ready` | 阶段：数据主线 CRUD + 温度联动重算完成 / 暂停恢复入口 | 状态：superseded

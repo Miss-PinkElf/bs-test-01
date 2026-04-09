@@ -416,3 +416,54 @@
   - 用户 CRUD 验证通过后再补验收脚本。
 - 可以从活跃上下文移除的内容：
   - 用户 CRUD 方案讨论中的重复边界确认语句。
+
+
+## 2026-04-09-019
+- 当前阶段：Apply / Verify completed for user CRUD
+- 本轮完成内容：
+  - 新增用户 CRUD 设计文档：`docs/superpowers/specs/2026-04-09-user-crud-design.md`。
+  - 新增用户 CRUD 实施计划：`docs/superpowers/plans/2026-04-09-user-crud.md`。
+  - 后端已补齐用户新增、编辑、删除、密码重置、多角色维护、所属仓库维护与最后一个启用管理员保护。
+  - 前端 `UsersView.vue` 已补齐新增 / 编辑 / 删除 / 重置密码交互，`frontend/src/api/grain.js` 已补齐用户 CRUD API 封装。
+  - 修复 `scripts/start-backend.ps1` 的 UTF-8 编码问题，并确认 `powershell.exe` 与 `pwsh.exe` 均可稳定拉起后端。
+  - 完成静态验证：`backend/` 执行 `mvn -q -DskipTests compile` 成功，`frontend/` 执行 `npm run build` 成功。
+  - 完成运行态 smoke：用户 create / update / reset password / delete 全链路通过，临时验证数据已清理。
+- 本轮决策与原因：
+  - 用户管理采用“资料 CRUD + 独立密码重置接口”，避免把普通资料修改和密码操作耦合到同一个编辑动作中。
+  - 当前删除语义继续保持硬删 + 引用拦截，不在本轮扩成逻辑删除。
+- 本轮沉淀经验：
+  - 在 Windows 环境下，含中文提示的 PowerShell 脚本应明确写成 UTF-8 BOM，避免不同宿主对脚本编码解析不一致。
+  - 运行态 smoke 结束后的清理脚本要避免误用 PowerShell 自动变量名，例如 `$PID`。
+- 待解决问题：
+  - PowerShell 验收脚本仍未落地。
+  - `UsersView.vue` 右侧角色说明卡片区与 `/screen` 展示统一仍未收口。
+- 下一步：
+  - 继续进入 Apply，优先补 PowerShell 验收脚本。
+  - 若脚本稳定后，再决定是否收口后台页展示统一。
+- 可以从活跃上下文移除的内容：
+  - 本轮为定位启动失败而追加的 PowerShell 编码排查中间输出。
+
+
+## 2026-04-09-020
+- 当前阶段：Apply / Verify completed for acceptance smoke script
+- 本轮完成内容：
+  - 新增一键验收脚本：`scripts/run-acceptance-smoke.ps1`。
+  - 新增计划文档：`docs/superpowers/plans/2026-04-09-acceptance-smoke-script.md`。
+  - 更新回归验证清单，补充脚本入口与参数说明。
+  - 脚本已串起：后端编译、前端构建、演示库重置、后端启动、用户 CRUD、固定模板下载/导入、旧 CSV 导入、旧行式 Excel 导入、首页概览与预测只读接口检查。
+  - 完成运行态验证：执行 `./scripts/run-acceptance-smoke.ps1 -SkipStaticChecks` 全链路通过。
+  - 完成单独静态验证：`backend/` 的 `mvn -q -DskipTests compile` 成功，`frontend/` 的 `npm run build` 成功。
+- 本轮决策与原因：
+  - 验收脚本默认仍保留静态检查，但为适配当前沙箱中 `esbuild spawn EPERM` 的环境差异，额外保留 `-SkipStaticChecks` 作为运行态回归入口。
+  - 旧行式 Excel 验证不再依赖仓库内无效 `1.6.xls` 样本，改为在脚本内动态生成行式 `.xlsx`，确保回归样本始终可用。
+- 本轮沉淀经验：
+  - PowerShell 脚本中若要稳定生成 Excel `.xlsx`，可直接使用 `.NET ZipArchive` 组装最小 Office Open XML 结构，不必依赖 Excel 或第三方 Python 包。
+  - 对本地 Maven 依赖已存在的项目，优先复用用户目录下 `.m2/repository`，比强制新建工作区仓库更稳。
+- 待解决问题：
+  - `UsersView.vue` 右侧角色说明卡片区与 `/screen` 展示统一仍未收口。
+  - 部分辅助文档仍带旧口径，需要继续收口。
+- 下一步：
+  - 若继续前端收口，先处理后台页展示统一。
+  - 否则可准备 handoff，进入答辩前稳定期。
+- 可以从活跃上下文移除的内容：
+  - 本轮为定位沙箱内静态构建差异而追加的中间排查输出。

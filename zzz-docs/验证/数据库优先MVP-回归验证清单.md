@@ -214,3 +214,26 @@ Invoke-WebRequest -UseBasicParsing "http://127.0.0.1:8081/api/grain-temp/summari
   - 旧 CSV 导入成功，新增批次 `BATCH-GRAIN-FDEFEE5A`
   - 旧行式 `.xls` 导入成功，新增批次 `BATCH-GRAIN-F9CEB1BF`
   - 导入完成后首页概览已联动更新，`grainSummaryCount = 30`
+
+## 9.1 一键验收脚本
+
+可直接执行：
+
+```powershell
+.\scripts\run-acceptance-smoke.ps1
+```
+
+默认覆盖：
+- `backend/` 编译
+- `frontend/` 构建
+- 演示库重置
+- 后端启动与 ready 检查
+- 用户 CRUD smoke
+- 固定模板下载与导入
+- 旧 CSV / 旧 XLS 兼容导入
+- 首页概览与预测只读接口检查
+
+可选参数：
+- `-SkipReset`：跳过演示库重置
+- `-SkipStaticChecks`：跳过编译与构建
+- `-KeepBackendRunning`：验收结束后保留后端进程

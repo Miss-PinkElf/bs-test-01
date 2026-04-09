@@ -1,4 +1,4 @@
-$ErrorActionPreference = "Stop"
+﻿$ErrorActionPreference = "Stop"
 
 function Clear-Port {
     param(
@@ -37,11 +37,21 @@ Write-Host "默认启动当前不会自动重建演示库。" -ForegroundColor C
 Write-Host "如果你需要重置演示数据，请先执行 .\scripts\reset-demo-db.ps1" -ForegroundColor Yellow
 
 $projectMavenSettings = Join-Path $backendPath ".mvn\settings.xml"
+$userMavenRepo = Join-Path $env:USERPROFILE ".m2\repository"
+$projectMavenRepo = if (Test-Path -LiteralPath $userMavenRepo) { $userMavenRepo } else { Join-Path $backendPath ".m2\repository" }
+if (-not (Test-Path -LiteralPath $projectMavenRepo)) {
+    New-Item -ItemType Directory -Force -Path $projectMavenRepo | Out-Null
+}
 if (Test-Path -LiteralPath $projectMavenSettings) {
     Write-Host "Using project Maven settings: $projectMavenSettings" -ForegroundColor Cyan
 }
+Write-Host "Using project Maven repository: $projectMavenRepo" -ForegroundColor Cyan
 
-$runArgs = @("spring-boot:run", "-Dspring-boot.run.arguments=--server.port=8081")
+$runArgs = @(
+    "-Dmaven.repo.local=$projectMavenRepo",
+    "spring-boot:run",
+    "-Dspring-boot.run.arguments=--server.port=8081"
+)
 
 if (Test-Path -LiteralPath ".\mvnw.cmd") {
     & ".\mvnw.cmd" @runArgs

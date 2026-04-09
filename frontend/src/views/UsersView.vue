@@ -1,13 +1,41 @@
 <script setup>
-import { computed, onMounted, ref } from "vue";
-import { fetchRoleOptions, fetchUsers } from "../api/grain";
+import { computed, onMounted, reactive, ref } from "vue";
+import { ElMessage, ElMessageBox } from "element-plus";
+import {
+  createUser,
+  deleteUser,
+  fetchRoleOptions,
+  fetchUsers,
+  fetchWarehouses,
+  resetUserPassword,
+  updateUser
+} from "../api/grain";
 import { useClientPagination } from "../composables/useClientPagination";
 
 const loading = ref(false);
+const dialogVisible = ref(false);
+const passwordDialogVisible = ref(false);
 const users = ref([]);
 const roles = ref([]);
+const warehouses = ref([]);
+const editingUserId = ref(null);
+const passwordTarget = ref(null);
 
 const userPagination = useClientPagination(users);
+
+const userForm = reactive({
+  username: "",
+  password: "",
+  displayName: "",
+  phone: "",
+  warehouseId: null,
+  status: "ACTIVE",
+  roleCodes: []
+});
+
+const passwordForm = reactive({
+  newPassword: ""
+});
 
 const summaryCards = computed(() => [
   { key: "users", label: "系统用户", value: users.value.length, note: "当前数据库中的用户账号数量" },
@@ -20,21 +48,161 @@ const summaryCards = computed(() => [
   }
 ]);
 
+const dialogTitle = computed(() => (editingUserId.value == null ? "新增用户" : "编辑用户"));
+const submitButtonText = computed(() => (editingUserId.value == null ? "保存用户" : "保存修改"));
+
 function formatRoleNames(roleNames) {
   return roleNames.length > 0 ? roleNames.join(" / ") : "-";
 }
 
-// 加载真实用户列表与角色说明，替换原先静态 mock 展示。
+function formatStatus(status) {
+  if (status === "ACTIVE") {
+    return "启用";
+  }
+
+  if (status === "DISABLED") {
+    return "停用";
+  }
+
+  return status || "-";
+}
+
+function resetUserForm() {
+  userForm.username = "";
+  userForm.password = "";
+  userForm.displayName = "";
+  userForm.phone = "";
+  userForm.warehouseId = null;
+  userForm.status = "ACTIVE";
+  userForm.roleCodes = [];
+  editingUserId.value = null;
+}
+
+function resetPasswordForm() {
+  passwordForm.newPassword = "";
+  passwordTarget.value = null;
+}
+
+function openCreateDialog() {
+  resetUserForm();
+  dialogVisible.value = true;
+}
+
+function openEditDialog(row) {
+  editingUserId.value = row.id;
+  userForm.username = row.username;
+  userForm.password = "";
+  userForm.displayName = row.displayName;
+  userForm.phone = row.phone || "";
+  userForm.warehouseId = row.warehouseId ?? null;
+  userForm.status = row.status || "ACTIVE";
+  userForm.roleCodes = [...row.roleCodes];
+  dialogVisible.value = true;
+}
+
+function openPasswordDialog(row) {
+  passwordTarget.value = row;
+  passwordForm.newPassword = "";
+  passwordDialogVisible.value = true;
+}
+
+function validateUserForm() {
+  if (!userForm.username.trim()) {
+    ElMessage.warning("请输入用户名");
+    return false;
+  }
+
+  if (editingUserId.value == null && !userForm.password.trim()) {
+    ElMessage.warning("请输入初始密码");
+    return false;
+  }
+
+  if (!userForm.displayName.trim()) {
+    ElMessage.warning("请输入姓名");
+    return false;
+  }
+
+  if (userForm.roleCodes.length === 0) {
+    ElMessage.warning("请至少选择一个角色");
+    return false;
+  }
+
+  return true;
+}
+
+function buildUserPayload() {
+  return {
+    username: userForm.username.trim(),
+    password: userForm.password.trim(),
+    displayName: userForm.displayName.trim(),
+    phone: userForm.phone.trim(),
+    warehouseId: userForm.warehouseId,
+    status: userForm.status,
+    roleCodes: userForm.roleCodes
+  };
+}
+
 async function loadUsersPage() {
   loading.value = true;
 
   try {
-    const [userList, roleList] = await Promise.all([fetchUsers(), fetchRoleOptions()]);
+    const [userList, roleList, warehouseList] = await Promise.all([
+      fetchUsers(),
+      fetchRoleOptions(),
+      fetchWarehouses()
+    ]);
     users.value = userList;
     roles.value = roleList;
+    warehouses.value = warehouseList;
   } finally {
     loading.value = false;
   }
+}
+
+async function submitUser() {
+  if (!validateUserForm()) {
+    return;
+  }
+
+  const payload = buildUserPayload();
+
+  if (editingUserId.value == null) {
+    await createUser(payload);
+    ElMessage.success("用户已写入数据库");
+  } else {
+    await updateUser(editingUserId.value, payload);
+    ElMessage.success("用户已更新");
+  }
+
+  dialogVisible.value = false;
+  resetUserForm();
+  await loadUsersPage();
+}
+
+async function submitPasswordReset() {
+  if (!passwordForm.newPassword.trim()) {
+    ElMessage.warning("请输入新密码");
+    return;
+  }
+
+  await resetUserPassword(passwordTarget.value.id, passwordForm.newPassword.trim());
+  ElMessage.success("密码已重置");
+  passwordDialogVisible.value = false;
+  resetPasswordForm();
+}
+
+async function handleDelete(row) {
+  try {
+    await ElMessageBox.confirm(`确定删除用户“${row.displayName}”吗？`, "确认删除", {
+      type: "warning"
+    });
+  } catch (error) {
+    return;
+  }
+
+  await deleteUser(row.id);
+  ElMessage.success("用户已删除");
+  await loadUsersPage();
 }
 
 onMounted(loadUsersPage);
@@ -59,20 +227,37 @@ onMounted(loadUsersPage);
       <el-col :xs="24" :xl="15">
         <el-card class="panel-card" shadow="never">
           <template #header>
-            <div class="panel-title">用户列表</div>
+            <div class="panel-header">
+              <div class="panel-title">用户列表</div>
+              <el-button type="primary" @click="openCreateDialog">新增用户</el-button>
+            </div>
           </template>
 
           <el-table :data="userPagination.pagedItems" stripe v-loading="loading">
-            <el-table-column prop="username" label="用户名" />
-            <el-table-column prop="displayName" label="姓名" />
-            <el-table-column label="角色">
+            <el-table-column prop="username" label="用户名" min-width="120" />
+            <el-table-column prop="displayName" label="姓名" min-width="120" />
+            <el-table-column prop="phone" label="手机号" min-width="140" />
+            <el-table-column label="角色" min-width="180">
               <template #default="{ row }">
                 {{ formatRoleNames(row.roleNames) }}
               </template>
             </el-table-column>
-            <el-table-column prop="warehouseName" label="所属范围" />
-            <el-table-column prop="status" label="状态" />
-            <el-table-column prop="lastLoginAt" label="最近登录" />
+            <el-table-column prop="warehouseName" label="所属范围" min-width="120" />
+            <el-table-column label="状态" min-width="90">
+              <template #default="{ row }">
+                {{ formatStatus(row.status) }}
+              </template>
+            </el-table-column>
+            <el-table-column prop="lastLoginAt" label="最近登录" min-width="170" />
+            <el-table-column label="操作" width="220" fixed="right">
+              <template #default="{ row }">
+                <div class="table-actions">
+                  <el-button link type="primary" @click.stop="openEditDialog(row)">编辑</el-button>
+                  <el-button link type="warning" @click.stop="openPasswordDialog(row)">重置密码</el-button>
+                  <el-button link type="danger" @click.stop="handleDelete(row)">删除</el-button>
+                </div>
+              </template>
+            </el-table-column>
           </el-table>
 
           <div class="table-pagination">
@@ -108,11 +293,101 @@ onMounted(loadUsersPage);
       </el-col>
     </el-row>
 
+    <el-dialog v-model="dialogVisible" :title="dialogTitle" width="720px" @closed="resetUserForm">
+      <el-form label-position="top" class="form-grid-2">
+        <el-form-item label="用户名">
+          <el-input
+            v-model="userForm.username"
+            :disabled="editingUserId != null"
+            placeholder="请输入登录用户名"
+          />
+        </el-form-item>
+        <el-form-item v-if="editingUserId == null" label="初始密码">
+          <el-input
+            v-model="userForm.password"
+            type="password"
+            show-password
+            placeholder="请输入初始密码"
+          />
+        </el-form-item>
+        <el-form-item label="姓名">
+          <el-input v-model="userForm.displayName" placeholder="请输入姓名" />
+        </el-form-item>
+        <el-form-item label="手机号">
+          <el-input v-model="userForm.phone" placeholder="请输入手机号，可留空" />
+        </el-form-item>
+        <el-form-item label="所属仓库">
+          <el-select v-model="userForm.warehouseId" clearable placeholder="留空表示平台级账号">
+            <el-option
+              v-for="item in warehouses"
+              :key="item.id"
+              :label="`${item.warehouseName}（${item.warehouseCode}）`"
+              :value="item.id"
+            />
+          </el-select>
+        </el-form-item>
+        <el-form-item label="状态">
+          <el-select v-model="userForm.status">
+            <el-option label="启用" value="ACTIVE" />
+            <el-option label="停用" value="DISABLED" />
+          </el-select>
+        </el-form-item>
+        <el-form-item label="角色" class="full-span">
+          <el-select v-model="userForm.roleCodes" multiple collapse-tags collapse-tags-tooltip>
+            <el-option
+              v-for="item in roles"
+              :key="item.roleCode"
+              :label="`${item.roleName}（${item.roleCode}）`"
+              :value="item.roleCode"
+            />
+          </el-select>
+        </el-form-item>
+      </el-form>
+
+      <template #footer>
+        <div class="dialog-footer">
+          <el-button @click="dialogVisible = false">取消</el-button>
+          <el-button type="primary" @click="submitUser">{{ submitButtonText }}</el-button>
+        </div>
+      </template>
+    </el-dialog>
+
+    <el-dialog
+      v-model="passwordDialogVisible"
+      title="重置密码"
+      width="420px"
+      @closed="resetPasswordForm"
+    >
+      <div class="page-stack">
+        <div>
+          当前用户：<strong>{{ passwordTarget?.displayName || "-" }}</strong>
+          <span class="muted-inline">（{{ passwordTarget?.username || "-" }}）</span>
+        </div>
+        <el-form label-position="top">
+          <el-form-item label="新密码">
+            <el-input
+              v-model="passwordForm.newPassword"
+              type="password"
+              show-password
+              placeholder="请输入新密码"
+            />
+          </el-form-item>
+        </el-form>
+      </div>
+
+      <template #footer>
+        <div class="dialog-footer">
+          <el-button @click="passwordDialogVisible = false">取消</el-button>
+          <el-button type="primary" @click="submitPasswordReset">确认重置</el-button>
+        </div>
+      </template>
+    </el-dialog>
+
     <el-alert
       type="info"
       :closable="false"
       title="当前说明"
-      description="用户页已切到真实接口，当前先聚焦真实列表与角色说明展示，新增、编辑和状态切换留待下一轮。"
+      description="本轮先补齐用户新增、编辑、删除和密码重置；右侧角色说明区与 /screen 展示统一仍留待后续收口。"
     />
   </div>
 </template>

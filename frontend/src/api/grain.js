@@ -530,6 +530,8 @@ function normalizeUser(item) {
     id: item.id,
     username: item.username || "-",
     displayName: item.displayName || "-",
+    phone: item.phone || "",
+    warehouseId: item.warehouseId ?? null,
     roleCodes: splitCsvValue(item.roleCodes),
     roleNames: splitCsvValue(item.roleNames),
     warehouseName: item.warehouseName || "平台级",
@@ -562,6 +564,53 @@ export async function fetchRoleOptions() {
   });
 
   return Array.isArray(raw) ? raw.map(normalizeRoleOption) : [];
+}
+
+export async function createUser(payload) {
+  return request({
+    url: "/api/users",
+    method: "post",
+    data: {
+      username: payload.username,
+      password: payload.password,
+      displayName: payload.displayName,
+      phone: payload.phone || undefined,
+      warehouseId: payload.warehouseId ?? undefined,
+      status: payload.status,
+      roleCodes: Array.isArray(payload.roleCodes) ? payload.roleCodes : []
+    }
+  });
+}
+
+export async function updateUser(id, payload) {
+  return request({
+    url: `/api/users/${id}`,
+    method: "put",
+    data: {
+      displayName: payload.displayName,
+      phone: payload.phone || undefined,
+      warehouseId: payload.warehouseId ?? undefined,
+      status: payload.status,
+      roleCodes: Array.isArray(payload.roleCodes) ? payload.roleCodes : []
+    }
+  });
+}
+
+export async function resetUserPassword(id, newPassword) {
+  return request({
+    url: `/api/users/${id}/password`,
+    method: "put",
+    data: {
+      newPassword
+    }
+  });
+}
+
+export async function deleteUser(id) {
+  return request({
+    url: `/api/users/${id}`,
+    method: "delete"
+  });
 }
 
 function normalizeMetricOption(item) {

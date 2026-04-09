@@ -4,6 +4,8 @@ public record UserListItemResponse(
         Long id,
         String username,
         String displayName,
+        String phone,
+        Long warehouseId,
         String roleCodes,
         String roleNames,
         String warehouseName,

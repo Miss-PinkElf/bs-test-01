@@ -8,6 +8,8 @@
 ## 当前有效计划
 - `docs/superpowers/plans/2026-04-09-init-strategy-closure.md`
 - `docs/superpowers/plans/2026-04-09-warehouse-crud.md`
+- `docs/superpowers/plans/2026-04-09-user-crud.md`
+- `docs/superpowers/plans/2026-04-09-acceptance-smoke-script.md`
 - `docs/superpowers/plans/2026-04-09-data-crud-and-temperature-recompute.md`
 - `docs/superpowers/plans/2026-04-09-frontend-list-unification.md`
 
