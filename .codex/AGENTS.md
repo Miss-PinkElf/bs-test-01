@@ -6,7 +6,7 @@
 
 1. 必须始终使用简体中文。
 2. 产出的文档默认使用简体中文，禁止默认输出英文。
-3. 包括但不限于 spark-workflow、handoff、openspec、skills 相关文档，默认都使用简体中文。
+3. 包括但不限于 devflow、OpenSpec、handoff、skills 相关文档，默认都使用简体中文。
 
 ## 2. 提交流程
 
@@ -16,8 +16,8 @@
 
 ## 3. 工作流要求
 
-1. 默认使用 `context-budget-explore` 进行探索、记录和推进。
-2. 在走 `context-budget-explore` 流程时，需要进入其中的 `spark-workflow` 做需求对齐。
+1. 默认使用 `devflow` 进行长期任务的探索、记录和推进。
+2. 在走 `devflow` 流程时，需要按阶段进入其中的 OpenSpec / Superpowers 子技能完成对齐、计划、实施、验证与 handoff。
 3. 在进入实现前，先进行一次头脑风暴，和我讨论方案，不要跳过讨论直接改代码。
 4. 需要顺手判断：这次需求是否需要补充或更新相关文档。
 
