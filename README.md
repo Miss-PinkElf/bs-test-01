@@ -16,7 +16,7 @@
 backend/   Spring Boot 后端
 frontend/  Vue 前端
 scripts/   Windows 启动脚本
-.explore/  任务记录与 spec
+.devflow/  任务记录、状态、计划与 handoff
 ```
 
 ## 推荐开发方式
@@ -89,16 +89,29 @@ Windows 下优先使用：
 .\scripts\start-all.ps1
 ```
 
+如果你需要把本地数据库恢复到仓库内置的演示数据，请先执行：
+
+```powershell
+.\scripts\reset-demo-db.ps1
+```
+
 注意：
 
 - 当前本机检测到了 `java`、`node`、`npm`
 - 当前未检测到 `mvn`
 - 如果你没有安装 Maven，可以用 IDEA 自带 Maven 运行后端，或者后续补 Maven Wrapper
+- 后端默认启动现在不会自动重建演示库；只有手动执行 `reset-demo-db.ps1` 才会清库并回填演示数据
 
 ## 真相源
 
-完整 spec 记录在：
+当前主开发 mission 真相源在：
 
-- `.explore/grain-platform-bootstrap/spec/proposal.md`
-- `.explore/grain-platform-bootstrap/spec/design.md`
-- `.explore/grain-platform-bootstrap/spec/tasks.md`
+- `.devflow/grain-platform-bootstrap/state.md`
+- `.devflow/grain-platform-bootstrap/handoffs/2026-04-09-018-devflow-migration-ready.md`
+- `.devflow/grain-platform-bootstrap/plans/active-plan-links.md`
+
+当前文档 mission 真相源在：
+
+- `.devflow/grain-docs-alignment/state.md`
+- `.devflow/grain-docs-alignment/handoffs/2026-04-09-002-devflow-migration-ready.md`
+- `.devflow/grain-docs-alignment/plans/active-plan-links.md`

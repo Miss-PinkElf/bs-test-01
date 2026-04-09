@@ -1,0 +1,418 @@
+# Checkpoints
+
+> [已归档] 2026-04-05 - Mission Init 与首轮 Align 已归档到 `checkpoints-archive.md`
+
+## 2026-04-05-002
+- 当前阶段：Apply / Verify
+- 本轮完成内容：
+  - 生成 `.devflow/grain-platform-bootstrap/spec/` 下的 proposal、design、tasks。
+  - 创建 `backend/` Spring Boot 骨架、基础控制器、服务和 SQL 脚本。
+  - 创建 `frontend/` Vue 页面、路由、API 封装和样式。
+  - 创建 `scripts/` 下的环境检查与一键启动脚本。
+  - 补充 `README.md` 和 VS Code 扩展建议。
+- 本轮决策与原因：
+  - 后端先用演示级内存数据服务，降低当前无数据库联调门槛。
+  - 一键脚本采用“检查 + 启动”模式，以适应当前 Maven 缺失环境。
+- 本轮沉淀经验：
+  - 对毕业设计骨架，先让页面和接口可对上，再逐步替换为真实持久化，推进更稳。
+- 待解决问题：
+  - 缺少 Maven 或 Maven Wrapper，后端无法在命令行直接一键运行。
+- 下一步：
+  - 补 Maven Wrapper，或在 IDEA 中运行后端。
+  - 进入真实数据库 CRUD、权限控制与导入功能迭代。
+- 可以从活跃上下文移除的内容：
+  - 已生成文件的逐个创建过程。
+
+## 2026-04-06-003
+- 当前阶段：Apply
+- 本轮完成内容：
+  - 基于 `开发指导版 PRD` 与最新 handoff 重新恢复上下文。
+  - 通过一次 mini align 确认预测归档采用“任务主表 + 结果明细表”。
+  - 将 `backend/src/main/resources/db/schema.sql` 从初稿升级为数据库定稿。
+  - 新增 `zzz-docs/设计文档/数据库设计定稿.md` 作为表说明与建模决策文档。
+  - 同步更新 `README.md` 与 `.devflow/grain-platform-bootstrap/spec/design.md`。
+- 本轮决策与原因：
+  - 环境数据继续按“单指标单行”存储，便于查询、图表与指标扩展。
+  - 预测归档采用 `prediction_task + prediction_result`，避免单表难以表达一次预测任务和多条预测点结果的关系。
+- 本轮沉淀经验：
+  - 对业务流程类毕业设计，先定数据库主模型，再做接口设计，可以显著降低 DTO、Mapper 和页面结构返工。
+- 待解决问题：
+  - 后端接口清单、DTO/VO、Mapper 仍需按新表结构同步定稿。
+  - `frontend/` 仍是早期 Vue 骨架，尚未切换到正式技术栈与页面结构。
+- 下一步：
+  - 输出后端接口清单、DTO/VO、Mapper 设计。
+  - 检查 `frontend/` 现状并准备正式版 Vue 骨架改造入口。
+- 可以从活跃上下文移除的内容：
+  - 关于 `prediction_record` 与双表方案的比较过程。
+
+## 2026-04-06-004
+- 当前阶段：Apply
+- 本轮完成内容：
+  - 在 `zzz-docs/设计文档/` 下新增后端接口、DTO/VO、Mapper 设计文档。
+  - 将 `frontend/` 升级到 `Vue Router + Pinia + Element Plus + Axios + ECharts` 正式技术路线。
+  - 新增 `ConsoleLayout`、`auth store`、`UsersView`、`BigScreenView` 和正式版页面导航结构。
+  - 保留对当前 demo 后端的兼容适配，并补齐登录、仪表盘、仓库、环境数据、预测页面入口。
+  - 在 `frontend/` 执行 `npm install` 和 `npm run build`，构建通过。
+- 本轮决策与原因：
+  - 正式前端先升级技术路线和页面骨架，再回头替换真实后端持久层，能更快形成可答辩的完整前端外壳。
+  - API 层增加字段归一化适配，避免后端尚未重构完成时前端被阻塞。
+- 本轮沉淀经验：
+  - 在毕业设计这类长任务中，把“正式技术栈升级”和“真实后端落库”拆成两步推进，比强行同轮一起做更稳。
+- 待解决问题：
+  - 后端仍依赖 `DemoDataService`，真实 MyBatis 持久层尚未接上。
+  - 用户管理、角色、指标选项、预测历史等正式接口还没落真实实现。
+- 下一步：
+  - 优先替换登录、仓库、环境数据、预测归档四条主链路的后端真实持久层。
+  - 再开展前后端联调和页面真实数据替换。
+- 可以从活跃上下文移除的内容：
+  - 前端依赖安装与初次构建时的过程性输出。
+
+## 2026-04-08-005
+- 当前阶段：Realign / Truth-source rewrite
+- 本轮完成内容：
+  - 重新阅读老师新增需求，确认项目核心已从“多指标独立短期预测展示”转向“粮温滚动预测闭环”。
+  - 新增滚动预测闭环版 PRD、数据库设计版、字段与接口变更方案、滚动预测接口设计版和 mock 数据设计。
+  - 同步更新主 PRD、数据库定稿、接口设计文档、`NEXT-SESSION-PROMPT.md` 与 `.devflow/` 当前状态。
+- 本轮决策与原因：
+  - 预测主线正式转为“8 个月训练参考 + 2 个月按天预测 + 新真实数据回填验证 + 修正续预测”。
+  - 温度采用专门的粮温数据结构，湿度与二氧化碳保留普通单值结构，降低改造耦合。
+- 本轮沉淀经验：
+  - 当老师口径明显改变时，应先更新真相源与恢复提示，而不是沿旧路线继续写代码，否则后续会出现大面积返工。
+- 待解决问题：
+  - `schema.sql`、后端接口与前端预测页尚未正式按新模型改造。
+  - 需要判断是增量重构还是半重写。
+- 下一步：
+  - 先输出实施计划，再改 `schema.sql`、接口和页面。
+  - 生成新的 resume-ready handoff，明确旧 handoff 已被 supersede。
+- 可以从活跃上下文移除的内容：
+  - 关于“要不要纯按月预测”的多轮讨论过程。
+
+## 2026-04-08-006
+- 当前阶段：Resume-ready after schema refactor
+- 本轮完成内容：
+  - 新增 `docs/superpowers/plans/2026-04-08-rolling-forecast-schema-refactor.md`。
+  - 重写 `backend/src/main/resources/db/schema.sql` 到粮温滚动预测闭环模型。
+  - 在 `schema.sql` 中加入粮温测点、原始记录、汇总分析、滚动预测任务、修正预测结果和高温预警 mock 数据。
+  - 新增最新 resume-ready handoff，并同步 `state.md`、`handoffs/index.md`、`NEXT-SESSION-PROMPT.md`。
+- 本轮决策与原因：
+  - 先把数据库模型和故事型 mock 数据写实，再进入 Java 层和前端的半重写，可以显著降低后续接口返工。
+  - 当前不继续做大屏或旧预测页补丁，因为这些都建立在已过时的数据模型之上。
+- 本轮沉淀经验：
+  - 当数据库是老师强调的核心时，mock 数据不能只追求数量，必须能完整讲出“首次预测 -> 真实值回填 -> 修正预测 -> 高温预警”的故事。
+- 待解决问题：
+  - `mysql -uroot -p123456` 返回 `Access denied for user 'root'@'localhost'`，新 schema 尚未完成真实导库验证。
+  - 后端 Java 层和前端页面仍停留在旧模型。
+- 下一步：
+  - 先确认可用 MySQL 凭据并实际导库。
+  - 再改后端实体、Mapper、Service、Controller。
+  - 最后改前端预测页、导入页和 API 适配层。
+- 可以从活跃上下文移除的内容：
+  - schema 字段命名微调时的中间草稿。
+
+## 2026-04-08-007
+- 当前阶段：Realign / Align（主线二次收口）
+- 本轮完成内容：
+  - 基于用户新增口径重新对齐主线，确认本期从“滚动预测闭环强绑定修正链”收口为“数据库优先 MVP”。
+  - 确认本期不拆独立归档表，归档沿用 `prediction_task + prediction_result`。
+  - 确认湿度和二氧化碳保留简单单值辅线，并支持文件导入与手工录入。
+  - 确认预测页交互改为可选预测天数，图表重点展示“实际值 + 预测值”双线。
+  - 更新 `.devflow/grain-platform-bootstrap/` 的 workflow、state、decision-log 与 handoff 索引。
+- 本轮决策与原因：
+  - 修正链功能降级为扩展能力预留（字段保留，入口不做），以避免本期范围超载并突出数据库价值。
+  - 不新增独立归档表，减少重复建模和数据一致性风险。
+- 本轮沉淀经验：
+  - 当主线连续变更时，应先统一更新 mission 状态、决策与恢复入口，再继续开发；否则会重复返工。
+- 待解决问题：
+  - MySQL 凭据仍未确认，`schema.sql` 尚未真实导库验证。
+  - 后端与前端实现仍停留在旧预测口径。
+- 下一步：
+  - 先完成导库验证。
+  - 再按“本期不做修正链入口”的标准改后端与前端。
+  - 回写并收口真相源文档，避免后续会话冲突。
+- 可以从活跃上下文移除的内容：
+  - 关于“修正链是否本期必做”的多轮讨论过程。
+
+## 2026-04-08-008
+- 当前阶段：Checkpoint / Handoff（暂停前收尾）
+- 本轮完成内容：
+  - 复核当前已完成的文档更新，确认 `.explore`、最新 handoff 与根目录恢复提示已落盘。
+  - 使用 `devflow` 内置 `session-handoff` 准备新的暂停恢复入口。
+  - 确认当前最重要的未完成事项仍是 MySQL 凭据确认与 schema 真实导入验证。
+- 本轮决策与原因：
+  - 单独新增一份暂停 handoff，而不是只依赖上一份对齐 handoff，方便用户休息后直接恢复。
+- 本轮沉淀经验：
+  - 在需求连续变化的阶段，休息前应额外生成一份“pause-ready” handoff，避免恢复时混淆“设计对齐”和“实施起点”。
+- 待解决问题：
+  - 最新 handoff、state 与 `NEXT-SESSION-PROMPT.md` 仍需保持同一编号。
+  - 旧真相源文档中的修正链表述尚未完全收口。
+- 下一步：
+  - 新增 `013` handoff 并更新索引。
+  - 更新 `NEXT-SESSION-PROMPT.md` 指向最新 handoff。
+  - 提交本轮文档变更。
+- 可以从活跃上下文移除的内容：
+  - 本轮对已更新文件的重复核对输出。
+
+## 2026-04-08-009
+- 当前阶段：Truth-source rewrite / Archive cleanup
+- 本轮完成内容：
+  - 重写 `zzz-docs/设计文档/粮仓环境数据预测管理平台-PRD-滚动预测闭环版.md` 为数据库优先 MVP 口径。
+  - 重写 `zzz-docs/设计文档/数据库设计-滚动预测与高温预警版.md` 为数据库优先 MVP 口径。
+  - 归档以下旧版文档到 `zzz-docs/Archive/`：
+    - 开发指导版 PRD
+    - 旧版 PRD
+    - 旧版数据库定稿
+    - 旧版接口设计
+  - 收口活跃说明文件：`state.md`、`NEXT-SESSION-PROMPT.md`、当前接口工作稿。
+- 本轮决策与原因：
+  - 当前真相源必须与最新主线一致，否则 `.explore` 和恢复入口虽然更新了，文档层仍会持续制造冲突。
+- 本轮沉淀经验：
+  - 当主线调整后，除了更新 `.explore`，还必须同步重写真相源文档并归档旧版，否则“聊天是新的、文档是旧的”会造成二次返工。
+- 待解决问题：
+  - 历史 handoff/checkpoint 中仍保留部分旧文档引用，但这属于历史记录，不再作为当前真相源。
+  - 仍有部分工作稿型文档带旧修正链表述，后续应继续收口。
+- 下一步：
+  - 继续推进 MySQL 导库验证。
+  - 再按当前真相源改后端与前端。
+- 可以从活跃上下文移除的内容：
+  - 对哪些旧版文档需要归档的比较过程。
+
+## 2026-04-08-010
+- 当前阶段：DB-first MVP implementation / smoke-test passed
+- 本轮完成内容：
+  - 确认可用 MySQL 凭据为 `root/123456`，并使用 `--default-character-set=utf8mb4` 成功执行新 `schema.sql`。
+  - 按当前主线完成后端第一轮改造：
+    - 预测链切到 `grain_temp_summary + prediction_task + prediction_result`
+    - 新增粮温接口：`/api/grain-temp/import`、`/api/grain-temp/records`、`/api/grain-temp/summaries`
+    - 保留修正扩展字段，但未实现修正入口
+  - 按当前主线完成前端第一轮改造：
+    - `PredictionView.vue` 支持可选预测天数、目标层选择、实际值/预测值双线图
+    - `DataView.vue` 区分“粮温主线 / 普通环境数据”两种导入与查询模式
+    - `frontend/src/api/grain.js` 已适配新接口
+  - 完成验证：
+    - `frontend/` 通过 `npm run build`
+    - 后端成功启动并完成本地烟雾测试
+    - 烟雾测试产生新预测任务：`prediction_task.id = 5`
+- 本轮决策与原因：
+  - 粮温导入先以“行式模板”完成数据库优先 MVP，优先保障导入、入库、汇总、预测、归档链路跑通。
+  - 预测页先固定温度主线，避免重新滑回旧的“多指标独立短期预测”范围。
+- 本轮沉淀经验：
+  - 在本地 MySQL 凭据不稳定时，应先独立验证 CLI 登录，再回填 Spring Boot 配置，否则运行级联调会卡在最底层连接错误。
+  - MyBatis XML 中涉及 `<=` / `>=` 的条件时应及时转义，避免运行时才暴露解析错误。
+- 待解决问题：
+  - 粮温导入尚未升级为更贴近老师预期的复杂矩阵式固定 XLS 模板。
+  - 仪表盘首页仍需切到真实高温预警 + 预测高温预警口径。
+- 下一步：
+  - 继续改首页统计与预警展示。
+  - 细化粮温固定模板导入。
+  - 视需要补充回归测试与验收脚本。
+- 可以从活跃上下文移除的内容：
+  - MySQL 凭据排查与 XML 解析报错的逐步调试过程。
+
+## 2026-04-08-011
+- 当前阶段：Checkpoint / Handoff（第一轮落地后暂停）
+- 本轮完成内容：
+  - 复核当前第一轮实现产物，确认后端、前端、数据库与 `.explore` 记录基本一致。
+  - 新增暂停 handoff：`2026-04-08-014-db-first-mvp-apply-round1-pause-ready.md`
+  - 更新 `handoffs/index.md` 与 `state.md` 的最新 handoff 指向。
+  - 更新根目录 `NEXT-SESSION-PROMPT.md`，改为新的恢复提示。
+  - 补充 `.gitignore`，忽略本地 Maven 仓库与本地 settings 文件。
+- 本轮决策与原因：
+  - 当前适合先暂停并生成新 handoff，而不是继续扩展首页或 XLS 模板；因为第一轮数据库优先 MVP 主链已经跑通，最重要的是降低恢复成本。
+- 本轮沉淀经验：
+  - 在“数据库、前后端、文档、验证”同时有变化的会话末尾，必须先统一恢复入口，再休息；否则下次会浪费时间重新核对当前真实状态。
+- 待解决问题：
+  - 首页仍未切到真实高温预警 + 预测高温预警口径。
+  - 粮温固定模板仍停留在行式 MVP 版本。
+- 下一步：
+  - 下次先按新 handoff 与新 prompt 恢复。
+  - 从首页改造开始推进。
+  - 再细化粮温固定模板导入。
+- 可以从活跃上下文移除的内容：
+  - 本轮关于 `.gitignore` 是否缺项的检查过程。
+## 2026-04-08-012
+- 当前阶段：Apply second round / Pause-ready
+- 本轮完成内容：
+  - 完成首页仪表盘口径切换：后端 `dashboard` 聚合改为优先展示 `grain_temp_summary.warning_*` 与 `prediction_result.warning_*`。
+  - 完成前端首页与大屏同步：`DashboardView.vue`、`BigScreenView.vue`、`frontend/src/api/grain.js` 已切到真实预警/预测预警口径。
+  - 完成固定模板粮温导入升级：
+    - `/api/grain-temp/import/template` 改为下载固定 `XLSX` 模板
+    - `GrainTempImportService` 已支持“基础信息 + 层号/点位矩阵”解析
+    - 保留旧 CSV / 行式 Excel 兼容能力
+  - 新增 `zzz-docs/验证/数据库优先MVP-回归验证清单.md`，沉淀首页与固定模板回归项。
+  - 完成静态验证：`backend/` 的 `mvn -q -DskipTests compile` 与 `frontend/` 的 `npm run build` 均通过。
+  - 尝试补运行态 smoke，已定位阻塞：Spring Boot 启动时本地 MySQL 认证失败，报错 `Access denied for user 'root'@'localhost' (using password: YES)`。
+- 本轮决策与原因：
+  - 固定模板采用“兼容升级”而不是推翻重做，避免已跑通的数据库优先 MVP 主链回退。
+  - 当前以“能安全暂停并明确恢复起点”为优先，不继续深挖 MySQL 本机配置。
+- 本轮沉淀经验：
+  - 编译通过不代表运行态 smoke 可直接放行；数据库凭据漂移会在 `spring-boot:run` 阶段才暴露。
+  - 首页统计口径和导入模板改造完成后，应立即补回归清单，否则下次恢复仍会遗漏验证范围。
+- 待解决问题：
+  - 本机 MySQL 当前拒绝 `root/123456`，导致后端运行态 smoke 无法继续。
+  - 固定模板下载与导入的运行态 smoke 仍待在数据库恢复后补齐。
+- 下一步：
+  - 先恢复 MySQL 可用凭据或本地连接配置。
+  - 再按 `zzz-docs/验证/数据库优先MVP-回归验证清单.md` 完成首页概览、模板下载、固定 XLSX 导入和旧 CSV 兼容 smoke。
+- 可以从活跃上下文移除的内容：
+  - 两次 `spring-boot:run` 拉起与日志抓取的中间过程输出。
+
+## 2026-04-09-013
+- 当前阶段：Apply data CRUD completed / Pause-ready
+- 本轮完成内容：
+  - 恢复本机 MySQL 默认可用凭据为 `root/123456`，并确认 `application.yml` 可直接连通。
+  - 补齐数据库优先 MVP 运行态 smoke：首页概览、固定模板下载、固定 XLSX 导入、旧 CSV / 旧行式 `.xls` 兼容、预测任务只读查询。
+  - 新增数据主线 CRUD 实施计划：`docs/superpowers/plans/2026-04-09-data-crud-and-temperature-recompute.md`。
+  - 完成 `grain_temp_record` CRUD、`sensor_data` CRUD。
+  - 完成温度原始记录变更后的 `grain_temp_summary` 与真实预警联动重算。
+  - 升级 `frontend/src/views/DataView.vue` 为粮温 / 普通环境统一维护页。
+- 本轮决策与原因：
+  - 温度 CRUD 作用于原始记录层，而不是汇总层，保证“原始数据 -> 汇总 -> 预警”的主链清晰。
+  - 普通环境数据继续使用单值 CRUD，不增加额外汇总层，控制范围。
+  - CRUD 实施计划显式回链到 `.explore` 真相源，降低 handoff / resume 成本。
+- 本轮沉淀经验：
+  - 运行态联动验证比单纯编译更重要，尤其是“数据改动是否能反映到首页聚合和预警”。
+  - 对前端手工录入接口，`LocalDateTime` 的 JSON 时间格式要明确约束，否则页面选择器与后端会直接不兼容。
+- 待解决问题：
+  - `spring.sql.init.mode=always` 仍会在每次后端启动时重置演示库。
+  - 仓库 / 用户管理 CRUD 还未补完整。
+  - PowerShell 验收脚本仍未落地。
+- 下一步：
+  - 评估并收口本地初始化策略。
+  - 若继续做后台管理闭环，优先仓库 CRUD，再做用户 CRUD。
+  - 若先补验收能力，则补 PowerShell 验收脚本。
+- 可以从活跃上下文移除的内容：
+  - 温度 CRUD 联动验证时创建、更新、删除的临时测试数据细节。
+
+
+## 2026-04-09-014
+- 当前阶段：Resume-ready after devflow migration
+- 本轮完成内容：
+  - 复制 `.explore/grain-platform-bootstrap/` 到 `.devflow/grain-platform-bootstrap/`。
+  - 统一改写新副本中的工作区路径、绝对路径与技能入口表述。
+  - 新增 `.devflow/grain-platform-bootstrap/plans/active-plan-links.md`。
+  - 新增 `NEXT-SESSION-PROMPT.devflow.md` 与 devflow 版最新 handoff。
+- 本轮决策与原因：
+  - 原 `.explore/` 与原 `NEXT-SESSION-PROMPT.md` 保持不动，降低迁移风险并保留历史恢复入口。
+- 本轮沉淀经验：
+  - 长任务切换工作流时，最稳的做法不是原地硬改，而是先复制出新真相源，再让新提示词只指向新工作区。
+- 待解决问题：
+  - 当前业务实现未变化，仍需继续处理初始化策略、仓库 CRUD、用户 CRUD 与 PowerShell 验收脚本。
+- 下一步：
+  - 从新的 devflow 恢复入口继续推进“当前下一步重点”的第 1 条。
+- 可以从活跃上下文移除的内容：
+  - 这次复制迁移过程中逐个替换 `.explore` 路径的操作细节。
+
+## 2026-04-09-015
+- 当前阶段：Resume / Mini Align completed，Light Plan ready
+- 本轮完成内容：
+  - 按要求重新读取 `devflow` skill、任务书、开题报告、`state.md` 和最新 handoff。
+  - 读取活跃计划索引、数据 CRUD 计划、前端列表统一计划和数据库优先 MVP 回归验证清单。
+  - 核查当前初始化策略：确认 `application.yml` 使用 `spring.sql.init.mode=always`，且 `db/schema.sql` 包含全量删表和演示数据回填。
+  - 核查后台管理现状：确认仓库管理当前只有列表/选项/新增；用户管理当前只有列表/角色选项。
+  - 新增轻量计划：`.devflow/grain-platform-bootstrap/plans/2026-04-09-init-strategy-and-admin-crud-sequencing.md`。
+- 本轮决策与原因：
+  - 默认开发态不应继续保留启动即重建演示库的策略，否则后续 CRUD、导入回归和验收脚本都缺少稳定数据基线。
+  - 后台管理闭环的顺序应为“初始化策略 -> 仓库 CRUD -> 用户 CRUD -> PowerShell 验收脚本”，因为用户依赖仓库，脚本依赖稳定初始化策略。
+- 本轮沉淀经验：
+  - 对数据库优先项目，初始化策略本身就是业务稳定性的一部分，不能被当作单纯环境细节。
+  - 在补自动化脚本前先冻结初始化口径，能显著降低脚本返工。
+- 待解决问题：
+  - 需要把“默认启动保留数据”和“显式重置演示库”设计成具体实现方案。
+  - 仓库 / 用户管理的更新、删除和前端交互仍未补齐。
+- 下一步：
+  - 进入 Apply，先实现初始化策略收口。
+  - 初始化策略稳定后，优先补仓库 CRUD。
+- 可以从活跃上下文移除的内容：
+  - 本轮逐个阅读文档和代码文件时的原始输出。
+
+## 2026-04-09-016
+- 当前阶段：Apply / Verify completed for init-strategy closure
+- 本轮完成内容：
+  - 新增设计文档：`docs/superpowers/specs/2026-04-09-init-strategy-closure-design.md`。
+  - 新增实施计划：`docs/superpowers/plans/2026-04-09-init-strategy-closure.md`。
+  - 将 `backend/src/main/resources/application.yml` 的 `spring.sql.init.mode` 从 `always` 改为 `never`。
+  - 新增显式重置入口：`scripts/reset-demo-db.ps1`。
+  - 更新 `scripts/start-backend.ps1`、`scripts/start-backend.sh`、`README.md`、回归验证清单和 devflow 计划索引，使“默认启动保留数据、显式脚本重置演示库”的口径一致。
+  - 完成静态验证：`backend/` 执行 `mvn -q -DskipTests compile` 成功。
+  - 完成运行态验证：
+    - 执行 `.\scripts\reset-demo-db.ps1` 成功
+    - 后端在 `8081` 可正常启动
+    - `/api/dashboard/overview` 请求成功返回首页聚合 JSON
+    - 写入临时仓库后连续启动两次，`/api/warehouses` 两次都能读到该仓库，证明默认启动不会自动清库；验证结束后已清理临时数据
+- 本轮决策与原因：
+  - 本轮不拆 `schema.sql` / `data.sql`，先用更小改动把风险最大的“每次启动重建库”问题止住。
+  - 显式重置采用 PowerShell 脚本而不是 profile，优先贴合当前本机联调习惯。
+- 本轮沉淀经验：
+  - PowerShell 脚本里应避免占用自动变量名，如 `$Host`；同时 `param(...)` 必须位于脚本开头。
+  - 对“默认不会清库”这类行为性结论，最好用“插入临时数据 -> 连续重启 -> 再清理”的方式取证，而不是只看配置 diff。
+- 待解决问题：
+  - 仓库 CRUD 仍未补完整，当前还缺更新 / 删除及前端交互。
+  - 用户 CRUD 仍未补完整。
+  - PowerShell 验收脚本仍未落地。
+- 下一步：
+  - 继续进入 Apply，优先补仓库 CRUD。
+  - 仓库 CRUD 稳定后，再补用户 CRUD。
+- 可以从活跃上下文移除的内容：
+  - 本轮 `reset-demo-db.ps1` 两次语法修复的中间报错输出。
+
+## 2026-04-09-017
+- 当前阶段：Apply / Verify completed for warehouse CRUD
+- 本轮完成内容：
+  - 新增实施计划：`docs/superpowers/plans/2026-04-09-warehouse-crud.md`。
+  - 后端仓库链已补齐：
+    - `WarehouseMapper` / `WarehouseMapper.xml` 新增 `update`、`deleteById`
+    - `WarehouseService` 新增 `update`、`delete`
+    - `WarehouseController` 新增 `PUT /api/warehouses/{id}`、`DELETE /api/warehouses/{id}`
+  - 删除仓库时若命中外键引用，后端会转成业务提示“仓库已被用户、环境数据或粮温数据引用，暂不能删除”。
+  - 前端 `frontend/src/api/grain.js` 已补 `updateWarehouse`、`deleteWarehouse`。
+  - 前端 `frontend/src/views/WarehouseView.vue` 已升级为完整维护页：
+    - 弹窗复用为新增 / 编辑双模式
+    - 列表新增编辑 / 删除操作
+    - 删除增加确认框
+    - 当前选中仓库改为跟随行点击，而不是永远取第一条
+  - 已完成静态验证：
+    - `backend/` 执行 `mvn -q -DskipTests compile` 成功
+    - `frontend/` 执行 `npm run build` 成功
+  - 已完成运行态 smoke：
+    - 新代码版本后端在 `8081` 启动成功
+    - 清理上轮被打断残留的 `WH-CRUD-*` 临时仓库
+    - 通过 API 完成 create -> update -> delete 一整轮仓库 CRUD
+    - 日志显示 `PUT /api/warehouses/{id}` 与 `DELETE /api/warehouses/{id}` 已真实命中新控制器
+    - 最终仓库列表恢复到 6 条，未残留临时验证数据
+- 本轮决策与原因：
+  - 当前仓库 CRUD 先保持现有 DTO 和页面字段边界，不顺带扩展联系号码、粮食品类等附加信息。
+  - 删除仓库暂不改成逻辑删除，先让“被引用不可删”的数据库约束继续作为主保护机制。
+- 本轮沉淀经验：
+  - 当运行态 smoke 被用户中途中断时，恢复后必须先检查残留服务和临时测试数据，再继续验证。
+  - 如果 `PUT/DELETE` 被当成静态资源路径，通常说明当前端口上仍跑着旧版本后端，而不是新接口实现本身失效。
+- 待解决问题：
+  - 用户管理仍未补完整 CRUD。
+  - PowerShell 验收脚本仍未落地。
+  - `UsersView.vue` 右侧角色说明卡片和 `/screen` 统一展示仍未收口。
+- 下一步：
+  - 继续进入 Apply，优先补用户 CRUD。
+  - 用户 CRUD 稳定后，再补 PowerShell 验收脚本。
+- 可以从活跃上下文移除的内容：
+  - 本轮第一次运行态 smoke 被旧版本 8081 进程干扰的中间输出。
+
+## 2026-04-09-018
+- 当前阶段：Checkpoint / Handoff（暂停前收尾）
+- 本轮完成内容：
+  - 按用户“先休息”的请求停止继续实现。
+  - 复核当前代码与文档状态，确认初始化策略收口与仓库 CRUD 已落地并有验证证据。
+  - 确认本次对话中“用户 CRUD”尚未开始正式编码，只完成读取和范围确认。
+  - 新增 pause-ready handoff：`2026-04-09-019-pause-ready-after-init-and-warehouse-crud.md`。
+  - 更新 `handoffs/index.md` 与 `state.md` 的最新 handoff 指向。
+  - 生成根目录可复制恢复提示词：`NEXT-SESSION-PROMPT-DEVFLOW.md`。
+- 本轮决策与原因：
+  - 当前以“可无歧义恢复”为优先，不在多次中断后强行继续实现用户 CRUD，避免产出半成品。
+- 本轮沉淀经验：
+  - 在频繁中断场景下，及时做 pause-ready handoff 比继续推进实现更能降低恢复成本。
+- 待解决问题：
+  - 用户 CRUD 仍未进入实现阶段。
+  - PowerShell 验收脚本仍未落地。
+- 下一步：
+  - 下次从最新 handoff 恢复后直接进入用户 CRUD。
+  - 用户 CRUD 验证通过后再补验收脚本。
+- 可以从活跃上下文移除的内容：
+  - 用户 CRUD 方案讨论中的重复边界确认语句。

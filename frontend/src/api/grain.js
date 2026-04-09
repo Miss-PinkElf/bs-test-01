@@ -254,6 +254,28 @@ export async function createWarehouse(payload) {
   });
 }
 
+export async function updateWarehouse(id, payload) {
+  return request({
+    url: `/api/warehouses/${id}`,
+    method: "put",
+    data: {
+      warehouseCode: payload.warehouseCode,
+      warehouseName: payload.warehouseName,
+      location: payload.location,
+      capacityTon: Number(payload.capacityTon),
+      managerName: payload.managerName,
+      status: payload.status
+    }
+  });
+}
+
+export async function deleteWarehouse(id) {
+  return request({
+    url: `/api/warehouses/${id}`,
+    method: "delete"
+  });
+}
+
 export async function fetchSensorData(params = {}) {
   const raw = await request({
     url: "/api/sensor-data",

@@ -15,11 +15,18 @@
 - 后端联调端口：`8081`
 - 前端默认 API：`http://localhost:8081`
 - 若本机 `8080` 被旧 Java 进程占用，不作为当前故障判断依据
+- 当前默认后端启动不再自动执行 `schema.sql`
+- 若需要重建演示库或首次准备本地库，请先执行：
+
+```powershell
+.\scripts\reset-demo-db.ps1
+```
+
 - 当前真相源：
   - `zzz-docs/任务书.md`
   - `zzz-docs/开题报告.md`
-  - `.explore/grain-platform-bootstrap/state.md`
-  - 最新 handoff
+  - `.devflow/grain-platform-bootstrap/state.md`
+  - `.devflow/grain-platform-bootstrap/handoffs/2026-04-09-018-devflow-migration-ready.md`
 
 ## 3. 静态验证
 
@@ -189,7 +196,7 @@ Invoke-WebRequest -UseBasicParsing "http://127.0.0.1:8081/api/grain-temp/summari
 
 ## 9. 下一步建议
 
-1. 收口本机 MySQL 的本地启动方案：要么恢复为 `root/123456`，要么在脚本中统一接管空密码覆盖。
+1. 当前应先验证新的初始化策略是否稳定：默认启动保留数据，显式重置走 `.\scripts\reset-demo-db.ps1`。
 2. 若后续频繁回归，可补一个 PowerShell 脚本串起“启动后端 + 下载模板 + 导入 + 查询首页概览 + 兼容格式导入”。
 3. 若固定模板会长期作为老师演示样例，再补一份真实样例文件到仓库内。
 

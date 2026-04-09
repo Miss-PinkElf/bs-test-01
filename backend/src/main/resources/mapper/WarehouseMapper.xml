@@ -73,4 +73,23 @@
             #{remark}
         )
     </insert>
+
+    <update id="update" parameterType="com.grain.platform.entity.Warehouse">
+        update warehouse
+        set warehouse_code = #{warehouseCode},
+            warehouse_name = #{warehouseName},
+            location = #{location},
+            capacity_ton = #{capacityTon},
+            manager_name = #{managerName},
+            contact_phone = #{contactPhone},
+            status = #{status},
+            grain_type = #{grainType},
+            remark = #{remark}
+        where id = #{id}
+    </update>
+
+    <delete id="deleteById">
+        delete from warehouse
+        where id = #{id}
+    </delete>
 </mapper>

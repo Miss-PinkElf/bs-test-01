@@ -7,8 +7,11 @@ import com.grain.platform.vo.common.IdVO;
 import jakarta.validation.Valid;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
@@ -52,5 +55,23 @@ public class WarehouseController {
         IdVO response = warehouseService.create(request);
         log.info("新增仓库成功，id={}", response.id());
         return ApiResponse.success(response);
+    }
+
+    // 编辑仓库。
+    @PutMapping("/{id}")
+    public ApiResponse<IdVO> update(@PathVariable Long id, @Valid @RequestBody WarehouseDto request) {
+        log.info("调用编辑仓库接口，id={}, warehouseCode={}, warehouseName={}", id, request.warehouseCode(), request.warehouseName());
+        IdVO response = warehouseService.update(id, request);
+        log.info("编辑仓库成功，id={}", response.id());
+        return ApiResponse.success(response);
+    }
+
+    // 删除仓库。
+    @DeleteMapping("/{id}")
+    public ApiResponse<Void> delete(@PathVariable Long id) {
+        log.info("调用删除仓库接口，id={}", id);
+        warehouseService.delete(id);
+        log.info("删除仓库成功，id={}", id);
+        return ApiResponse.success(null);
     }
 }

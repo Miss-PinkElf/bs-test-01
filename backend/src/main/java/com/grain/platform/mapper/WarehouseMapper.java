@@ -14,4 +14,8 @@ public interface WarehouseMapper {
     Warehouse selectById(Long id);
 
     void insert(Warehouse warehouse);
+
+    void update(Warehouse warehouse);
+
+    void deleteById(Long id);
 }

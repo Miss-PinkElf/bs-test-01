@@ -1,12 +1,14 @@
 <script setup>
 import { computed, onMounted, reactive, ref } from "vue";
-import { ElMessage } from "element-plus";
-import { createWarehouse, fetchWarehouses } from "../api/grain";
+import { ElMessage, ElMessageBox } from "element-plus";
+import { createWarehouse, deleteWarehouse, fetchWarehouses, updateWarehouse } from "../api/grain";
 import { useClientPagination } from "../composables/useClientPagination";
 
 const loading = ref(false);
 const dialogVisible = ref(false);
 const warehouses = ref([]);
+const selectedWarehouseId = ref(null);
+const editingWarehouseId = ref(null);
 const warehousePagination = useClientPagination(warehouses);
 const form = reactive({
   warehouseCode: "",
@@ -31,7 +33,19 @@ const summaryCards = computed(() => [
   }
 ]);
 
-const selectedWarehouse = computed(() => warehouses.value[0] || null);
+const selectedWarehouse = computed(() => {
+  if (selectedWarehouseId.value != null) {
+    const matched = warehouses.value.find((item) => item.id === selectedWarehouseId.value);
+    if (matched) {
+      return matched;
+    }
+  }
+
+  return warehouses.value[0] || null;
+});
+
+const dialogTitle = computed(() => (editingWarehouseId.value == null ? "新增仓库" : "编辑仓库"));
+const submitButtonText = computed(() => (editingWarehouseId.value == null ? "保存仓库" : "保存修改"));
 
 function resetForm() {
   form.warehouseCode = "";
@@ -40,6 +54,7 @@ function resetForm() {
   form.capacityTon = 500;
   form.managerName = "";
   form.status = "ACTIVE";
+  editingWarehouseId.value = null;
 }
 
 function openCreateDialog() {
@@ -47,21 +62,63 @@ function openCreateDialog() {
   dialogVisible.value = true;
 }
 
+function openEditDialog(row) {
+  editingWarehouseId.value = row.id;
+  form.warehouseCode = row.warehouseCode;
+  form.warehouseName = row.warehouseName;
+  form.location = row.location;
+  form.capacityTon = row.capacityTon;
+  form.managerName = row.managerName;
+  form.status = row.status;
+  dialogVisible.value = true;
+}
+
+function handleRowClick(row) {
+  selectedWarehouseId.value = row.id;
+}
+
 async function loadWarehouses() {
   loading.value = true;
 
   try {
     warehouses.value = await fetchWarehouses();
+
+    if (warehouses.value.length === 0) {
+      selectedWarehouseId.value = null;
+      return;
+    }
+
+    const stillExists = warehouses.value.some((item) => item.id === selectedWarehouseId.value);
+    if (!stillExists) {
+      selectedWarehouseId.value = warehouses.value[0].id;
+    }
   } finally {
     loading.value = false;
   }
 }
 
 async function submit() {
-  await createWarehouse(form);
-  ElMessage.success("仓库已写入数据库");
+  if (editingWarehouseId.value == null) {
+    await createWarehouse(form);
+    ElMessage.success("仓库已写入数据库");
+  } else {
+    await updateWarehouse(editingWarehouseId.value, form);
+    selectedWarehouseId.value = editingWarehouseId.value;
+    ElMessage.success("仓库已更新");
+  }
+
   dialogVisible.value = false;
   resetForm();
+  await loadWarehouses();
+}
+
+async function handleDelete(row) {
+  await ElMessageBox.confirm(`确定删除仓库“${row.warehouseName}”吗？`, "确认删除", {
+    type: "warning"
+  });
+
+  await deleteWarehouse(row.id);
+  ElMessage.success("仓库已删除");
   await loadWarehouses();
 }
 
@@ -125,13 +182,27 @@ onMounted(loadWarehouses);
         <div class="panel-title">仓库档案列表</div>
       </template>
 
-      <el-table :data="warehousePagination.pagedItems" stripe v-loading="loading">
+      <el-table
+        :data="warehousePagination.pagedItems"
+        stripe
+        v-loading="loading"
+        highlight-current-row
+        @row-click="handleRowClick"
+      >
         <el-table-column prop="warehouseCode" label="仓库编码" />
         <el-table-column prop="warehouseName" label="仓库名称" />
         <el-table-column prop="location" label="位置" />
         <el-table-column prop="capacityTon" label="容量（吨）" />
         <el-table-column prop="managerName" label="负责人" />
         <el-table-column prop="status" label="状态" />
+        <el-table-column label="操作" width="180">
+          <template #default="{ row }">
+            <div class="table-actions">
+              <el-button link type="primary" @click.stop="openEditDialog(row)">编辑</el-button>
+              <el-button link type="danger" @click.stop="handleDelete(row)">删除</el-button>
+            </div>
+          </template>
+        </el-table-column>
       </el-table>
 
       <div class="table-pagination">
@@ -148,7 +219,7 @@ onMounted(loadWarehouses);
       </div>
     </el-card>
 
-    <el-dialog v-model="dialogVisible" title="新增仓库" width="720px">
+    <el-dialog v-model="dialogVisible" :title="dialogTitle" width="720px" @closed="resetForm">
       <el-form label-position="top" class="form-grid-2">
         <el-form-item label="仓库编码">
           <el-input v-model="form.warehouseCode" placeholder="例如 WH-A03" />
@@ -177,7 +248,7 @@ onMounted(loadWarehouses);
       <template #footer>
         <div class="dialog-footer">
           <el-button @click="dialogVisible = false">取消</el-button>
-          <el-button type="primary" @click="submit">保存仓库</el-button>
+          <el-button type="primary" @click="submit">{{ submitButtonText }}</el-button>
         </div>
       </template>
     </el-dialog>
