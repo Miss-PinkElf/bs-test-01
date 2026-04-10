@@ -374,6 +374,31 @@ export async function fetchGrainTempSummaries(params = {}) {
   return Array.isArray(raw) ? raw.map(normalizeGrainSummary) : [];
 }
 
+export async function fetchGrainTempSummaryPage(params = {}) {
+  const raw = await request({
+    url: "/api/grain-temp/summaries/page",
+    method: "get",
+    params: {
+      warehouseId: params.warehouseId || undefined,
+      startTime: params.startTime || undefined,
+      endTime: params.endTime || undefined,
+      warningLevel: params.warningLevel || undefined,
+      tempMin:
+        params.tempMin !== "" && params.tempMin != null && !Number.isNaN(Number(params.tempMin))
+          ? params.tempMin
+          : undefined,
+      tempMax:
+        params.tempMax !== "" && params.tempMax != null && !Number.isNaN(Number(params.tempMax))
+          ? params.tempMax
+          : undefined,
+      keyword: params.keyword || undefined,
+      pageNum: params.pageNum || 1,
+      pageSize: params.pageSize || 10
+    }
+  });
+
+  return normalizePageResult(raw, normalizeGrainSummary);
+}
 export async function fetchGrainTempRecordFilterOptions(params = {}) {
   const raw = await request({
     url: "/api/grain-temp/records/filter-options",
@@ -675,3 +700,4 @@ export async function fetchMetricOptions() {
 
   return Array.isArray(raw) ? raw.map(normalizeMetricOption) : [];
 }
+
