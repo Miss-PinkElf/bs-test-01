@@ -5,6 +5,7 @@ import com.grain.platform.entity.GrainTempRecord;
 import org.apache.ibatis.annotations.Mapper;
 import org.apache.ibatis.annotations.Param;
 
+import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.List;
 
@@ -25,6 +26,9 @@ public interface GrainTempRecordMapper {
                                                    @Param("endTime") LocalDateTime endTime,
                                                    @Param("zoneCode") String zoneCode,
                                                    @Param("layerNo") Integer layerNo,
+                                                   @Param("pointNo") Integer pointNo,
+                                                   @Param("tempMin") BigDecimal tempMin,
+                                                   @Param("tempMax") BigDecimal tempMax,
                                                    @Param("keyword") String keyword);
 
     List<GrainTempRecordItemDto> selectPageByCondition(@Param("warehouseId") Long warehouseId,
@@ -32,6 +36,9 @@ public interface GrainTempRecordMapper {
                                                        @Param("endTime") LocalDateTime endTime,
                                                        @Param("zoneCode") String zoneCode,
                                                        @Param("layerNo") Integer layerNo,
+                                                       @Param("pointNo") Integer pointNo,
+                                                       @Param("tempMin") BigDecimal tempMin,
+                                                       @Param("tempMax") BigDecimal tempMax,
                                                        @Param("keyword") String keyword,
                                                        @Param("offset") int offset,
                                                        @Param("pageSize") int pageSize);
@@ -41,7 +48,16 @@ public interface GrainTempRecordMapper {
                           @Param("endTime") LocalDateTime endTime,
                           @Param("zoneCode") String zoneCode,
                           @Param("layerNo") Integer layerNo,
+                          @Param("pointNo") Integer pointNo,
+                          @Param("tempMin") BigDecimal tempMin,
+                          @Param("tempMax") BigDecimal tempMax,
                           @Param("keyword") String keyword);
+
+    List<String> selectDistinctZoneCodes(@Param("warehouseId") Long warehouseId);
+
+    List<Integer> selectDistinctLayerNos(@Param("warehouseId") Long warehouseId);
+
+    List<Integer> selectDistinctPointNos(@Param("warehouseId") Long warehouseId);
 
     List<GrainTempRecordItemDto> selectByWarehouseAndCollectedAt(@Param("warehouseId") Long warehouseId,
                                                                  @Param("collectedAt") LocalDateTime collectedAt);

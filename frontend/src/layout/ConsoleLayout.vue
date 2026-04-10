@@ -33,32 +33,34 @@ function handleLogout() {
 <template>
   <el-container class="console-shell">
     <el-aside width="248px" class="console-aside">
-      <div class="aside-main">
-        <div class="brand-panel">
-          <div class="brand-mark">粮</div>
-          <div>
-            <div class="brand-title">粮仓环境数据平台</div>
-            <div class="brand-subtitle">Vue 正式实现骨架</div>
+      <el-scrollbar class="aside-scroll">
+        <div class="aside-main">
+          <div class="brand-panel">
+            <div class="brand-mark">粮</div>
+            <div>
+              <div class="brand-title">粮仓环境数据平台</div>
+              <div class="brand-subtitle">Vue 正式实现骨架</div>
+            </div>
           </div>
-        </div>
 
-        <el-menu
-          class="console-menu"
-          :default-active="route.path"
-          router
-          background-color="transparent"
-          text-color="#d7edf3"
-          active-text-color="#ffffff"
-        >
-          <el-menu-item
-            v-for="item in navItems"
-            :key="item.path"
-            :index="item.path"
+          <el-menu
+            class="console-menu"
+            :default-active="route.path"
+            router
+            background-color="transparent"
+            text-color="#d7edf3"
+            active-text-color="#ffffff"
           >
-            {{ item.label }}
-          </el-menu-item>
-        </el-menu>
-      </div>
+            <el-menu-item
+              v-for="item in navItems"
+              :key="item.path"
+              :index="item.path"
+            >
+              {{ item.label }}
+            </el-menu-item>
+          </el-menu>
+        </div>
+      </el-scrollbar>
 
       <div class="aside-footer">
         <div class="aside-tip">答辩演示入口</div>
@@ -68,7 +70,7 @@ function handleLogout() {
       </div>
     </el-aside>
 
-    <el-container>
+    <el-container class="console-body">
       <el-header class="console-header">
         <div>
           <div class="page-title">{{ pageTitle }}</div>
@@ -86,7 +88,9 @@ function handleLogout() {
       </el-header>
 
       <el-main class="console-main">
-        <router-view />
+        <el-scrollbar class="console-main-scroll">
+          <router-view />
+        </el-scrollbar>
       </el-main>
     </el-container>
   </el-container>

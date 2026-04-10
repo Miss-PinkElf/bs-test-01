@@ -1,7 +1,7 @@
 # 当前状态
 
 ## 当前阶段
-- Pause-ready after table search、Cursor 规则强化与 handoff 021（2026-04-10）
+- 体验优化两轮已记入 devflow：① 管理端布局（侧栏/主区独立滚动 + `el-scrollbar`）② 粮温原始测点记录多条件筛选工具栏（2026-04-10）；handoff 021 仍为上一轮暂停点，连续小改未另开 handoff
 
 ## 已确认的事实
 - 用户要求使用 `devflow` 记录过程。
@@ -115,6 +115,16 @@
   - 服务端分页：`GET /api/grain-temp/records`、`GET /api/sensor-data` 增加可选 `keyword`，MyBatis `LIKE` 模糊匹配仓库名、点位/区域/层号/指标等；`DataView` 原始记录区输入防抖后触发重新拉页
 - 已强化 Cursor 仓库规则：
   - `.cursor/rules/project-zh.mdc` §3 增加「实现前对齐」硬约束（触发条件、禁止同轮直接大批量改代码、须先输出理解/方案/待确认、用户豁免语）
+- 已修复管理端「侧栏与主体一体滚动」并完成与 Element Plus Container 文档对齐的滚动收口（详见 `.devflow/grain-platform-bootstrap/plans/2026-04-10-console-layout-scroll-and-scrollbar.md`）：
+  - **问题现象**：向下滚动时左侧导航与右侧内容同步被带起，像整页一体滚动。
+  - **问题原因**：已使用 `el-container` / `el-aside` / `el-main`，但外层仅用 `min-height: 100vh`、未锁定视口高度与 flex 子项 `min-height: 0`，主内容增高时整页容器被撑高，由浏览器文档滚动统一滚动；**不是**「未使用 Element Plus」。
+  - **解决方案**：`html`/`body`/`#app` 高度链；`.console-shell` 视口限高与 `overflow: hidden`；`.console-body` / `.console-main` 使用 `flex: 1`、`min-height: 0`；侧栏中部与主内容按官方示例增加 `el-scrollbar`（`ConsoleLayout.vue`、`styles.css`）；小屏断点恢复文档流滚动。
+  - **验证**：`frontend/` 执行 `npm run build` 成功。
+- 已增强「粮温原始测点记录」筛选：由单一关键词扩展为表头向工具栏 + 服务端条件（详见 `.devflow/grain-platform-bootstrap/plans/2026-04-10-grain-temp-records-filter-toolbar.md`）：
+  - **目标**：区域 / 层号 / 点位用下拉，温度用区间，采集时间用范围；仓库仍以数据页右上方「查询条件」为准；保留关键词防抖模糊搜索。
+  - **后端**：`GET /api/grain-temp/records` 在既有 `warehouseId`、`startTime`、`endTime`、`zoneCode`、`layerNo`、`keyword` 基础上增加 `pointNo`、`tempMin`、`tempMax`；新增 `GET /api/grain-temp/records/filter-options?warehouseId=` 返回去重后的 `zoneCodes`、`layerNos`、`pointNos`；`GrainTempRecordMapper.xml` / `GrainTempService` / `GrainTempController` 与 DTO `GrainTempRecordFilterOptionsDto`。
+  - **前端**：`DataView.vue`（粮温模式下工具栏）、`frontend/src/api/grain.js`（`fetchGrainTempRecordFilterOptions`、`fetchGrainTempRecords` 参数）；`styles.css`（`.grain-record-filter-form` 等）。
+  - **验证**：`backend/` `mvn -q -DskipTests compile`、`frontend/` `npm run build` 已通过；全量 `run-acceptance-smoke.ps1` 未因本项改写，答辩前可按需手工跑一遍。
 
 ## 工作假设
 - 以毕业设计 MVP 为目标，先做可演示的软件平台，不接入真实硬件。
@@ -138,6 +148,8 @@
 
 ## 当前参考计划
 - `.devflow/grain-platform-bootstrap/plans/active-plan-links.md`
+- `.devflow/grain-platform-bootstrap/plans/2026-04-10-console-layout-scroll-and-scrollbar.md`
+- `.devflow/grain-platform-bootstrap/plans/2026-04-10-grain-temp-records-filter-toolbar.md`
 - `.devflow/grain-platform-bootstrap/plans/2026-04-09-init-strategy-and-admin-crud-sequencing.md`
 - `.devflow/grain-platform-bootstrap/plans/2026-04-09-init-strategy-closure.md`
 - `.devflow/grain-platform-bootstrap/plans/2026-04-09-warehouse-crud.md`
@@ -150,6 +162,6 @@
 - `.devflow/grain-platform-bootstrap/handoffs/2026-04-10-021-pause-ready-after-table-search-and-cursor-rules.md`
 
 ## 最小活跃上下文摘要
-- 在 020 基础上已落地：主流列表模糊搜索（前端过滤 + `/api/grain-temp/records` 与 `/api/sensor-data` 的 `keyword`）、`.cursor/rules/project-zh.mdc` 对齐门禁强化。恢复时读 021 handoff 与根目录 `NEXT-SESSION-PROMPT-DEVFLOW.md`。新需求默认先对齐再编码（见 mdc §3.2–3.3）；沙箱跑验收可 `-SkipStaticChecks`。
+- 在 021 基础上补充：① `ConsoleLayout` 视口锁定 + 侧栏/主区 `el-scrollbar`（见 `plans/2026-04-10-console-layout-scroll-and-scrollbar.md`）② 粮温原始记录多条件筛选 + `filter-options` 接口（见 `plans/2026-04-10-grain-temp-records-filter-toolbar.md`）。恢复时仍以 `state.md` + 021 handoff + `NEXT-SESSION-PROMPT-DEVFLOW.md` 为主。新需求默认先对齐再编码（见 mdc §3.2–3.3）；沙箱跑验收可 `-SkipStaticChecks`。
 
 

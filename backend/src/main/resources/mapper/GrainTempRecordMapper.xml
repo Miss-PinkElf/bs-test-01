@@ -28,6 +28,9 @@
           and (#{endTime} is null or r.collected_at &lt;= #{endTime})
           and (#{zoneCode} is null or #{zoneCode} = '' or p.zone_code = #{zoneCode})
           and (#{layerNo} is null or p.layer_no = #{layerNo})
+          and (#{pointNo} is null or p.point_no = #{pointNo})
+          and (#{tempMin} is null or r.temperature_value &gt;= #{tempMin})
+          and (#{tempMax} is null or r.temperature_value &lt;= #{tempMax})
         <if test="keyword != null and keyword != ''">
           and (
             w.warehouse_name like concat('%', #{keyword}, '%')
@@ -140,6 +143,30 @@
     <select id="countByCondition" resultType="long">
         select count(1)
         <include refid="recordQueryFromWhere"/>
+    </select>
+
+    <select id="selectDistinctZoneCodes" resultType="java.lang.String">
+        select distinct p.zone_code
+        from grain_temp_record r
+                 join grain_temp_point p on r.point_id = p.id
+        where (#{warehouseId} is null or r.warehouse_id = #{warehouseId})
+        order by p.zone_code
+    </select>
+
+    <select id="selectDistinctLayerNos" resultType="java.lang.Integer">
+        select distinct p.layer_no
+        from grain_temp_record r
+                 join grain_temp_point p on r.point_id = p.id
+        where (#{warehouseId} is null or r.warehouse_id = #{warehouseId})
+        order by p.layer_no
+    </select>
+
+    <select id="selectDistinctPointNos" resultType="java.lang.Integer">
+        select distinct p.point_no
+        from grain_temp_record r
+                 join grain_temp_point p on r.point_id = p.id
+        where (#{warehouseId} is null or r.warehouse_id = #{warehouseId})
+        order by p.point_no
     </select>
 
     <select id="selectByWarehouseAndCollectedAt" resultType="com.grain.platform.dto.grain.GrainTempRecordItemDto">

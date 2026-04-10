@@ -374,6 +374,22 @@ export async function fetchGrainTempSummaries(params = {}) {
   return Array.isArray(raw) ? raw.map(normalizeGrainSummary) : [];
 }
 
+export async function fetchGrainTempRecordFilterOptions(params = {}) {
+  const raw = await request({
+    url: "/api/grain-temp/records/filter-options",
+    method: "get",
+    params: {
+      warehouseId: params.warehouseId || undefined
+    }
+  });
+
+  return {
+    zoneCodes: Array.isArray(raw?.zoneCodes) ? raw.zoneCodes : [],
+    layerNos: Array.isArray(raw?.layerNos) ? raw.layerNos.map((n) => Number(n)) : [],
+    pointNos: Array.isArray(raw?.pointNos) ? raw.pointNos.map((n) => Number(n)) : []
+  };
+}
+
 export async function fetchGrainTempRecords(params = {}) {
   const raw = await request({
     url: "/api/grain-temp/records",
@@ -383,7 +399,16 @@ export async function fetchGrainTempRecords(params = {}) {
       startTime: params.startTime || undefined,
       endTime: params.endTime || undefined,
       zoneCode: params.zoneCode || undefined,
-      layerNo: params.layerNo || undefined,
+      layerNo: params.layerNo != null && params.layerNo !== "" ? Number(params.layerNo) : undefined,
+      pointNo: params.pointNo != null && params.pointNo !== "" ? Number(params.pointNo) : undefined,
+      tempMin:
+        params.tempMin !== "" && params.tempMin != null && !Number.isNaN(Number(params.tempMin))
+          ? params.tempMin
+          : undefined,
+      tempMax:
+        params.tempMax !== "" && params.tempMax != null && !Number.isNaN(Number(params.tempMax))
+          ? params.tempMax
+          : undefined,
       keyword: params.keyword || undefined,
       pageNum: params.pageNum || 1,
       pageSize: params.pageSize || 10

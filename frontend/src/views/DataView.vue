@@ -10,6 +10,7 @@ import {
   deleteSensorData,
   downloadGrainTempTemplate,
   downloadSensorTemplate,
+  fetchGrainTempRecordFilterOptions,
   fetchGrainTempRecords,
   fetchGrainTempSummaries,
   fetchMetricOptions,
@@ -38,6 +39,15 @@ const envTrendRows = ref([]);
 const grainSummaryKeyword = ref("");
 const grainRecordKeyword = ref("");
 const envRecordKeyword = ref("");
+const grainFilterOptions = ref({ zoneCodes: [], layerNos: [], pointNos: [] });
+const grainCollectedRange = ref(null);
+const grainRecordFilters = reactive({
+  zoneCode: "",
+  layerNo: null,
+  pointNo: null,
+  tempMin: null,
+  tempMax: null
+});
 
 const filteredGrainSummaries = computed(() =>
   filterRows(grainSummaryRows.value, grainSummaryKeyword.value, (row) => [
@@ -183,18 +193,48 @@ async function loadWarehouses() {
   }
 }
 
+async function loadGrainRecordFilterOptions() {
+  grainFilterOptions.value = await fetchGrainTempRecordFilterOptions({
+    warehouseId: filters.warehouseId || undefined
+  });
+}
+
 async function loadData() {
   loading.value = true;
 
   try {
     if (mode.value === "grain") {
+      let startTime;
+      let endTime;
+      if (Array.isArray(grainCollectedRange.value) && grainCollectedRange.value.length === 2) {
+        [startTime, endTime] = grainCollectedRange.value;
+      }
+
+      let tempMin = grainRecordFilters.tempMin;
+      let tempMax = grainRecordFilters.tempMax;
+      const nMin = tempMin !== null && tempMin !== "" && !Number.isNaN(Number(tempMin)) ? Number(tempMin) : null;
+      const nMax = tempMax !== null && tempMax !== "" && !Number.isNaN(Number(tempMax)) ? Number(tempMax) : null;
+      let outMin = nMin;
+      let outMax = nMax;
+      if (nMin != null && nMax != null && nMin > nMax) {
+        outMin = nMax;
+        outMax = nMin;
+      }
+
       const [summaryList, recordList] = await Promise.all([
         fetchGrainTempSummaries({ warehouseId: filters.warehouseId }),
         fetchGrainTempRecords({
           warehouseId: filters.warehouseId,
+          startTime,
+          endTime,
+          zoneCode: grainRecordFilters.zoneCode || undefined,
+          layerNo: grainRecordFilters.layerNo ?? undefined,
+          pointNo: grainRecordFilters.pointNo ?? undefined,
+          tempMin: outMin ?? undefined,
+          tempMax: outMax ?? undefined,
+          keyword: grainRecordKeyword.value.trim() || undefined,
           pageNum: grainRecordPageState.pageNum,
-          pageSize: grainRecordPageState.pageSize,
-          keyword: grainRecordKeyword.value.trim() || undefined
+          pageSize: grainRecordPageState.pageSize
         })
       ]);
       grainSummaryRows.value = summaryList;
@@ -338,7 +378,28 @@ function handleRecordPageSizeChange(size) {
 
 async function handleSearch() {
   currentRecordPageState.value.pageNum = 1;
+  if (mode.value === "grain") {
+    await loadGrainRecordFilterOptions();
+  }
+
   await loadData();
+}
+
+function applyGrainRecordFilters() {
+  grainRecordPageState.pageNum = 1;
+  loadData();
+}
+
+function resetGrainRecordFilters() {
+  grainRecordFilters.zoneCode = "";
+  grainRecordFilters.layerNo = null;
+  grainRecordFilters.pointNo = null;
+  grainRecordFilters.tempMin = null;
+  grainRecordFilters.tempMax = null;
+  grainCollectedRange.value = null;
+  grainRecordKeyword.value = "";
+  grainRecordPageState.pageNum = 1;
+  loadData();
 }
 
 async function handleModeChange() {
@@ -351,6 +412,7 @@ async function handleModeChange() {
   } else {
     resetGrainForm();
     grainRecordPageState.pageNum = 1;
+    await loadGrainRecordFilterOptions();
   }
 
   await loadData();
@@ -371,6 +433,17 @@ function scheduleRecordKeywordReload() {
 
 watch(grainRecordKeyword, scheduleRecordKeywordReload);
 watch(envRecordKeyword, scheduleRecordKeywordReload);
+
+watch(
+  () => filters.warehouseId,
+  async () => {
+    if (mode.value !== "grain") {
+      return;
+    }
+
+    await loadGrainRecordFilterOptions();
+  }
+);
 
 function renderChart() {
   if (!chartRef.value) {
@@ -448,6 +521,7 @@ onMounted(async () => {
   await loadWarehouses();
   resetGrainForm();
   resetEnvForm();
+  await loadGrainRecordFilterOptions();
   await loadData();
 });
 
@@ -617,17 +691,87 @@ onBeforeUnmount(() => {
         <div class="panel-title">{{ mode === "grain" ? "粮温原始测点记录" : "环境数据记录" }}</div>
       </template>
 
-      <div class="toolbar-row table-toolbar">
+      <template v-if="mode === 'grain'">
+      <el-form class="grain-record-filter-form table-toolbar" label-width="72px" inline>
+        <el-form-item label="区域">
+          <el-select v-model="grainRecordFilters.zoneCode" clearable placeholder="全部" filterable>
+            <el-option
+              v-for="z in grainFilterOptions.zoneCodes"
+              :key="z"
+              :label="z"
+              :value="z"
+            />
+          </el-select>
+        </el-form-item>
+        <el-form-item label="层号">
+          <el-select v-model="grainRecordFilters.layerNo" clearable placeholder="全部">
+            <el-option
+              v-for="n in grainFilterOptions.layerNos"
+              :key="n"
+              :label="String(n)"
+              :value="n"
+            />
+          </el-select>
+        </el-form-item>
+        <el-form-item label="点位">
+          <el-select v-model="grainRecordFilters.pointNo" clearable placeholder="全部">
+            <el-option
+              v-for="n in grainFilterOptions.pointNos"
+              :key="n"
+              :label="String(n)"
+              :value="n"
+            />
+          </el-select>
+        </el-form-item>
+        <el-form-item label="温度℃">
+          <div class="grain-temp-range">
+            <el-input-number
+              v-model="grainRecordFilters.tempMin"
+              :step="0.1"
+              :controls="false"
+              placeholder="最低"
+            />
+            <span class="grain-temp-range-sep">~</span>
+            <el-input-number
+              v-model="grainRecordFilters.tempMax"
+              :step="0.1"
+              :controls="false"
+              placeholder="最高"
+            />
+          </div>
+        </el-form-item>
+        <el-form-item label="采集时间">
+          <el-date-picker
+            v-model="grainCollectedRange"
+            type="datetimerange"
+            range-separator="至"
+            start-placeholder="开始"
+            end-placeholder="结束"
+            value-format="YYYY-MM-DD HH:mm:ss"
+            class="grain-filter-daterange"
+          />
+        </el-form-item>
+        <el-form-item class="grain-filter-actions">
+          <el-button type="primary" @click="applyGrainRecordFilters">应用筛选</el-button>
+          <el-button plain @click="resetGrainRecordFilters">重置</el-button>
+        </el-form-item>
+        <el-form-item label="关键词" class="grain-filter-keyword-row">
+          <el-input
+            v-model="grainRecordKeyword"
+            class="table-search-input grain-keyword-input"
+            clearable
+            placeholder="模糊匹配仓库名、区域、层号、点位等（可选）"
+            :prefix-icon="Search"
+          />
+        </el-form-item>
+      </el-form>
+      <div class="grain-filter-hint compact-lines">
+        仓库以右上方「查询条件」为准；修改区域/层号/点位/温度/时间后请点击「应用筛选」。关键词支持防抖自动查询。
+      </div>
+      </template>
+
+      <div v-else class="toolbar-row table-toolbar">
         <el-input
-          v-if="mode === 'grain'"
-          v-model="grainRecordKeyword"
-          class="table-search-input"
-          clearable
-          placeholder="搜索仓库、区域、层号、点位等（服务端模糊匹配）"
-          :prefix-icon="Search"
-        />
-        <el-input
-          v-else
           v-model="envRecordKeyword"
           class="table-search-input"
           clearable

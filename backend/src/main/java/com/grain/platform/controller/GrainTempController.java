@@ -3,6 +3,7 @@ package com.grain.platform.controller;
 import com.grain.platform.common.ApiResponse;
 import com.grain.platform.common.PageResult;
 import com.grain.platform.dto.grain.GrainTempImportResultDto;
+import com.grain.platform.dto.grain.GrainTempRecordFilterOptionsDto;
 import com.grain.platform.dto.grain.GrainTempRecordItemDto;
 import com.grain.platform.dto.grain.GrainTempRecordUpsertRequest;
 import com.grain.platform.dto.grain.GrainTempSummaryItemDto;
@@ -25,6 +26,7 @@ import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.io.IOException;
+import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.List;
 
@@ -69,6 +71,13 @@ public class GrainTempController {
         return ApiResponse.success(null);
     }
 
+    @GetMapping("/records/filter-options")
+    public ApiResponse<GrainTempRecordFilterOptionsDto> listRecordFilterOptions(
+            @RequestParam(required = false) Long warehouseId
+    ) {
+        return ApiResponse.success(grainTempService.recordFilterOptions(warehouseId));
+    }
+
     @GetMapping("/records")
     public ApiResponse<PageResult<GrainTempRecordItemDto>> listRecords(
             @RequestParam(required = false) Long warehouseId,
@@ -76,6 +85,9 @@ public class GrainTempController {
             @RequestParam(required = false) @DateTimeFormat(pattern = "yyyy-MM-dd HH:mm:ss") LocalDateTime endTime,
             @RequestParam(required = false) String zoneCode,
             @RequestParam(required = false) Integer layerNo,
+            @RequestParam(required = false) Integer pointNo,
+            @RequestParam(required = false) BigDecimal tempMin,
+            @RequestParam(required = false) BigDecimal tempMax,
             @RequestParam(required = false) String keyword,
             @RequestParam(defaultValue = "1") Integer pageNum,
             @RequestParam(defaultValue = "10") Integer pageSize
@@ -86,6 +98,9 @@ public class GrainTempController {
                 endTime,
                 zoneCode,
                 layerNo,
+                pointNo,
+                tempMin,
+                tempMax,
                 keyword,
                 pageNum,
                 pageSize

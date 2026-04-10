@@ -2,6 +2,7 @@ package com.grain.platform.service;
 
 import com.grain.platform.common.PageResult;
 import com.grain.platform.dto.grain.GrainTempImportResultDto;
+import com.grain.platform.dto.grain.GrainTempRecordFilterOptionsDto;
 import com.grain.platform.dto.grain.GrainTempRecordItemDto;
 import com.grain.platform.dto.grain.GrainTempRecordUpsertRequest;
 import com.grain.platform.dto.grain.GrainTempSummaryItemDto;
@@ -23,6 +24,7 @@ import java.math.RoundingMode;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.stream.Collectors;
 
 @Service
@@ -51,7 +53,27 @@ public class GrainTempService {
                                                     LocalDateTime endTime,
                                                     String zoneCode,
                                                     Integer layerNo) {
-        return grainTempRecordMapper.selectByCondition(warehouseId, startTime, endTime, zoneCode, layerNo, null);
+        return grainTempRecordMapper.selectByCondition(
+                warehouseId, startTime, endTime, zoneCode, layerNo, null, null, null, null);
+    }
+
+    public GrainTempRecordFilterOptionsDto recordFilterOptions(Long warehouseId) {
+        List<String> zoneCodes = grainTempRecordMapper.selectDistinctZoneCodes(warehouseId).stream()
+                .filter(Objects::nonNull)
+                .map(String::trim)
+                .filter(s -> !s.isEmpty())
+                .distinct()
+                .sorted()
+                .toList();
+        List<Integer> layerNos = grainTempRecordMapper.selectDistinctLayerNos(warehouseId).stream()
+                .filter(Objects::nonNull)
+                .sorted()
+                .toList();
+        List<Integer> pointNos = grainTempRecordMapper.selectDistinctPointNos(warehouseId).stream()
+                .filter(Objects::nonNull)
+                .sorted()
+                .toList();
+        return new GrainTempRecordFilterOptionsDto(zoneCodes, layerNos, pointNos);
     }
 
     public PageResult<GrainTempRecordItemDto> listRecordPage(Long warehouseId,
@@ -59,13 +81,17 @@ public class GrainTempService {
                                                              LocalDateTime endTime,
                                                              String zoneCode,
                                                              Integer layerNo,
+                                                             Integer pointNo,
+                                                             BigDecimal tempMin,
+                                                             BigDecimal tempMax,
                                                              String keyword,
                                                              Integer pageNum,
                                                              Integer pageSize) {
         String kw = (keyword == null || keyword.isBlank()) ? null : keyword.trim();
         int finalPageNum = pageNum == null || pageNum < 1 ? 1 : pageNum;
         int finalPageSize = pageSize == null || pageSize < 1 ? 10 : pageSize;
-        long total = grainTempRecordMapper.countByCondition(warehouseId, startTime, endTime, zoneCode, layerNo, kw);
+        long total = grainTempRecordMapper.countByCondition(
+                warehouseId, startTime, endTime, zoneCode, layerNo, pointNo, tempMin, tempMax, kw);
         int maxPage = total == 0 ? 1 : (int) Math.ceil((double) total / finalPageSize);
         finalPageNum = Math.min(finalPageNum, maxPage);
         int offset = (finalPageNum - 1) * finalPageSize;
@@ -75,6 +101,9 @@ public class GrainTempService {
                 endTime,
                 zoneCode,
                 layerNo,
+                pointNo,
+                tempMin,
+                tempMax,
                 kw,
                 offset,
                 finalPageSize

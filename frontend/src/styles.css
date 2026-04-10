@@ -16,6 +16,11 @@
   box-sizing: border-box;
 }
 
+html,
+body {
+  height: 100%;
+}
+
 body {
   margin: 0;
   color: var(--text-main);
@@ -26,19 +31,45 @@ body {
 }
 
 #app {
+  height: 100%;
   min-height: 100vh;
 }
 
+/* 管理端：侧栏固定视口高度，仅右侧主内容区滚动（桌面端） */
 .console-shell {
+  height: 100%;
   min-height: 100vh;
+  max-height: 100vh;
+  overflow: hidden;
 }
 
 .console-aside {
   display: flex;
   flex-direction: column;
+  flex-shrink: 0;
+  height: 100%;
+  max-height: 100%;
+  overflow: hidden;
   padding: 20px 18px;
   color: #fff;
   background: linear-gradient(180deg, #102d28 0%, #16443b 52%, #0f2e29 100%);
+}
+
+/* 侧栏菜单区：与 Element Plus 文档示例一致，由 el-scrollbar 承担滚动 */
+.aside-scroll {
+  flex: 1;
+  min-height: 0;
+}
+
+.aside-scroll.el-scrollbar {
+  height: 100%;
+}
+
+.console-body {
+  flex: 1;
+  min-width: 0;
+  min-height: 0;
+  overflow: hidden;
 }
 
 .aside-main {
@@ -112,6 +143,7 @@ body {
 
 .console-header {
   display: flex;
+  flex-shrink: 0;
   align-items: center;
   justify-content: space-between;
   height: auto;
@@ -142,7 +174,23 @@ body {
 }
 
 .console-main {
-  padding: 18px 28px 28px !important;
+  flex: 1;
+  min-height: 0;
+  overflow: hidden;
+  padding: 0 !important;
+}
+
+/* 主内容：文档示例在 el-main 内套 el-scrollbar；内边距落在滚动视图上 */
+.console-main-scroll {
+  height: 100%;
+}
+
+.console-main-scroll.el-scrollbar {
+  height: 100%;
+}
+
+.console-main .el-scrollbar__view {
+  padding: 18px 28px 28px;
 }
 
 .page-stack {
@@ -204,6 +252,61 @@ body {
 
 .table-toolbar {
   margin-bottom: 12px;
+}
+
+.grain-record-filter-form {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-start;
+  gap: 4px 8px;
+}
+
+.grain-record-filter-form .el-form-item {
+  margin-bottom: 8px;
+  margin-right: 8px;
+}
+
+.grain-record-filter-form .el-select {
+  width: 120px;
+}
+
+.grain-filter-daterange {
+  width: 340px;
+}
+
+.grain-temp-range {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.grain-temp-range .el-input-number {
+  width: 110px;
+}
+
+.grain-temp-range-sep {
+  color: var(--text-subtle);
+  font-size: 13px;
+}
+
+.grain-filter-actions {
+  margin-left: 4px;
+}
+
+.grain-filter-hint {
+  flex: 1 1 100%;
+  margin: 0 0 4px;
+  color: var(--text-subtle);
+  font-size: 13px;
+}
+
+.grain-filter-keyword-row {
+  flex: 1 1 100%;
+}
+
+.grain-keyword-input {
+  min-width: 280px;
+  max-width: 560px;
 }
 
 .table-search-input {
@@ -542,10 +645,43 @@ body {
 @media (max-width: 960px) {
   .console-shell {
     display: block;
+    max-height: none;
+    height: auto;
+    min-height: 100vh;
+    overflow: visible;
+  }
+
+  .console-body {
+    display: block;
+    min-height: 0;
+    overflow: visible;
   }
 
   .console-aside {
     width: 100% !important;
+    height: auto;
+    max-height: none;
+    overflow: visible;
+  }
+
+  .aside-scroll {
+    flex: none;
+    min-height: 0;
+    height: auto;
+  }
+
+  .aside-scroll.el-scrollbar {
+    height: auto;
+  }
+
+  .console-main {
+    flex: none;
+    min-height: 0;
+    overflow: visible;
+  }
+
+  .console-main-scroll.el-scrollbar {
+    height: auto;
   }
 
   .console-main,
