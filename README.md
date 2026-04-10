@@ -86,7 +86,14 @@ scripts/   Windows 启动脚本
 Windows 下优先使用：
 
 ```powershell
-.\scripts\start-all.ps1
+npm run dev
+```
+
+也可以单独启动：
+
+```powershell
+npm run frontend
+npm run backend
 ```
 
 如果你需要把本地数据库恢复到仓库内置的演示数据，请先执行：
@@ -99,6 +106,7 @@ Windows 下优先使用：
 
 - 当前本机检测到了 `java`、`node`、`npm`
 - 当前未检测到 `mvn`
+- 前端默认地址改为 `http://localhost:5174`
 - 如果你没有安装 Maven，可以用 IDEA 自带 Maven 运行后端，或者后续补 Maven Wrapper
 - 后端默认启动现在不会自动重建演示库；只有手动执行 `reset-demo-db.ps1` 才会清库并回填演示数据
 

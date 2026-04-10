@@ -1,4 +1,4 @@
-$ErrorActionPreference = "Stop"
+﻿$ErrorActionPreference = "Stop"
 
 function Test-Tool {
     param(
@@ -9,6 +9,18 @@ function Test-Tool {
     return $null -ne $command
 }
 
+function Get-ToolStatusText {
+    param(
+        [bool]$Available
+    )
+
+    if ($Available) {
+        return "OK"
+    }
+
+    return "MISSING"
+}
+
 Write-Host "检查开发环境..." -ForegroundColor Cyan
 
 $javaOk = Test-Tool "java"
@@ -17,11 +29,11 @@ $npmOk = Test-Tool "npm"
 $mvnOk = Test-Tool "mvn"
 $mvnwOk = Test-Path -LiteralPath (Join-Path $PSScriptRoot "..\backend\mvnw.cmd")
 
-Write-Host ("java: " + ($javaOk ? "OK" : "MISSING"))
-Write-Host ("node: " + ($nodeOk ? "OK" : "MISSING"))
-Write-Host ("npm:  " + ($npmOk ? "OK" : "MISSING"))
-Write-Host ("mvn:  " + ($mvnOk ? "OK" : "MISSING"))
-Write-Host ("mvnw: " + ($mvnwOk ? "OK" : "MISSING"))
+Write-Host ("java: " + (Get-ToolStatusText -Available $javaOk))
+Write-Host ("node: " + (Get-ToolStatusText -Available $nodeOk))
+Write-Host ("npm:  " + (Get-ToolStatusText -Available $npmOk))
+Write-Host ("mvn:  " + (Get-ToolStatusText -Available $mvnOk))
+Write-Host ("mvnw: " + (Get-ToolStatusText -Available $mvnwOk))
 
 if (-not $javaOk -or -not $nodeOk -or -not $npmOk) {
     Write-Host "基础环境不完整，无法启动项目。" -ForegroundColor Red

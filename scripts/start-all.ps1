@@ -14,7 +14,7 @@ Start-Process -FilePath "powershell" -ArgumentList "-NoExit", "-ExecutionPolicy"
 Start-Process -FilePath "powershell" -ArgumentList "-NoExit", "-ExecutionPolicy", "Bypass", "-File", $frontendScript
 
 Write-Host "如果启动成功，可访问：" -ForegroundColor Green
-Write-Host "前端: http://localhost:5173"
+Write-Host "前端: http://localhost:5174"
 Write-Host "后端: http://localhost:8081"
 Write-Host "前端请求将自动指向: http://localhost:8081" -ForegroundColor Green
 Write-Host "如果后端窗口提示缺少 Maven，请改用 IDEA 直接运行 backend。" -ForegroundColor Yellow

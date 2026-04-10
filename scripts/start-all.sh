@@ -18,6 +18,6 @@ osascript <<EOF
 EOF
 
 echo "如果启动成功，可访问："
-echo "前端: http://localhost:5173"
+echo "前端: http://localhost:5174"
 echo "后端: http://localhost:8081"
 echo "前端请求将自动指向: http://localhost:8081"
