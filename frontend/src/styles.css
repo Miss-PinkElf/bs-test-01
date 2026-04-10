@@ -194,7 +194,7 @@ body {
   height: 100%;
   min-width: 0;
   max-width: 100%;
-  overflow-x: hidden;
+  overflow-x: auto;
   overflow-y: auto;
   padding: 18px 28px 28px;
   scrollbar-gutter: stable;
@@ -360,7 +360,7 @@ body {
 
 /*
  * 预测记录：el-card 为 flex 列布局，.el-card__body 默认 min-width:auto 会被宽表格撑开，
- * 连带撑破 .page-stack，最终被 .console-main-native { overflow-x:hidden } 裁切。
+ * 连带撑破 .page-stack，最终把主内容区推到可视边界外。
  * 给 body min-width:0 让子级 max-width:100% / overflow-x:auto 真正生效。
  */
 .prediction-records-card {
@@ -383,6 +383,22 @@ body {
 
 .prediction-history-table {
   min-width: max(100%, 1100px);
+}
+
+.task-summary-card {
+  min-width: 0;
+}
+
+.task-summary-card :deep(.el-card__body) {
+  min-width: 0;
+}
+
+.task-summary-table-wrap {
+  min-width: 0;
+  width: 100%;
+  max-width: 100%;
+  overflow-x: auto;
+  overflow-y: visible;
 }
 
 .stack-list {
@@ -519,8 +535,29 @@ body {
   gap: 12px;
 }
 
-.task-summary-descriptions + .task-summary-descriptions {
+.task-summary-table-wrap + .task-summary-table-wrap {
   margin-top: 12px;
+}
+
+.task-summary-descriptions {
+  min-width: 0;
+  width: 100%;
+}
+
+.task-summary-descriptions :deep(.el-descriptions__table) {
+  width: 100%;
+  table-layout: fixed;
+}
+
+.task-summary-descriptions :deep(.el-descriptions__label) {
+  white-space: nowrap;
+}
+
+.task-summary-descriptions :deep(.el-descriptions__content) {
+  min-width: 0;
+  white-space: normal;
+  overflow-wrap: anywhere;
+  word-break: break-word;
 }
 
 .prediction-train-collapse {
@@ -779,7 +816,7 @@ body {
   .console-main-native {
     height: auto;
     max-width: none;
-    overflow-x: hidden;
+    overflow-x: auto;
     overflow-y: visible;
   }
 

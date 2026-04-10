@@ -44,6 +44,14 @@
 - [ ] **DEL-05-01**: 「预测记录」表 **最左侧多选列**；工具栏 **「批量删除」**（`danger`）；操作列在 Phase 4 基础上增加 **「删除」**；**单删与批量删**在请求接口前均需 **`ElMessageBox.confirm`**，且批量确认须展示 **选中数量**（或等价可读摘要）；删除成功后刷新列表并 **清空表格勾选**；若删除集合包含当前查看的 `taskId`，须 **清空**摘要区与图表主视觉（见 `05-CONTEXT.md` D-05～D-07）
 - [ ] **DEL-05-02**: 后端提供 **`DELETE /api/predictions/tasks/{taskId}`** 与 **`POST /api/predictions/tasks/batch-delete`**（请求体 `taskIds` 列表）；**物理删除**对应 `prediction_result` 与 `prediction_task`；**单事务**；空列表 **400**；单条不存在 **404**（或与项目统一错误形态一致）；批量部分 id 无效时推荐 **整批失败回滚**（见 `05-CONTEXT.md` D-02～D-03b）
 
+## Phase 6 Requirements（温度预测页 · overflow-x 收口）
+
+### Layout / overflow-x
+
+- [x] **OVERFLOW-06-01**: 管理端主内容区在保留原生纵向滚动、且不恢复 `el-scrollbar` 主内容承载的前提下，**不再一刀切 `overflow-x: hidden`**；当页面出现**真实超宽内容**时，主内容区应能提供正常横向滚动，而非直接裁切（2026-04-10：`.console-main-native` 改为 `overflow-x: auto`）
+- [x] **OVERFLOW-06-02**: 温度预测页中**底部「预测记录」表**继续通过局部 wrapper 承担横向滚动；右侧**任务摘要**不依赖整页横向滚动，而应通过 `min-width: 0`、可换行内容和局部 wrapper 控制在窄列内稳定显示，避免出现“超宽后被直接裁切”的表现（2026-04-10：`task-summary-card` / `task-summary-table-wrap` / `el-descriptions` fixed-layout）
+- [x] **OVERFLOW-06-03**: 需保持对 **BUG-2026-04-10-001** 根因的规避：主内容层**不重新引入** `el-scrollbar + ECharts + ResizeObserver` 的高风险组合；预测页不再出现“页面进入后横向持续变宽”的回归（2026-04-10：保留主内容原生滚动 + 预测页 `chart.resize` 方案）
+
 ## v2 Requirements
 
 - [ ] **DATA-05**: 验收脚本 `run-acceptance-smoke.ps1` 增加针对新版模板版式或关键标签的断言（可选）
@@ -73,6 +81,9 @@
 | POLISH-04-02 | Phase 4 | Done（待 UAT） |
 | DEL-05-01 | Phase 5 | Planned |
 | DEL-05-02 | Phase 5 | Planned |
+| OVERFLOW-06-01 | Phase 6 | Done（待 UAT） |
+| OVERFLOW-06-02 | Phase 6 | Done（待 UAT） |
+| OVERFLOW-06-03 | Phase 6 | Done（待 UAT） |
 
 **Coverage:**
 
@@ -81,8 +92,9 @@
 - Phase 3 / 预测交互：3 条（UX2-*）
 - Phase 4 / 预测页打磨：2 条（POLISH-04-*）
 - Phase 5 / 预测记录删除：2 条（DEL-05-*）
-- Mapped to phases: 14
+- Phase 6 / overflow-x 收口：3 条（OVERFLOW-06-*）
+- Mapped to phases: 17
 - Unmapped: 0
 
 ---
-*Last updated: 2026-04-10 Phase 5 增加 DEL-05-*（多选、批量删、单删、后端 API）*
+*Last updated: 2026-04-10 Phase 6 增加 OVERFLOW-06-*（主内容正常横向滚动恢复、预测页摘要局部收口、保留对 ECharts 反馈循环的规避）*

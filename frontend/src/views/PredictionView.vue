@@ -440,46 +440,50 @@ onBeforeUnmount(() => {
       </el-col>
 
       <el-col :xs="24" :sm="24" :md="9" :lg="9" :xl="9">
-        <el-card ref="taskSummaryCardRef" class="panel-card" shadow="never">
+        <el-card ref="taskSummaryCardRef" class="panel-card task-summary-card" shadow="never">
           <template #header>
             <div class="panel-title">任务摘要</div>
           </template>
 
-          <el-descriptions :column="2" border size="small" class="task-summary-descriptions">
-            <el-descriptions-item label="任务号" :span="2">
-              {{ prediction.taskNo || "-" }}
-            </el-descriptions-item>
-            <el-descriptions-item label="仓库">
-              {{ prediction.warehouseName || "-" }}
-            </el-descriptions-item>
-            <el-descriptions-item label="预测对象">
-              {{ getTargetLabel(prediction.targetType) }}
-            </el-descriptions-item>
-            <el-descriptions-item label="算法">
-              {{ prediction.algorithmName || "-" }}
-            </el-descriptions-item>
-            <el-descriptions-item label="风险等级">
-              {{ prediction.riskLevel }}
-            </el-descriptions-item>
-            <el-descriptions-item label="预测天数">
-              {{ prediction.forecastDays }}
-            </el-descriptions-item>
-          </el-descriptions>
+          <div class="task-summary-table-wrap">
+            <el-descriptions :column="2" border size="small" class="task-summary-descriptions">
+              <el-descriptions-item label="任务号" :span="2">
+                {{ prediction.taskNo || "-" }}
+              </el-descriptions-item>
+              <el-descriptions-item label="仓库">
+                {{ prediction.warehouseName || "-" }}
+              </el-descriptions-item>
+              <el-descriptions-item label="预测对象">
+                {{ getTargetLabel(prediction.targetType) }}
+              </el-descriptions-item>
+              <el-descriptions-item label="算法">
+                {{ prediction.algorithmName || "-" }}
+              </el-descriptions-item>
+              <el-descriptions-item label="风险等级">
+                {{ prediction.riskLevel }}
+              </el-descriptions-item>
+              <el-descriptions-item label="预测天数">
+                {{ prediction.forecastDays }}
+              </el-descriptions-item>
+            </el-descriptions>
+          </div>
 
-          <el-descriptions :column="1" border size="small" class="task-summary-descriptions">
-            <el-descriptions-item label="训练区间">
-              {{ formatDateTime(prediction.trainStartTime) }} ~ {{ formatDateTime(prediction.trainEndTime) }}
-            </el-descriptions-item>
-            <el-descriptions-item label="预测区间">
-              {{ formatDateTime(prediction.forecastStartTime) }} ~ {{ formatDateTime(prediction.forecastEndTime) }}
-            </el-descriptions-item>
-            <el-descriptions-item label="执行时间">
-              {{ formatDateTime(prediction.requestedAt) }}
-            </el-descriptions-item>
-            <el-descriptions-item label="任务摘要">
-              {{ prediction.summary || "预测执行完成" }}
-            </el-descriptions-item>
-          </el-descriptions>
+          <div class="task-summary-table-wrap">
+            <el-descriptions :column="1" border size="small" class="task-summary-descriptions">
+              <el-descriptions-item label="训练区间">
+                {{ formatDateTime(prediction.trainStartTime) }} ~ {{ formatDateTime(prediction.trainEndTime) }}
+              </el-descriptions-item>
+              <el-descriptions-item label="预测区间">
+                {{ formatDateTime(prediction.forecastStartTime) }} ~ {{ formatDateTime(prediction.forecastEndTime) }}
+              </el-descriptions-item>
+              <el-descriptions-item label="执行时间">
+                {{ formatDateTime(prediction.requestedAt) }}
+              </el-descriptions-item>
+              <el-descriptions-item label="任务摘要">
+                {{ prediction.summary || "预测执行完成" }}
+              </el-descriptions-item>
+            </el-descriptions>
+          </div>
         </el-card>
       </el-col>
     </el-row>

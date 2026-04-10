@@ -12,6 +12,7 @@
 | 3 | 温度预测页交互二次优化 | 图表先达、双表语义可读 | UX2-01 — UX2-03（见 REQUIREMENTS） | **已交付**（UAT 见 REQ）；底部表形态见 Phase 4 演进 |
 | 4 | 温度预测页单表与预测区间 | 单表、预测区间列、操作列；后端可追溯 | POLISH-04-01 — POLISH-04-02 | **已落地**（待 UAT） |
 | 5 | 预测记录表支持删除 | 多选 + 批量删 + 单删；二次确认；DEL-05-* | 已规划（待执行） |
+| 6 | 预测页 overflow-x 收口 | 恢复正常横向滚动；摘要局部收口；不回退高风险滚动模型 | OVERFLOW-06-01 — OVERFLOW-06-03 | **已落地**（待 UAT） |
 
 ## Phase 1: 粮温 Excel 模板与导入一致化（已完成）
 
@@ -105,6 +106,26 @@
 
 - [ ] `05-01-PLAN.md` — 后端删除、前端 API、PredictionView 多选与批量删、文档同步（Wave 1）
 
+### Phase 6: 预测页过宽：任务摘要横向滚动与主内容区 overflow-x 裁切问题
+
+**阶段目录：** `.planning/phases/06-overflow-x/`（`06-CONTEXT.md`、`06-UI-SPEC.md`、`06-01-PLAN.md`、`06-VERIFICATION.md`）
+
+**Delivered（2026-04-10）：** 主内容 `.console-main-native` 恢复 `overflow-x: auto`；预测页任务摘要补 `task-summary-card` / `task-summary-table-wrap`、`min-width: 0`、fixed-layout 与内容换行；保留主内容原生滚动与预测页 `chart.resize` 规避方案。
+
+**Goal:** 在不回退到主内容 `el-scrollbar` 的前提下，恢复后台页面在**真实超宽内容**下的正常横向滚动；同时让预测页右侧任务摘要在窄列中稳定显示，不再因全局 `overflow-x: hidden` 被直接裁切。
+
+**Requirements**: OVERFLOW-06-01 — OVERFLOW-06-03
+**Depends on:** Phase 5
+
+**Success criteria:**
+
+1. 主内容区在真实超宽时出现正常横向滚动，而非统一裁切。
+2. 预测页底部宽表继续走局部横向滚动；右侧任务摘要不再直接裁切。
+3. 主内容层仍不恢复 `el-scrollbar`，保留对 `el-scrollbar + ECharts + ResizeObserver` 反馈循环的规避。
+
+Plans:
+- [x] `06-01-PLAN.md` — 主内容 overflow-x 收口、预测页摘要局部收口、GSD 同步（Wave 1）
+
 ---
 
-*Roadmap updated: 2026-04-10（Phase 5：预测记录删除；Phase 4 单表打磨；Phase 2/3 归档见 zzz-docs/归档）*
+*Roadmap updated: 2026-04-10（Phase 6：overflow-x 收口；Phase 5：预测记录删除；Phase 4 单表打磨；Phase 2/3 归档见 zzz-docs/归档）*
