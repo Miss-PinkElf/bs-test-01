@@ -117,6 +117,52 @@ public class GrainTempService {
         return grainTempSummaryMapper.selectByCondition(warehouseId, startTime, endTime);
     }
 
+    public PageResult<GrainTempSummaryItemDto> listSummaryPage(Long warehouseId,
+                                                               LocalDateTime startTime,
+                                                               LocalDateTime endTime,
+                                                               String warningLevel,
+                                                               BigDecimal tempMin,
+                                                               BigDecimal tempMax,
+                                                               String keyword,
+                                                               Integer pageNum,
+                                                               Integer pageSize) {
+        String kw = (keyword == null || keyword.isBlank()) ? null : keyword.trim();
+        String finalWarningLevel = (warningLevel == null || warningLevel.isBlank()) ? null : warningLevel.trim();
+        BigDecimal finalTempMin = tempMin;
+        BigDecimal finalTempMax = tempMax;
+        if (finalTempMin != null && finalTempMax != null && finalTempMin.compareTo(finalTempMax) > 0) {
+            finalTempMin = tempMax;
+            finalTempMax = tempMin;
+        }
+
+        int finalPageNum = pageNum == null || pageNum < 1 ? 1 : pageNum;
+        int finalPageSize = pageSize == null || pageSize < 1 ? 10 : pageSize;
+        long total = grainTempSummaryMapper.countByCondition(
+                warehouseId,
+                startTime,
+                endTime,
+                finalWarningLevel,
+                finalTempMin,
+                finalTempMax,
+                kw
+        );
+        int maxPage = total == 0 ? 1 : (int) Math.ceil((double) total / finalPageSize);
+        finalPageNum = Math.min(finalPageNum, maxPage);
+        int offset = (finalPageNum - 1) * finalPageSize;
+        List<GrainTempSummaryItemDto> list = grainTempSummaryMapper.selectPageByCondition(
+                warehouseId,
+                startTime,
+                endTime,
+                finalWarningLevel,
+                finalTempMin,
+                finalTempMax,
+                kw,
+                offset,
+                finalPageSize
+        );
+        return new PageResult<>(list, finalPageNum, finalPageSize, total);
+    }
+
     public GrainTempImportResultDto importData(MultipartFile file) throws IOException {
         return grainTempImportService.importData(file);
     }

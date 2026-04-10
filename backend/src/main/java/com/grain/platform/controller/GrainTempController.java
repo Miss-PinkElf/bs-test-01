@@ -16,8 +16,8 @@ import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -114,5 +114,30 @@ public class GrainTempController {
             @RequestParam(required = false) @DateTimeFormat(pattern = "yyyy-MM-dd HH:mm:ss") LocalDateTime endTime
     ) {
         return ApiResponse.success(grainTempService.listSummaries(warehouseId, startTime, endTime));
+    }
+
+    @GetMapping("/summaries/page")
+    public ApiResponse<PageResult<GrainTempSummaryItemDto>> listSummaryPage(
+            @RequestParam(required = false) Long warehouseId,
+            @RequestParam(required = false) @DateTimeFormat(pattern = "yyyy-MM-dd HH:mm:ss") LocalDateTime startTime,
+            @RequestParam(required = false) @DateTimeFormat(pattern = "yyyy-MM-dd HH:mm:ss") LocalDateTime endTime,
+            @RequestParam(required = false) String warningLevel,
+            @RequestParam(required = false) BigDecimal tempMin,
+            @RequestParam(required = false) BigDecimal tempMax,
+            @RequestParam(required = false) String keyword,
+            @RequestParam(defaultValue = "1") Integer pageNum,
+            @RequestParam(defaultValue = "10") Integer pageSize
+    ) {
+        return ApiResponse.success(grainTempService.listSummaryPage(
+                warehouseId,
+                startTime,
+                endTime,
+                warningLevel,
+                tempMin,
+                tempMax,
+                keyword,
+                pageNum,
+                pageSize
+        ));
     }
 }

@@ -24,6 +24,47 @@
         <result property="updatedAt" column="updated_at"/>
     </resultMap>
 
+    <sql id="summarySelectColumns">
+        select s.id as id,
+               s.warehouse_id as warehouseId,
+               w.warehouse_name as warehouseName,
+               date_format(s.collected_at, '%Y-%m-%d %H:%i:%s') as collectedAt,
+               s.avg_temp as avgTemp,
+               s.max_temp as maxTemp,
+               s.min_temp as minTemp,
+               s.layer_1_avg as layer1Avg,
+               s.layer_2_avg as layer2Avg,
+               s.layer_3_avg as layer3Avg,
+               s.layer_4_avg as layer4Avg,
+               s.warning_level as warningLevel,
+               s.warning_flag as warningFlag,
+               s.warning_message as warningMessage,
+               s.analysis_result as analysisResult
+    </sql>
+
+    <sql id="summaryFromWhere">
+        from grain_temp_summary s
+                 join warehouse w on s.warehouse_id = w.id
+        where (#{warehouseId} is null or s.warehouse_id = #{warehouseId})
+          and (#{startTime} is null or s.collected_at &gt;= #{startTime})
+          and (#{endTime} is null or s.collected_at &lt;= #{endTime})
+          and (#{warningLevel} is null or #{warningLevel} = '' or s.warning_level = #{warningLevel})
+          and (#{tempMin} is null or s.avg_temp &gt;= #{tempMin})
+          and (#{tempMax} is null or s.avg_temp &lt;= #{tempMax})
+        <if test="keyword != null and keyword != ''">
+          and (
+            w.warehouse_name like concat('%', #{keyword}, '%')
+            or ifnull(s.warning_level, '') like concat('%', #{keyword}, '%')
+            or ifnull(s.warning_message, '') like concat('%', #{keyword}, '%')
+            or ifnull(s.analysis_result, '') like concat('%', #{keyword}, '%')
+            or cast(s.avg_temp as char) like concat('%', #{keyword}, '%')
+            or cast(s.max_temp as char) like concat('%', #{keyword}, '%')
+            or cast(s.min_temp as char) like concat('%', #{keyword}, '%')
+            or date_format(s.collected_at, '%Y-%m-%d %H:%i:%s') like concat('%', #{keyword}, '%')
+          )
+        </if>
+    </sql>
+
     <insert id="upsert" parameterType="com.grain.platform.entity.GrainTempSummary" useGeneratedKeys="true" keyProperty="id">
         insert into grain_temp_summary (
             warehouse_id,
@@ -79,27 +120,25 @@
     </delete>
 
     <select id="selectByCondition" resultType="com.grain.platform.dto.grain.GrainTempSummaryItemDto">
-        select s.id as id,
-               s.warehouse_id as warehouseId,
-               w.warehouse_name as warehouseName,
-               date_format(s.collected_at, '%Y-%m-%d %H:%i:%s') as collectedAt,
-               s.avg_temp as avgTemp,
-               s.max_temp as maxTemp,
-               s.min_temp as minTemp,
-               s.layer_1_avg as layer1Avg,
-               s.layer_2_avg as layer2Avg,
-               s.layer_3_avg as layer3Avg,
-               s.layer_4_avg as layer4Avg,
-               s.warning_level as warningLevel,
-               s.warning_flag as warningFlag,
-               s.warning_message as warningMessage,
-               s.analysis_result as analysisResult
+        <include refid="summarySelectColumns"/>
         from grain_temp_summary s
                  join warehouse w on s.warehouse_id = w.id
         where (#{warehouseId} is null or s.warehouse_id = #{warehouseId})
           and (#{startTime} is null or s.collected_at &gt;= #{startTime})
           and (#{endTime} is null or s.collected_at &lt;= #{endTime})
         order by s.collected_at asc, s.id asc
+    </select>
+
+    <select id="selectPageByCondition" resultType="com.grain.platform.dto.grain.GrainTempSummaryItemDto">
+        <include refid="summarySelectColumns"/>
+        <include refid="summaryFromWhere"/>
+        order by s.collected_at desc, s.id desc
+        limit #{pageSize} offset #{offset}
+    </select>
+
+    <select id="countByCondition" resultType="long">
+        select count(1)
+        <include refid="summaryFromWhere"/>
     </select>
 
     <select id="selectSeriesByTarget" resultMap="grainTempSummaryMap">
