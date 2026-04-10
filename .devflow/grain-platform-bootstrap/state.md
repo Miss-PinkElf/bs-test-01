@@ -125,6 +125,7 @@
   - **后端**：`GET /api/grain-temp/records` 在既有 `warehouseId`、`startTime`、`endTime`、`zoneCode`、`layerNo`、`keyword` 基础上增加 `pointNo`、`tempMin`、`tempMax`；新增 `GET /api/grain-temp/records/filter-options?warehouseId=` 返回去重后的 `zoneCodes`、`layerNos`、`pointNos`；`GrainTempRecordMapper.xml` / `GrainTempService` / `GrainTempController` 与 DTO `GrainTempRecordFilterOptionsDto`。
   - **前端**：`DataView.vue`（粮温模式下工具栏）、`frontend/src/api/grain.js`（`fetchGrainTempRecordFilterOptions`、`fetchGrainTempRecords` 参数）；`styles.css`（`.grain-record-filter-form` 等）。
   - **验证**：`backend/` `mvn -q -DskipTests compile`、`frontend/` `npm run build` 已通过；全量 `run-acceptance-smoke.ps1` 未因本项改写，答辩前可按需手工跑一遍。
+- 已优化粮温固定 XLSX 模板版式（2026-04-10，模板 v2）：`GrainTempImportService.getExcelTemplate` 增加合并单元格与中文分区说明；矩阵块标签为「区域编码（zoneCode）」「缆号/探头编码（probeCode）」等；`parseFixedTemplate` 通过 `cellMatchesKey` 兼容旧版纯英文标签与新版双语标签；`DataView.vue` 导入说明已同步。GSD 侧 `.planning/PROJECT.md` / `REQUIREMENTS.md` 已更新；codebase 地图见 `.planning/codebase/`。
 
 ## 工作假设
 - 以毕业设计 MVP 为目标，先做可演示的软件平台，不接入真实硬件。
@@ -136,7 +137,7 @@
 ## 待解决的问题
 - 首页与导入链路、后台管理关键链路已补齐一键验收脚本，但当前脚本在本沙箱内直接执行前端构建时仍可能命中 `esbuild spawn EPERM`；仓库内单独执行 `npm run build` 已通过。
 - 验收脚本尚未对带 `keyword` 的分页接口做专门断言（可选补一条轻量 smoke）；粮温记录新增 `pointNo`/`tempMin`/`tempMax`/`filter-options` 亦未纳入脚本断言（可选）。
-- GSD：用户拟用 GSD 承接后续优化波次；仓库内 **`.planning/` 尚未初始化**，`.codex/`、`.cursor/` 下大量 GSD 相关文件仍为未跟踪，提交课题代码时勿整包纳入。
+- GSD：`.planning/` 已初始化并含 codebase 地图；`.codex/`、`.cursor/` 下部分工具文件仍可能未跟踪，提交课题代码时勿整包纳入无关工具目录。
 - 预测修正字段已保留，但本期仍未实现修正入口与修正页，这与当前范围收口一致。
 - 用户/仓库列表当前为全量接口 + 前端搜索；若数据量显著增大，可再评估是否增加后端 `keyword`。
 - `/screen` 大屏表格未加本地筛选（可选）。

@@ -11,13 +11,18 @@ import com.grain.platform.mapper.GrainTempRecordMapper;
 import com.grain.platform.mapper.GrainTempSummaryMapper;
 import com.grain.platform.mapper.WarehouseMapper;
 import org.apache.poi.ss.usermodel.Cell;
+import org.apache.poi.ss.usermodel.CellStyle;
 import org.apache.poi.ss.usermodel.CellType;
 import org.apache.poi.ss.usermodel.DataFormatter;
 import org.apache.poi.ss.usermodel.DateUtil;
+import org.apache.poi.ss.usermodel.HorizontalAlignment;
 import org.apache.poi.ss.usermodel.Row;
 import org.apache.poi.ss.usermodel.Sheet;
+import org.apache.poi.ss.usermodel.VerticalAlignment;
 import org.apache.poi.ss.usermodel.Workbook;
 import org.apache.poi.ss.usermodel.WorkbookFactory;
+import org.apache.poi.ss.util.CellRangeAddress;
+import org.apache.poi.xssf.usermodel.XSSFFont;
 import org.apache.poi.xssf.usermodel.XSSFWorkbook;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
@@ -59,10 +64,10 @@ public class GrainTempImportService {
     private final WarehouseMapper warehouseMapper;
 
     public GrainTempImportService(GrainTempPointMapper grainTempPointMapper,
-                                  GrainTempRecordMapper grainTempRecordMapper,
-                                  GrainTempSummaryMapper grainTempSummaryMapper,
-                                  MetricService metricService,
-                                  WarehouseMapper warehouseMapper) {
+            GrainTempRecordMapper grainTempRecordMapper,
+            GrainTempSummaryMapper grainTempSummaryMapper,
+            MetricService metricService,
+            WarehouseMapper warehouseMapper) {
         this.grainTempPointMapper = grainTempPointMapper;
         this.grainTempRecordMapper = grainTempRecordMapper;
         this.grainTempSummaryMapper = grainTempSummaryMapper;
@@ -78,7 +83,8 @@ public class GrainTempImportService {
 
         Long warehouseId = rows.get(0).warehouseId();
         LocalDateTime collectedAt = rows.get(0).collectedAt();
-        boolean sameHeader = rows.stream().allMatch(item -> item.warehouseId().equals(warehouseId) && item.collectedAt().equals(collectedAt));
+        boolean sameHeader = rows.stream()
+                .allMatch(item -> item.warehouseId().equals(warehouseId) && item.collectedAt().equals(collectedAt));
         if (!sameHeader) {
             throw new IllegalArgumentException("当前粮温 MVP 导入要求同一文件中的 warehouseId 与 collectedAt 保持一致");
         }
@@ -92,11 +98,13 @@ public class GrainTempImportService {
         List<GrainTempRecord> records = new ArrayList<>();
 
         for (ImportRow row : rows) {
-            GrainTempPoint point = grainTempPointMapper.selectByUniqueKey(row.warehouseId(), row.zoneCode(), row.layerNo(), row.pointNo());
+            GrainTempPoint point = grainTempPointMapper.selectByUniqueKey(row.warehouseId(), row.zoneCode(),
+                    row.layerNo(), row.pointNo());
             if (point == null) {
                 point = new GrainTempPoint();
                 point.setWarehouseId(row.warehouseId());
-                point.setProbeCode(row.probeCode() == null || row.probeCode().isBlank() ? "AUTO-" + row.zoneCode() : row.probeCode());
+                point.setProbeCode(row.probeCode() == null || row.probeCode().isBlank() ? "AUTO-" + row.zoneCode()
+                        : row.probeCode());
                 point.setZoneCode(row.zoneCode());
                 point.setLayerNo(row.layerNo());
                 point.setPointNo(row.pointNo());
@@ -131,8 +139,7 @@ public class GrainTempImportService {
                 rows.size(),
                 true,
                 summary.getWarningLevel(),
-                summary.getWarningMessage()
-        );
+                summary.getWarningMessage());
     }
 
     public String getCsvTemplate() {
@@ -140,16 +147,61 @@ public class GrainTempImportService {
     }
 
     public byte[] getExcelTemplate() throws IOException {
-        try (XSSFWorkbook workbook = new XSSFWorkbook(); ByteArrayOutputStream outputStream = new ByteArrayOutputStream()) {
+        try (XSSFWorkbook workbook = new XSSFWorkbook();
+                ByteArrayOutputStream outputStream = new ByteArrayOutputStream()) {
             Sheet sheet = workbook.createSheet("粮温固定模板");
 
-            createRow(sheet, 0, "粮温固定模板", "请填写基础信息与测点矩阵；下方汇总区可留空");
-            createRow(sheet, 1, "warehouseId", "1");
-            createRow(sheet, 2, "collectedAt", "2026-04-08 08:40:00");
-            createRow(sheet, 3, "说明", "每个 zoneCode + probeCode 为一个矩阵区块，按层号填写行、按点位填写列");
-            createZoneBlock(sheet, 5, "A", "CABLE-A");
-            createZoneBlock(sheet, 13, "B", "CABLE-B");
-            createRow(sheet, 21, "汇总分析（系统自动生成，可留空）", "avgTemp/maxTemp/warningLevel 等由系统导入后自动生成");
+            CellStyle titleStyle = workbook.createCellStyle();
+            XSSFFont titleFont = workbook.createFont();
+            titleFont.setBold(true);
+            titleFont.setFontHeightInPoints((short) 14);
+            titleStyle.setFont(titleFont);
+            titleStyle.setAlignment(HorizontalAlignment.CENTER);
+            titleStyle.setVerticalAlignment(VerticalAlignment.CENTER);
+
+            CellStyle sectionStyle = workbook.createCellStyle();
+            XSSFFont sectionFont = workbook.createFont();
+            sectionFont.setBold(true);
+            sectionFont.setFontHeightInPoints((short) 11);
+            sectionStyle.setFont(sectionFont);
+            sectionStyle.setAlignment(HorizontalAlignment.LEFT);
+            sectionStyle.setVerticalAlignment(VerticalAlignment.CENTER);
+
+            CellStyle wrapStyle = workbook.createCellStyle();
+            wrapStyle.setWrapText(true);
+            wrapStyle.setVerticalAlignment(VerticalAlignment.TOP);
+
+            int r = 0;
+            addMergedRow(sheet, r++, 0, 5, "粮温固定导入模板（测点矩阵）", titleStyle);
+            addMergedRow(sheet,
+                    r++,
+                    0,
+                    5,
+                    "填写说明：① 先完成「一、基础信息」中的仓库编号与采集时间，整表只能对应同一仓库、同一时间；② 在「二、测点温度矩阵」中按区域分块填写，"
+                            + "每一块的「行」为层号、「列」为点位编号，单元格填摄氏温度数值；③ 可增加更多区域块：复制一块的结构并修改区域编码与缆号即可；④ 底部汇总区可留空，导入后由系统自动计算。",
+                    wrapStyle);
+            r++;
+            addMergedRow(sheet, r++, 0, 5, "一、基础信息", sectionStyle);
+            createRow(sheet, r++, "仓库编号（warehouseId）", "1");
+            createRow(sheet, r++, "采集时间（collectedAt）", "2026-04-08 08:40:00");
+            addMergedRow(sheet,
+                    r++,
+                    0,
+                    5,
+                    "提示：仓库编号须与系统中仓库主数据一致；采集时间格式为 yyyy-MM-dd HH:mm:ss（也可在 Excel 中按日期时间格式填写）。",
+                    wrapStyle);
+            r++;
+            addMergedRow(sheet, r++, 0, 5, "二、测点温度矩阵（行=层号，列=点位编号）", sectionStyle);
+            r++;
+            r = createZoneBlock(sheet, r, "A", "CABLE-A");
+            r++;
+            r = createZoneBlock(sheet, r, "B", "CABLE-B");
+            addMergedRow(sheet,
+                    r,
+                    0,
+                    5,
+                    "三、汇总分析（可留空）：平均温、最高温、预警等级等由系统导入后自动写入数据库，无需手填。",
+                    wrapStyle);
 
             for (int column = 0; column <= 5; column++) {
                 sheet.autoSizeColumn(column);
@@ -160,21 +212,34 @@ public class GrainTempImportService {
         }
     }
 
+    private void addMergedRow(Sheet sheet, int rowIndex, int colFrom, int colTo, String text, CellStyle style) {
+        Row row = sheet.createRow(rowIndex);
+        Cell cell = row.createCell(colFrom);
+        cell.setCellValue(text);
+        cell.setCellStyle(style);
+        if (colTo > colFrom) {
+            sheet.addMergedRegion(new CellRangeAddress(rowIndex, rowIndex, colFrom, colTo));
+        }
+    }
+
     private void createRow(Sheet sheet, int rowIndex, String first, String second) {
         Row row = sheet.createRow(rowIndex);
         row.createCell(0).setCellValue(first);
         row.createCell(1).setCellValue(second);
     }
 
-    private void createZoneBlock(Sheet sheet, int startRowIndex, String zoneCode, String probeCode) {
+    /**
+     * @return 紧接矩阵块之后的首个空行索引（便于继续追加区域块或页脚说明）
+     */
+    private int createZoneBlock(Sheet sheet, int startRowIndex, String zoneCode, String probeCode) {
         Row metaRow = sheet.createRow(startRowIndex);
-        metaRow.createCell(0).setCellValue("zoneCode");
+        metaRow.createCell(0).setCellValue("区域编码（zoneCode）");
         metaRow.createCell(1).setCellValue(zoneCode);
-        metaRow.createCell(2).setCellValue("probeCode");
+        metaRow.createCell(2).setCellValue("缆号/探头编码（probeCode）");
         metaRow.createCell(3).setCellValue(probeCode);
 
         Row headerRow = sheet.createRow(startRowIndex + 1);
-        headerRow.createCell(0).setCellValue("层号/点位");
+        headerRow.createCell(0).setCellValue("层号 \\ 点位列");
         for (int pointNo = 1; pointNo <= FIXED_TEMPLATE_POINT_COUNT; pointNo++) {
             headerRow.createCell(pointNo).setCellValue(pointNo);
         }
@@ -186,12 +251,13 @@ public class GrainTempImportService {
                 dataRow.createCell(pointNo).setCellValue(24.0 + layerNo * 0.4 + pointNo * 0.2);
             }
         }
+        return startRowIndex + 1 + FIXED_TEMPLATE_LAYER_COUNT + 1;
     }
 
     private GrainTempSummary buildSummary(Long warehouseId,
-                                          LocalDateTime collectedAt,
-                                          List<ImportRow> rows,
-                                          SensorMetric temperatureMetric) {
+            LocalDateTime collectedAt,
+            List<ImportRow> rows,
+            SensorMetric temperatureMetric) {
         GrainTempSummary summary = new GrainTempSummary();
         summary.setWarehouseId(warehouseId);
         summary.setCollectedAt(collectedAt);
@@ -207,7 +273,8 @@ public class GrainTempImportService {
         summary.setLayer3Avg(avgForLayer(byLayer.get(3)));
         summary.setLayer4Avg(avgForLayer(byLayer.get(4)));
 
-        double threshold = temperatureMetric.getMaxThreshold() == null ? 28.0 : temperatureMetric.getMaxThreshold().doubleValue();
+        double threshold = temperatureMetric.getMaxThreshold() == null ? 28.0
+                : temperatureMetric.getMaxThreshold().doubleValue();
         if (summary.getMaxTemp().doubleValue() >= threshold) {
             summary.setWarningLevel("WARNING");
             summary.setWarningFlag(true);
@@ -252,7 +319,8 @@ public class GrainTempImportService {
 
     private List<ImportRow> parseCsv(MultipartFile file) throws IOException {
         List<ImportRow> rows = new ArrayList<>();
-        try (BufferedReader reader = new BufferedReader(new InputStreamReader(file.getInputStream(), StandardCharsets.UTF_8))) {
+        try (BufferedReader reader = new BufferedReader(
+                new InputStreamReader(file.getInputStream(), StandardCharsets.UTF_8))) {
             String line;
             int rowIndex = 0;
             while ((line = reader.readLine()) != null) {
@@ -262,7 +330,8 @@ public class GrainTempImportService {
                 }
                 String[] parts = line.split(",", -1);
                 if (parts.length < 6) {
-                    throw new IllegalArgumentException("CSV 第 " + rowIndex + " 行字段不足，至少需要 warehouseId,collectedAt,zoneCode,layerNo,pointNo,temperatureValue");
+                    throw new IllegalArgumentException("CSV 第 " + rowIndex
+                            + " 行字段不足，至少需要 warehouseId,collectedAt,zoneCode,layerNo,pointNo,temperatureValue");
                 }
                 rows.add(new ImportRow(
                         parseLong(parts[0], rowIndex, "warehouseId"),
@@ -272,8 +341,7 @@ public class GrainTempImportService {
                         parseInteger(parts[4], rowIndex, "pointNo"),
                         parseDouble(parts[5], rowIndex, "temperatureValue"),
                         parts.length > 6 ? parts[6].trim() : null,
-                        parts.length > 7 ? parts[7].trim() : null
-                ));
+                        parts.length > 7 ? parts[7].trim() : null));
             }
         }
         return rows;
@@ -298,29 +366,50 @@ public class GrainTempImportService {
     private boolean isFixedTemplateSheet(Sheet sheet, DataFormatter formatter) {
         boolean hasWarehouseId = false;
         boolean hasZoneCode = false;
-        int maxRow = Math.min(sheet.getLastRowNum(), 12);
+        int maxRow = Math.min(sheet.getLastRowNum(), 40);
         for (int index = 0; index <= maxRow; index++) {
             String firstCell = getCellText(sheet.getRow(index), 0, formatter);
-            if ("warehouseId".equalsIgnoreCase(firstCell)) {
+            if (cellMatchesKey(firstCell, "warehouseId")) {
                 hasWarehouseId = true;
             }
-            if ("zoneCode".equalsIgnoreCase(firstCell)) {
+            if (cellMatchesKey(firstCell, "zoneCode")) {
                 hasZoneCode = true;
             }
         }
         return hasWarehouseId && hasZoneCode;
     }
 
+    /**
+     * 兼容旧版纯英文标签与新版「中文（英文键）」标签；导入时以英文键或固定中文关键词识别。
+     */
+    private boolean cellMatchesKey(String cellText, String englishKey) {
+        if (cellText == null || cellText.isBlank()) {
+            return false;
+        }
+        String t = cellText.trim();
+        String k = englishKey.toLowerCase(Locale.ROOT);
+        if (t.equalsIgnoreCase(englishKey) || t.toLowerCase(Locale.ROOT).contains(k)) {
+            return true;
+        }
+        return switch (englishKey) {
+            case "warehouseId" -> t.contains("仓库编号");
+            case "collectedAt" -> t.contains("采集时间");
+            case "zoneCode" -> t.contains("区域编码");
+            case "probeCode" -> t.contains("缆号") || t.contains("探头编码") || t.contains("探头");
+            default -> false;
+        };
+    }
+
     private List<ImportRow> parseFixedTemplate(Sheet sheet, DataFormatter formatter) {
         Long warehouseId = null;
         LocalDateTime collectedAt = null;
-        for (int index = 0; index <= Math.min(sheet.getLastRowNum(), 10); index++) {
+        for (int index = 0; index <= Math.min(sheet.getLastRowNum(), 40); index++) {
             Row row = sheet.getRow(index);
             String firstCell = getCellText(row, 0, formatter);
-            if ("warehouseId".equalsIgnoreCase(firstCell)) {
+            if (cellMatchesKey(firstCell, "warehouseId")) {
                 warehouseId = parseLong(getCellText(row, 1, formatter), index + 1, "warehouseId");
             }
-            if ("collectedAt".equalsIgnoreCase(firstCell)) {
+            if (cellMatchesKey(firstCell, "collectedAt")) {
                 collectedAt = parseDateTimeCell(row.getCell(1), formatter, index + 1);
             }
         }
@@ -334,11 +423,11 @@ public class GrainTempImportService {
         while (rowIndex <= sheet.getLastRowNum()) {
             Row row = sheet.getRow(rowIndex);
             String firstCell = getCellText(row, 0, formatter);
-            if ("zoneCode".equalsIgnoreCase(firstCell)) {
+            if (cellMatchesKey(firstCell, "zoneCode")) {
                 rowIndex = parseZoneMatrixBlock(sheet, formatter, rowIndex, warehouseId, collectedAt, rows);
                 continue;
             }
-            if (firstCell.contains("汇总分析")) {
+            if (firstCell.contains("汇总分析") || firstCell.contains("汇总区")) {
                 break;
             }
             rowIndex++;
@@ -351,14 +440,15 @@ public class GrainTempImportService {
     }
 
     private int parseZoneMatrixBlock(Sheet sheet,
-                                     DataFormatter formatter,
-                                     int zoneRowIndex,
-                                     Long warehouseId,
-                                     LocalDateTime collectedAt,
-                                     List<ImportRow> resultRows) {
+            DataFormatter formatter,
+            int zoneRowIndex,
+            Long warehouseId,
+            LocalDateTime collectedAt,
+            List<ImportRow> resultRows) {
         Row zoneRow = sheet.getRow(zoneRowIndex);
         String zoneCode = requireText(extractNamedValue(zoneRow, formatter, "zoneCode"), zoneRowIndex + 1, "zoneCode");
-        String probeCode = extractNamedValue(zoneRow, formatter, "probeCode");
+        String probeRaw = extractNamedValue(zoneRow, formatter, "probeCode");
+        String probeCode = probeRaw == null || probeRaw.isBlank() ? null : probeRaw.trim();
 
         int headerRowIndex = zoneRowIndex + 1;
         while (headerRowIndex <= sheet.getLastRowNum() && isRowBlank(sheet.getRow(headerRowIndex), formatter, 6)) {
@@ -367,8 +457,8 @@ public class GrainTempImportService {
 
         Row headerRow = sheet.getRow(headerRowIndex);
         String headerLabel = getCellText(headerRow, 0, formatter);
-        if (!(headerLabel.contains("层号") || "layerNo".equalsIgnoreCase(headerLabel))) {
-            throw new IllegalArgumentException("第 " + (headerRowIndex + 1) + " 行不是有效的测点矩阵表头，应以“层号/点位”开头");
+        if (!(headerLabel.contains("层号") || headerLabel.contains("点位") || "layerNo".equalsIgnoreCase(headerLabel))) {
+            throw new IllegalArgumentException("第 " + (headerRowIndex + 1) + " 行不是有效的测点矩阵表头，应包含层号/点位说明（如「层号 \\ 点位列」）");
         }
 
         List<Integer> pointNumbers = new ArrayList<>();
@@ -392,7 +482,7 @@ public class GrainTempImportService {
             if (firstCell.isBlank()) {
                 return dataRowIndex + 1;
             }
-            if ("zoneCode".equalsIgnoreCase(firstCell) || firstCell.contains("汇总分析")) {
+            if (cellMatchesKey(firstCell, "zoneCode") || firstCell.contains("汇总分析") || firstCell.contains("汇总区")) {
                 return dataRowIndex;
             }
 
@@ -410,8 +500,7 @@ public class GrainTempImportService {
                         pointNumbers.get(pointIndex),
                         parseDouble(valueText, dataRowIndex + 1, "temperatureValue"),
                         probeCode,
-                        "固定模板导入"
-                ));
+                        "固定模板导入"));
             }
             dataRowIndex++;
         }
@@ -433,8 +522,7 @@ public class GrainTempImportService {
                     parseInteger(getCellText(row, 4, formatter), i + 1, "pointNo"),
                     parseDouble(getCellText(row, 5, formatter), i + 1, "temperatureValue"),
                     getCellText(row, 6, formatter),
-                    getCellText(row, 7, formatter)
-            ));
+                    getCellText(row, 7, formatter)));
         }
         return rows;
     }
@@ -445,7 +533,7 @@ public class GrainTempImportService {
         }
         int lastCell = Math.max(row.getLastCellNum(), 0);
         for (int cellIndex = 0; cellIndex < lastCell - 1; cellIndex++) {
-            if (fieldName.equalsIgnoreCase(getCellText(row, cellIndex, formatter))) {
+            if (cellMatchesKey(getCellText(row, cellIndex, formatter), fieldName)) {
                 return getCellText(row, cellIndex + 1, formatter);
             }
         }
@@ -507,7 +595,8 @@ public class GrainTempImportService {
         try {
             return LocalDateTime.parse(raw.trim(), DATE_TIME_FORMATTER);
         } catch (DateTimeParseException ex) {
-            throw new IllegalArgumentException("第 " + rowIndex + " 行字段 " + fieldName + " 时间格式错误，应为 yyyy-MM-dd HH:mm:ss");
+            throw new IllegalArgumentException(
+                    "第 " + rowIndex + " 行字段 " + fieldName + " 时间格式错误，应为 yyyy-MM-dd HH:mm:ss");
         }
     }
 
@@ -522,12 +611,12 @@ public class GrainTempImportService {
     }
 
     private record ImportRow(Long warehouseId,
-                             LocalDateTime collectedAt,
-                             String zoneCode,
-                             Integer layerNo,
-                             Integer pointNo,
-                             Double temperatureValue,
-                             String probeCode,
-                             String remark) {
+            LocalDateTime collectedAt,
+            String zoneCode,
+            Integer layerNo,
+            Integer pointNo,
+            Double temperatureValue,
+            String probeCode,
+            String remark) {
     }
 }

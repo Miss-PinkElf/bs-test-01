@@ -615,10 +615,10 @@ onBeforeUnmount(() => {
 
       <div class="compact-lines">
         <div v-if="mode === 'grain'">
-          粮温固定模板结构：上方填写 warehouseId、collectedAt；中间按 zoneCode + probeCode 分区块填写“层号/点位”矩阵；下方汇总区可留空。
+          粮温固定 XLSX：含分区标题与合并单元格说明。「一、基础信息」填写仓库编号、采集时间（括号内英文键与程序识别一致）。「二、测点温度矩阵」按区域分块：块首行填区域编码与缆号/探头编码；表头行含「层号」与「点位」，数据行左侧为层号、向右为各点位列温度。底部「三、汇总分析」可留空，导入后由系统汇总。
         </div>
         <div v-if="mode === 'grain'">
-          当前后端已兼容固定 XLSX 模板，也兼容旧 CSV / 行式 Excel；手工 CRUD 会直接作用于原始测点记录。
+          后端仍兼容旧版纯英文标签的固定模板、CSV 与行式 Excel；手工维护会直接影响原始测点记录。
         </div>
         <div v-else>
           普通环境模板字段：warehouseId、metricCode、metricValue、collectedAt、remark。
