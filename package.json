@@ -2,7 +2,7 @@
   "name": "grain-platform-workspace",
   "private": true,
   "scripts": {
-    "dev": "powershell -NoProfile -ExecutionPolicy Bypass -File ./scripts/start-all.ps1",
+    "dev": "node ./scripts/dev-inline.cjs",
     "frontend": "powershell -NoProfile -ExecutionPolicy Bypass -File ./scripts/start-frontend.ps1",
     "backend": "powershell -NoProfile -ExecutionPolicy Bypass -File ./scripts/start-backend.ps1",
     "check-env": "powershell -NoProfile -ExecutionPolicy Bypass -File ./scripts/check-env.ps1",

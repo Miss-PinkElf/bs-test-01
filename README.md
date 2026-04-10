@@ -89,6 +89,7 @@ Windows 下优先使用：
 npm run dev
 ```
 
+这会在当前 VS Code 终端里同时启动前后端，并用日志前缀区分输出。
 也可以单独启动：
 
 ```powershell
@@ -123,3 +124,4 @@ npm run backend
 - `.devflow/grain-docs-alignment/state.md`
 - `.devflow/grain-docs-alignment/handoffs/2026-04-09-002-devflow-migration-ready.md`
 - `.devflow/grain-docs-alignment/plans/active-plan-links.md`
+
