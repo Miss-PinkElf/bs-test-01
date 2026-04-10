@@ -52,6 +52,13 @@
 - [x] **OVERFLOW-06-02**: 温度预测页中**底部「预测记录」表**继续通过局部 wrapper 承担横向滚动；右侧**任务摘要**不依赖整页横向滚动，而应通过 `min-width: 0`、可换行内容和局部 wrapper 控制在窄列内稳定显示，避免出现“超宽后被直接裁切”的表现（2026-04-10：`task-summary-card` / `task-summary-table-wrap` / `el-descriptions` fixed-layout）
 - [x] **OVERFLOW-06-03**: 需保持对 **BUG-2026-04-10-001** 根因的规避：主内容层**不重新引入** `el-scrollbar + ECharts + ResizeObserver` 的高风险组合；预测页不再出现“页面进入后横向持续变宽”的回归（2026-04-10：保留主内容原生滚动 + 预测页 `chart.resize` 方案）
 
+## Phase 7 Requirements（环境数据页 / 粮温汇总优化）
+
+### Grain summary / environment data page
+
+- [x] **ENV-07-01**: `DataView.vue` 的 **粮温汇总结果** 改为服务端分页，不再使用前端 `useClientPagination(filteredGrainSummaries)`；后端提供分页接口，支持 `warehouseId`、时间范围、关键词、预警等级、整仓均温范围、`pageNum/pageSize`（2026-04-11：`/api/grain-temp/summaries/page` + `PageResult`）
+- [x] **ENV-07-02**: **粮温汇总趋势图** 支持共享的 **仓库 + 时间范围** 查询，并支持 **层级目标** 切换：`整仓均温 / 一层均温 / 二层均温 / 三层均温 / 四层均温`；图表固定保留 **最高温** 参考线（2026-04-11：`DataView.vue` 图例与 series 改造）
+- [x] **ENV-07-03**: 图表与汇总表 **共享仓库 + 时间范围**，但汇总表的 **关键词 / 预警等级 / 温度范围** 只影响表格，不反向影响图表；普通环境模式与粮温原始测点记录链路不回归（2026-04-11：summary series / summary page / record page 状态拆分）
 ## v2 Requirements
 
 - [ ] **DATA-05**: 验收脚本 `run-acceptance-smoke.ps1` 增加针对新版模板版式或关键标签的断言（可选）
@@ -84,6 +91,9 @@
 | OVERFLOW-06-01 | Phase 6 | Done（待 UAT） |
 | OVERFLOW-06-02 | Phase 6 | Done（待 UAT） |
 | OVERFLOW-06-03 | Phase 6 | Done（待 UAT） |
+| ENV-07-01 | Phase 7 | Done |
+| ENV-07-02 | Phase 7 | Done |
+| ENV-07-03 | Phase 7 | Done |
 
 **Coverage:**
 
@@ -93,8 +103,10 @@
 - Phase 4 / 预测页打磨：2 条（POLISH-04-*）
 - Phase 5 / 预测记录删除：2 条（DEL-05-*）
 - Phase 6 / overflow-x 收口：3 条（OVERFLOW-06-*）
-- Mapped to phases: 17
+- Phase 7 / 粮温汇总优化：3 条（ENV-07-*）
+- Mapped to phases: 20
 - Unmapped: 0
 
 ---
-*Last updated: 2026-04-10 Phase 6 增加 OVERFLOW-06-*（主内容正常横向滚动恢复、预测页摘要局部收口、保留对 ECharts 反馈循环的规避）*
+*Last updated: 2026-04-11 Phase 7 增加 ENV-07-*（粮温汇总服务端分页、共享时间范围、层级目标切换与图表/表格查询态拆分）*
+

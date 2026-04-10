@@ -1,7 +1,7 @@
 # ROADMAP: 粮仓平台（GSD）
 
 **Milestone:** 毕设数据库优先 MVP — 体验优化波次  
-**Updated:** 2026-04-10
+**Updated:** 2026-04-11
 
 ## Overview
 
@@ -13,6 +13,7 @@
 | 4 | 温度预测页单表与预测区间 | 单表、预测区间列、操作列；后端可追溯 | POLISH-04-01 — POLISH-04-02 | **已落地**（待 UAT） |
 | 5 | 预测记录表支持删除 | 多选 + 批量删 + 单删；二次确认；DEL-05-* | 已规划（待执行） |
 | 6 | 预测页 overflow-x 收口 | 恢复正常横向滚动；摘要局部收口；不回退高风险滚动模型 | OVERFLOW-06-01 — OVERFLOW-06-03 | **已落地**（待 UAT） |
+| 7 | 环境数据页 / 粮温汇总优化 | 汇总表后端分页；图表按时间/层级查询；图表与表格查询态拆分 | ENV-07-01 — ENV-07-03 | **已落地**（待 UAT） |
 
 ## Phase 1: 粮温 Excel 模板与导入一致化（已完成）
 
@@ -126,6 +127,26 @@
 Plans:
 - [x] `06-01-PLAN.md` — 主内容 overflow-x 收口、预测页摘要局部收口、GSD 同步（Wave 1）
 
+### Phase 7: zzz-prompt-debug/origin/环境数据页面优化/prompt.md
+
+**阶段目录：** `.planning/phases/07-zzz-prompt-debug-origin-prompt-md/`（`07-CONTEXT.md`、`07-RESEARCH.md`、`07-01-PLAN.md`、`07-VERIFICATION.md`）
+
+**Goal:** 把环境数据页中 **粮温主线** 的“粮温汇总趋势图 + 粮温汇总结果”从演示型静态查询，升级为可用于排查与答辩展示的查询页：汇总结果改为**后端分页 + 多条件筛选**；趋势图支持**仓库、时间范围、层级目标**，且固定保留**最高温**参考线。
+
+**Requirements**: ENV-07-01 — ENV-07-03
+**Depends on:** Phase 6
+
+**Success criteria:**
+
+1. 汇总结果表走服务端分页，支持关键词、预警等级、整仓均温范围，不再使用前端内存分页。
+2. 趋势图支持共享的仓库 + 时间范围查询，并支持 `整仓均温 / 一层 / 二层 / 三层 / 四层` 目标切换，同时保留“最高温”对照线。
+3. 图表与汇总表共享仓库 + 时间范围，但表格细筛不影响图表；普通环境模式和粮温原始测点记录链路不回归。
+
+**Plans:**
+
+- [x] `07-01-PLAN.md` — 粮温汇总分页接口、前端查询态拆分、趋势图层级目标、文档同步（Wave 1）
+
 ---
 
-*Roadmap updated: 2026-04-10（Phase 6：overflow-x 收口；Phase 5：预测记录删除；Phase 4 单表打磨；Phase 2/3 归档见 zzz-docs/归档）*
+*Roadmap updated: 2026-04-11（Phase 7：环境数据页 / 粮温汇总优化；Phase 6：overflow-x 收口；Phase 5：预测记录删除；Phase 4 单表打磨；Phase 2/3 归档见 zzz-docs/归档）*
+
