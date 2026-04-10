@@ -21,11 +21,13 @@ See: `.planning/PROJECT.md`（updated 2026-04-10）
 | # | Description | Date | Commit | Directory |
 | --- | --- | --- | --- | --- |
 | 260410-jw9 | 粮温固定 XLSX 模板 v2：合并单元格与双语标签，解析兼容旧版，DataView 与 GSD/devflow 文档同步 | 2026-04-10 | `05b6c71` | [260410-jw9-xlsx-v2-dataview-gsd](./quick/260410-jw9-xlsx-v2-dataview-gsd/) |
+| 260410-k32 | Vue 管理端主内容横向无限变宽：`el-scrollbar` 与 ECharts ResizeObserver 反馈；主内容改原生滚动并收紧 flex / 预测页显式 resize | 2026-04-10 | `—` | [260410-k32-vue-scrollbar-echarts-layout-fix](./quick/260410-k32-vue-scrollbar-echarts-layout-fix/) |
 
-**Last activity:** 2026-04-10 — 补录 quick **260410-jw9**（模板 v2；未走 Codex 子代理，计划与摘要为事后对齐 GSD 工作流）
+**Last activity:** 2026-04-10 — 补录 quick **260410-k32**（布局 bug修复与 devflow `bug-log` / `learnings`；代码若尚未提交请将 STATE 表 Commit 列补为短哈希）
 
 ## Session Notes
 
+- 2026-04-10：**260410-k32** — Vue 管理端主内容 `el-scrollbar` + ECharts 导致横向持续变宽；已改原生滚动并补 GSD quick / devflow `bug-log` + `learnings`（代码提交后可将 quick 表 Commit 列由 `—` 改为短哈希）。
 - 2026-04-10：`/gsd-new-project` 轻量初始化完成（曾跳过 codebase map；现已补全 map）。`config.json` 已写入；`AGENTS.md` 已生成。
 - 2026-04-10：codebase map 已写入 `.planning/codebase/`。
 - 2026-04-10：`GrainTempImportService` 固定模板版式升级（合并单元格、分区标题、双语标签）；解析兼容旧模板；`DataView.vue` 说明更新；`PROJECT.md` / `REQUIREMENTS.md` / `ROADMAP.md` 已同步。

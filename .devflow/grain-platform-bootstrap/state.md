@@ -120,6 +120,11 @@
   - **问题原因**：已使用 `el-container` / `el-aside` / `el-main`，但外层仅用 `min-height: 100vh`、未锁定视口高度与 flex 子项 `min-height: 0`，主内容增高时整页容器被撑高，由浏览器文档滚动统一滚动；**不是**「未使用 Element Plus」。
   - **解决方案**：`html`/`body`/`#app` 高度链；`.console-shell` 视口限高与 `overflow: hidden`；`.console-body` / `.console-main` 使用 `flex: 1`、`min-height: 0`；侧栏中部与主内容按官方示例增加 `el-scrollbar`（`ConsoleLayout.vue`、`styles.css`）；小屏断点恢复文档流滚动。
   - **验证**：`frontend/` 执行 `npm run build` 成功。
+- 已修复管理端主内容区与温度预测页 **横向宽度持续增长**（详见 `.devflow/grain-platform-bootstrap/bug-log.md` **BUG-2026-04-10-001** 与 `learnings.md` 同日条目）：
+  - **问题现象**：进入后台（尤以 `/prediction` 为甚）后页面横向不断变宽，右侧元素持续外移。
+  - **问题原因**：主内容使用 `el-scrollbar` 时，其 `ResizeObserver` + `onUpdated` 更新链与 ECharts 容器 resize、flex `min-width: auto` 叠加，形成横向尺寸反馈。
+  - **解决方案**：主内容改为原生滚动容器 `.console-main-native`（`ConsoleLayout.vue` / `styles.css`）；`flex: 1 1 0` 与顶栏 `min-width: 0` 等收紧；`PredictionView.vue` 在 `rAF` 后显式 `chart.resize`（零动画）。
+  - **GSD quick记录**：`.planning/quick/260410-k32-vue-scrollbar-echarts-layout-fix/`；`.planning/STATE.md` 已增 **260410-k32** 行。
 - 已增强「粮温原始测点记录」筛选：由单一关键词扩展为表头向工具栏 + 服务端条件（详见 `.devflow/grain-platform-bootstrap/plans/2026-04-10-grain-temp-records-filter-toolbar.md`）：
   - **目标**：区域 / 层号 / 点位用下拉，温度用区间，采集时间用范围；仓库仍以数据页右上方「查询条件」为准；保留关键词防抖模糊搜索。
   - **后端**：`GET /api/grain-temp/records` 在既有 `warehouseId`、`startTime`、`endTime`、`zoneCode`、`layerNo`、`keyword` 基础上增加 `pointNo`、`tempMin`、`tempMax`；新增 `GET /api/grain-temp/records/filter-options?warehouseId=` 返回去重后的 `zoneCodes`、`layerNos`、`pointNos`；`GrainTempRecordMapper.xml` / `GrainTempService` / `GrainTempController` 与 DTO `GrainTempRecordFilterOptionsDto`。

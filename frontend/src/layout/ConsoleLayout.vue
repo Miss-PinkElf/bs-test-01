@@ -88,9 +88,10 @@ function handleLogout() {
       </el-header>
 
       <el-main class="console-main">
-        <el-scrollbar class="console-main-scroll">
+        <!-- 主内容不用 el-scrollbar：其与 ECharts 的 ResizeObserver 叠加时可能形成横向尺寸反馈循环 -->
+        <div class="console-main-native">
           <router-view />
-        </el-scrollbar>
+        </div>
       </el-main>
     </el-container>
   </el-container>

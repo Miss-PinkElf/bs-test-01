@@ -179,6 +179,19 @@ function renderChart() {
       }
     ]
   });
+
+  requestAnimationFrame(() => {
+    const el = chartRef.value;
+    if (!el || !chart) {
+      return;
+    }
+
+    chart.resize({
+      width: el.clientWidth,
+      height: el.clientHeight,
+      animation: { duration: 0 }
+    });
+  });
 }
 
 onMounted(async () => {
