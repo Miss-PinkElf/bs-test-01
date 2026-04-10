@@ -29,7 +29,7 @@
 - [x] 管理端侧栏与主区独立滚动 + Element Plus `el-scrollbar`
 - [x] 粮温记录服务端区间/点位筛选 + `filter-options` + 前端工具栏
 - [x] devflow 双 plan + state / 决策日志更新
-- [x] `NEXT-SESSION-PROMPT-DEVFLOW.md` 由下一轮助手更新（与本 handoff 同步）
+- [x] `NEXT-SESSION-PROMPT-DEVFLOW.md` 已与 handoff 022 同步更新（根目录可复制提示词）
 - [x] 代码提交 `16cabbc`
 
 ## 关键决策与原因
