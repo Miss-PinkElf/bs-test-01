@@ -252,6 +252,14 @@ body {
   font-weight: 700;
 }
 
+.panel-subtitle {
+  margin-top: 6px;
+  font-size: 13px;
+  font-weight: 400;
+  line-height: 1.5;
+  color: var(--text-subtle);
+}
+
 .panel-header {
   display: flex;
   align-items: center;
@@ -464,6 +472,32 @@ body {
   min-width: 0;
   height: 360px;
   overflow: hidden;
+}
+
+/* 温度预测页：避免行内 width，与 Console窄屏共存 */
+.prediction-select-md {
+  width: 180px;
+  max-width: 100%;
+}
+
+.prediction-train-range-picker {
+  width: 100%;
+  max-width: 440px;
+}
+
+.prediction-advanced-train {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 12px;
+}
+
+.task-summary-descriptions + .task-summary-descriptions {
+  margin-top: 12px;
+}
+
+.prediction-train-collapse {
+  margin-top: 12px;
 }
 
 .alert-scrollbar {

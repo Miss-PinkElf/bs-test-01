@@ -32,6 +32,7 @@
 
 ### Active
 
+- [ ] **Phase 2 / 3 UAT**：预测页（PRED + UX2：摘要、训练区间、图表顺序、双表说明、滚动）；联调通过后可将对应 REQ 标为 Validated
 - [ ] 按需：验收脚本对新版模板布局的轻量断言（见 `REQUIREMENTS.md` DATA-05）
 
 ### Out of Scope
@@ -74,4 +75,4 @@
 5. "What This Is" still accurate? → Update if drifted
 
 ---
-*Last updated: 2026-04-10 after 粮温固定模板 v2 + PROJECT 棕地 Validated 同步*
+*Last updated: 2026-04-10 after Phase 2（温度预测页）需求落盘*

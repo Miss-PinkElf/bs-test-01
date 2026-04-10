@@ -1,5 +1,6 @@
 <script setup>
 import { Search } from "@element-plus/icons-vue";
+import { ElMessage } from "element-plus";
 import * as echarts from "echarts";
 import { computed, nextTick, onBeforeUnmount, onMounted, reactive, ref, watch } from "vue";
 import { fetchPredictionTasks, fetchWarehouses, predictMetric } from "../api/grain";
@@ -7,6 +8,8 @@ import { useClientPagination } from "../composables/useClientPagination";
 import { filterRows } from "../utils/fuzzyText";
 
 const chartRef = ref();
+/** 预测后滚动定位，避免主视觉在视口外 */
+const chartAnchorRef = ref();
 const loading = ref(false);
 const historyLoading = ref(false);
 const warehouses = ref([]);
@@ -89,6 +92,11 @@ const form = reactive({
   forecastDays: 7
 });
 
+/** 可选训练窗口，提交时映射为 trainStartTime / trainEndTime；清空则不传（全量历史） */
+const trainRange = ref(null);
+/** 默认折叠「高级：训练数据区间」 */
+const trainCollapse = ref([]);
+
 let chart;
 
 function resolveHistoryRowClassName({ row }) {
@@ -113,20 +121,58 @@ async function loadPredictionHistory() {
   }
 }
 
+function validateTrainRange() {
+  if (!trainRange.value || trainRange.value.length !== 2) {
+    return true;
+  }
+
+  const [start, end] = trainRange.value;
+
+  if (!start || !end) {
+    return true;
+  }
+
+  if (start >= end) {
+    ElMessage.warning("训练区间结束时间应晚于开始时间");
+    return false;
+  }
+
+  return true;
+}
+
+function clearTrainRange() {
+  trainRange.value = null;
+}
+
 async function runPrediction() {
+  if (!validateTrainRange()) {
+    return;
+  }
+
   loading.value = true;
 
   try {
-    prediction.value = await predictMetric({
+    const payload = {
       warehouseId: form.warehouseId,
       metricCode: "temperature",
       targetType: form.targetType,
       forecastDays: form.forecastDays
-    });
+    };
+
+    if (trainRange.value?.length === 2 && trainRange.value[0] && trainRange.value[1]) {
+      payload.trainStartTime = trainRange.value[0];
+      payload.trainEndTime = trainRange.value[1];
+    }
+
+    prediction.value = await predictMetric(payload);
     selectedTaskId.value = prediction.value.taskId;
     await loadPredictionHistory();
     await nextTick();
     renderChart();
+    await nextTick();
+    chartAnchorRef.value?.scrollIntoView?.({ behavior: "smooth", block: "start" });
+  } catch (err) {
+    ElMessage.error(err?.message || "预测失败");
   } finally {
     loading.value = false;
   }
@@ -137,6 +183,8 @@ async function selectPredictionTask(item) {
   prediction.value = item;
   await nextTick();
   renderChart();
+  await nextTick();
+  chartAnchorRef.value?.scrollIntoView?.({ behavior: "smooth", block: "nearest" });
 }
 
 function renderChart() {
@@ -213,7 +261,8 @@ onBeforeUnmount(() => {
 <template>
   <div class="page-stack">
     <el-row :gutter="16">
-      <el-col :xs="24" :xl="15">
+      <!-- md 起并排：仅写 xl 时 EP 默认 xl≥1920 才生效，常见笔记本会上下堆叠 -->
+      <el-col :xs="24" :sm="24" :md="15" :lg="15" :xl="15">
         <el-card class="panel-card" shadow="never">
           <template #header>
             <div class="panel-title">滚动预测参数</div>
@@ -221,7 +270,7 @@ onBeforeUnmount(() => {
 
           <el-form inline>
             <el-form-item label="仓库">
-              <el-select v-model="form.warehouseId" style="width: 180px">
+              <el-select v-model="form.warehouseId" class="prediction-select-md">
                 <el-option
                   v-for="item in warehouses"
                   :key="item.id"
@@ -232,7 +281,7 @@ onBeforeUnmount(() => {
             </el-form-item>
 
             <el-form-item label="预测对象">
-              <el-select v-model="form.targetType" style="width: 180px">
+              <el-select v-model="form.targetType" class="prediction-select-md">
                 <el-option
                   v-for="item in targetOptions"
                   :key="item.value"
@@ -252,44 +301,94 @@ onBeforeUnmount(() => {
               </el-button>
             </el-form-item>
           </el-form>
+
+          <el-collapse v-model="trainCollapse" class="prediction-train-collapse">
+            <el-collapse-item title="高级：训练数据区间（可选）" name="train">
+              <div class="prediction-advanced-train">
+                <el-date-picker
+                  v-model="trainRange"
+                  type="datetimerange"
+                  range-separator="至"
+                  start-placeholder="训练开始"
+                  end-placeholder="训练结束"
+                  value-format="YYYY-MM-DDTHH:mm:ss"
+                  class="prediction-train-range-picker"
+                />
+                <el-button text type="primary" @click="clearTrainRange">清空（使用全部历史）</el-button>
+              </div>
+            </el-collapse-item>
+          </el-collapse>
         </el-card>
       </el-col>
 
-      <el-col :xs="24" :xl="9">
+      <el-col :xs="24" :sm="24" :md="9" :lg="9" :xl="9">
         <el-card class="panel-card" shadow="never">
           <template #header>
             <div class="panel-title">任务摘要</div>
           </template>
 
-          <div class="detail-grid">
-            <div><strong>任务号：</strong>{{ prediction.taskNo }}</div>
-            <div><strong>仓库：</strong>{{ prediction.warehouseName || "-" }}</div>
-            <div><strong>预测对象：</strong>{{ getTargetLabel(prediction.targetType) }}</div>
-            <div><strong>算法：</strong>{{ prediction.algorithmName }}</div>
-            <div><strong>风险等级：</strong>{{ prediction.riskLevel }}</div>
-            <div><strong>预测天数：</strong>{{ prediction.forecastDays }}</div>
-            <div><strong>训练区间：</strong>{{ formatDateTime(prediction.trainStartTime) }} ~ {{ formatDateTime(prediction.trainEndTime) }}</div>
-            <div><strong>预测区间：</strong>{{ formatDateTime(prediction.forecastStartTime) }} ~ {{ formatDateTime(prediction.forecastEndTime) }}</div>
-            <div><strong>执行时间：</strong>{{ formatDateTime(prediction.requestedAt) }}</div>
-            <div><strong>任务摘要：</strong>{{ prediction.summary || "预测执行完成" }}</div>
-          </div>
+          <el-descriptions :column="2" border size="small" class="task-summary-descriptions">
+            <el-descriptions-item label="任务号" :span="2">
+              {{ prediction.taskNo || "-" }}
+            </el-descriptions-item>
+            <el-descriptions-item label="仓库">
+              {{ prediction.warehouseName || "-" }}
+            </el-descriptions-item>
+            <el-descriptions-item label="预测对象">
+              {{ getTargetLabel(prediction.targetType) }}
+            </el-descriptions-item>
+            <el-descriptions-item label="算法">
+              {{ prediction.algorithmName || "-" }}
+            </el-descriptions-item>
+            <el-descriptions-item label="风险等级">
+              {{ prediction.riskLevel }}
+            </el-descriptions-item>
+            <el-descriptions-item label="预测天数">
+              {{ prediction.forecastDays }}
+            </el-descriptions-item>
+          </el-descriptions>
+
+          <el-descriptions :column="1" border size="small" class="task-summary-descriptions">
+            <el-descriptions-item label="训练区间">
+              {{ formatDateTime(prediction.trainStartTime) }} ~ {{ formatDateTime(prediction.trainEndTime) }}
+            </el-descriptions-item>
+            <el-descriptions-item label="预测区间">
+              {{ formatDateTime(prediction.forecastStartTime) }} ~ {{ formatDateTime(prediction.forecastEndTime) }}
+            </el-descriptions-item>
+            <el-descriptions-item label="执行时间">
+              {{ formatDateTime(prediction.requestedAt) }}
+            </el-descriptions-item>
+            <el-descriptions-item label="任务摘要">
+              {{ prediction.summary || "预测执行完成" }}
+            </el-descriptions-item>
+          </el-descriptions>
         </el-card>
       </el-col>
     </el-row>
 
-    <el-card class="panel-card" shadow="never">
-      <template #header>
-        <div class="panel-title">实际值 / 预测值双线图</div>
-      </template>
+    <div ref="chartAnchorRef" class="prediction-chart-anchor">
+      <el-card class="panel-card" shadow="never">
+        <template #header>
+          <div>
+            <div class="panel-title">实际值 / 预测值双线图</div>
+            <div class="panel-subtitle">对应上方「任务摘要」中的当前任务；执行预测后会自动滚到此处</div>
+          </div>
+        </template>
 
-      <div ref="chartRef" class="chart-box"></div>
-    </el-card>
+        <div ref="chartRef" class="chart-box"></div>
+      </el-card>
+    </div>
 
     <el-row :gutter="16">
-      <el-col :xs="24" :xl="15">
+      <el-col :xs="24" :sm="24" :md="15" :lg="15" :xl="15">
         <el-card class="panel-card" shadow="never">
           <template #header>
-            <div class="panel-title">预测结果列表</div>
+            <div>
+              <div class="panel-title">预测结果列表</div>
+              <div class="panel-subtitle">
+                当前任务的分步明细：历史实际点（ACTUAL）与未来预测点（FUTURE），与曲线数据一致
+              </div>
+            </div>
           </template>
 
           <div class="toolbar-row table-toolbar">
@@ -339,10 +438,13 @@ onBeforeUnmount(() => {
         </el-card>
       </el-col>
 
-      <el-col :xs="24" :xl="9">
+      <el-col :xs="24" :sm="24" :md="9" :lg="9" :xl="9">
         <el-card class="panel-card" shadow="never">
           <template #header>
-            <div class="panel-title">历史归档记录</div>
+            <div>
+              <div class="panel-title">历史归档记录</div>
+              <div class="panel-subtitle">历次预测任务；点击一行加载该任务，摘要、曲线与本表会同步更新</div>
+            </div>
           </template>
 
           <div class="toolbar-row table-toolbar">
