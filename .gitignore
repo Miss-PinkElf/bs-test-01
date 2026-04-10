@@ -49,3 +49,12 @@ frontend-next/.turbo/
 frontend-next/.vercel/
 *.tsbuildinfo
 coverage/
+
+# GSD / Codex local installation artifacts
+.codex/config.toml
+.codex/agents/
+.codex/get-shit-done/
+.codex/gsd-file-manifest.json
+.cursor/agents/
+.cursor/get-shit-done/
+.cursor/gsd-file-manifest.json
