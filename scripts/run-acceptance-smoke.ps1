@@ -1,4 +1,4 @@
-param(
+﻿param(
     [string]$ApiBase = "http://127.0.0.1:8081",
     [switch]$SkipReset,
     [switch]$SkipStaticChecks,

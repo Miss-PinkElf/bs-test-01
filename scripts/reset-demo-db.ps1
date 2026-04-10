@@ -1,4 +1,4 @@
-param(
+﻿param(
     [string]$DbHost = "localhost",
     [int]$DbPort = 3306,
     [string]$Username = "root",
