@@ -1,4 +1,3 @@
-> **Cursor 已用规则承载：** 见 `.cursor/rules/project-zh.mdc`（`alwaysApply: true`）。本文件仅作备忘或与 Codex 对齐的副本；修改约束时请改 rule，并可按需同步此处。
 
 # 协作约束
 
