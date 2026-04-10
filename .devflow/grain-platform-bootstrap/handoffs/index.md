@@ -2,11 +2,12 @@
 
 ## 最新 handoff
 
-- [2026-04-10-021-pause-ready-after-table-search-and-cursor-rules](.devflow/grain-platform-bootstrap/handoffs/2026-04-10-021-pause-ready-after-table-search-and-cursor-rules.md)
+- [2026-04-10-022-pause-ready-after-layout-grain-filter-handoff-commit](.devflow/grain-platform-bootstrap/handoffs/2026-04-10-022-pause-ready-after-layout-grain-filter-handoff-commit.md)
 
 ## Handoff 列表
 
-- `2026-04-10-021-pause-ready-after-table-search-and-cursor-rules` | 阶段：列表搜索 + Cursor 规则强化后暂停 | 状态：**latest**
+- `2026-04-10-022-pause-ready-after-layout-grain-filter-handoff-commit` | 阶段：管理端布局 + 粮温多条件筛选 + devflow 补记 + 提交后暂停 | 状态：**latest**
+- `2026-04-10-021-pause-ready-after-table-search-and-cursor-rules` | 阶段：列表搜索 + Cursor 规则强化后暂停 | 状态：superseded
 - `2026-04-09-020-pause-ready-after-user-crud-and-acceptance-smoke` | 阶段：用户 CRUD + 验收脚本完成后暂停 | 状态：superseded
 - `2026-04-09-019-pause-ready-after-init-and-warehouse-crud` | 阶段：初始化策略收口 + 仓库 CRUD 完成后暂停 | 状态：superseded
 - `2026-04-09-018-devflow-migration-ready` | 阶段：devflow 迁移完成 / 新恢复入口 | 状态：superseded

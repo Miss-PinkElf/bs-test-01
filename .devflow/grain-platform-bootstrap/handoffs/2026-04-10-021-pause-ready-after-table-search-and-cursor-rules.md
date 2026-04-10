@@ -6,7 +6,7 @@
 - mission：grain-platform-bootstrap
 - 当前阶段：Pause-ready after table search + Cursor rules hardening
 - handoff 编号：021
-- 是否 superseded：否
+- 是否 superseded：是（由 022 接替，布局与粮温筛选后请读 022）
 
 ## 当前目标
 

@@ -1,7 +1,7 @@
 # 当前状态
 
 ## 当前阶段
-- 体验优化两轮已记入 devflow：① 管理端布局（侧栏/主区独立滚动 + `el-scrollbar`）② 粮温原始测点记录多条件筛选工具栏（2026-04-10）；handoff 021 仍为上一轮暂停点，连续小改未另开 handoff
+- Pause-ready：handoff **022**（2026-04-10）— 管理端布局 + 粮温多条件筛选已交付并提交 `16cabbc`；恢复以022 + `NEXT-SESSION-PROMPT-DEVFLOW.md` 为准
 
 ## 已确认的事实
 - 用户要求使用 `devflow` 记录过程。
@@ -135,7 +135,8 @@
 
 ## 待解决的问题
 - 首页与导入链路、后台管理关键链路已补齐一键验收脚本，但当前脚本在本沙箱内直接执行前端构建时仍可能命中 `esbuild spawn EPERM`；仓库内单独执行 `npm run build` 已通过。
-- 验收脚本尚未对带 `keyword` 的分页接口做专门断言（可选补一条轻量 smoke）。
+- 验收脚本尚未对带 `keyword` 的分页接口做专门断言（可选补一条轻量 smoke）；粮温记录新增 `pointNo`/`tempMin`/`tempMax`/`filter-options` 亦未纳入脚本断言（可选）。
+- GSD：用户拟用 GSD 承接后续优化波次；仓库内 **`.planning/` 尚未初始化**，`.codex/`、`.cursor/` 下大量 GSD 相关文件仍为未跟踪，提交课题代码时勿整包纳入。
 - 预测修正字段已保留，但本期仍未实现修正入口与修正页，这与当前范围收口一致。
 - 用户/仓库列表当前为全量接口 + 前端搜索；若数据量显著增大，可再评估是否增加后端 `keyword`。
 - `/screen` 大屏表格未加本地筛选（可选）。
@@ -143,7 +144,9 @@
 - 旧版 PRD、数据库定稿、旧接口设计已归档；历史 handoff/checkpoint 中仍保留旧文件名，属于历史上下文，不应作为当前真相源。
 
 ## 下一步
+- 休息/恢复：下轮先读 handoff **022** 与根目录 `NEXT-SESSION-PROMPT-DEVFLOW.md`。
 - 答辩前可再扫一遍 `zzz-docs/设计文档/` 中非归档文档，按需补「数据库优先 MVP」文首提示或真相源引用。
+- 可选：扩展验收脚本与回归清单（粮温筛选）；按需 `git push`；初始化 GSD 时保持与 devflow 分工。
 - 如需在沙箱环境里重复跑脚本，可优先使用 `-SkipStaticChecks`，静态命令单独执行。
 
 ## 当前参考计划
@@ -159,9 +162,12 @@
 - `.devflow/grain-platform-bootstrap/plans/2026-04-10-usersview-and-screen-display-unification.md`
 
 ## 最新 handoff
-- `.devflow/grain-platform-bootstrap/handoffs/2026-04-10-021-pause-ready-after-table-search-and-cursor-rules.md`
+- `.devflow/grain-platform-bootstrap/handoffs/2026-04-10-022-pause-ready-after-layout-grain-filter-handoff-commit.md`
 
 ## 最小活跃上下文摘要
-- 在 021 基础上补充：① `ConsoleLayout` 视口锁定 + 侧栏/主区 `el-scrollbar`（见 `plans/2026-04-10-console-layout-scroll-and-scrollbar.md`）② 粮温原始记录多条件筛选 + `filter-options` 接口（见 `plans/2026-04-10-grain-temp-records-filter-toolbar.md`）。恢复时仍以 `state.md` + 021 handoff + `NEXT-SESSION-PROMPT-DEVFLOW.md` 为主。新需求默认先对齐再编码（见 mdc §3.2–3.3）；沙箱跑验收可 `-SkipStaticChecks`。
+- **Git**：`16cabbc` 已提交（布局 + 粮温筛选 + devflow 文档）。需同步远端时本地 `git push`。
+- **恢复**：`state.md` + handoff **022** + 根目录 `NEXT-SESSION-PROMPT-DEVFLOW.md`。计划条目见 `plans/2026-04-10-console-layout-scroll-and-scrollbar.md` 与 `plans/2026-04-10-grain-temp-records-filter-toolbar.md`。
+- **开放**：验收脚本扩展断言、回归清单补粮温筛选步骤、GSD 初始化、设计文档扫荡等见 `state.md`「待解决的问题」与 022 handoff。
+- 新需求默认先对齐再编码（`project-zh.mdc` §3）；沙箱跑验收可 `-SkipStaticChecks`。
 
 
