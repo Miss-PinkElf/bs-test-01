@@ -52,7 +52,7 @@ Closes the plan → execute → verify → ship loop.
 </objective>
 
 <execution_context>
-@E:/Learn/Vs/Code/bs-test-01/.codex/get-shit-done/workflows/ship.md
+@D:/Users/Mobius/Desktop/mine/AAA-code/bs-test-01/.codex/get-shit-done/workflows/ship.md
 </execution_context>
 
-Execute the ship workflow from @E:/Learn/Vs/Code/bs-test-01/.codex/get-shit-done/workflows/ship.md end-to-end.
+Execute the ship workflow from @D:/Users/Mobius/Desktop/mine/AAA-code/bs-test-01/.codex/get-shit-done/workflows/ship.md end-to-end.

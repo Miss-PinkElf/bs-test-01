@@ -76,7 +76,7 @@ GSD > INTEL
 
 Intel system is disabled. To activate:
 
-  node E:/Learn/Vs/Code/bs-test-01/.codex/get-shit-done/bin/gsd-tools.cjs config-set intel.enabled true
+  node D:/Users/Mobius/Desktop/mine/AAA-code/bs-test-01/.codex/get-shit-done/bin/gsd-tools.cjs config-set intel.enabled true
 
 Then run /gsd-intel refresh to build the initial index.
 ```
@@ -114,7 +114,7 @@ Modes:
 Run:
 
 ```bash
-node E:/Learn/Vs/Code/bs-test-01/.codex/get-shit-done/bin/gsd-tools.cjs intel query <term>
+node D:/Users/Mobius/Desktop/mine/AAA-code/bs-test-01/.codex/get-shit-done/bin/gsd-tools.cjs intel query <term>
 ```
 
 Parse the JSON output and display results:
@@ -129,7 +129,7 @@ Parse the JSON output and display results:
 Run:
 
 ```bash
-node E:/Learn/Vs/Code/bs-test-01/.codex/get-shit-done/bin/gsd-tools.cjs intel status
+node D:/Users/Mobius/Desktop/mine/AAA-code/bs-test-01/.codex/get-shit-done/bin/gsd-tools.cjs intel status
 ```
 
 Parse the JSON output and display each intel file with:
@@ -144,7 +144,7 @@ Parse the JSON output and display each intel file with:
 Run:
 
 ```bash
-node E:/Learn/Vs/Code/bs-test-01/.codex/get-shit-done/bin/gsd-tools.cjs intel diff
+node D:/Users/Mobius/Desktop/mine/AAA-code/bs-test-01/.codex/get-shit-done/bin/gsd-tools.cjs intel diff
 ```
 
 Parse the JSON output and display:
@@ -174,7 +174,7 @@ Task(
   prompt="You are the gsd-intel-updater agent. Your job is to analyze this codebase and write/update intelligence files in .planning/intel/.
 
 Project root: ${CWD}
-gsd-tools path: E:/Learn/Vs/Code/bs-test-01/.codex/get-shit-done/bin/gsd-tools.cjs
+gsd-tools path: D:/Users/Mobius/Desktop/mine/AAA-code/bs-test-01/.codex/get-shit-done/bin/gsd-tools.cjs
 
 Instructions:
 1. Analyze the codebase structure, dependencies, APIs, and architecture
@@ -198,7 +198,7 @@ Wait for the agent to complete.
 After the agent completes, run:
 
 ```bash
-node E:/Learn/Vs/Code/bs-test-01/.codex/get-shit-done/bin/gsd-tools.cjs intel status
+node D:/Users/Mobius/Desktop/mine/AAA-code/bs-test-01/.codex/get-shit-done/bin/gsd-tools.cjs intel status
 ```
 
 Display a summary showing:

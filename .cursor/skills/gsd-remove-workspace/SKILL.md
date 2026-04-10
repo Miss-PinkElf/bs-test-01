@@ -37,10 +37,10 @@ Remove a workspace directory after confirmation. For worktree strategy, runs `gi
 </objective>
 
 <execution_context>
-@E:/Learn/Vs/Code/bs-test-01/.cursor/get-shit-done/workflows/remove-workspace.md
-@E:/Learn/Vs/Code/bs-test-01/.cursor/get-shit-done/references/ui-brand.md
+@D:/Users/Mobius/Desktop/mine/AAA-code/bs-test-01/.cursor/get-shit-done/workflows/remove-workspace.md
+@D:/Users/Mobius/Desktop/mine/AAA-code/bs-test-01/.cursor/get-shit-done/references/ui-brand.md
 </execution_context>
 
 <process>
-Execute the remove-workspace workflow from @E:/Learn/Vs/Code/bs-test-01/.cursor/get-shit-done/workflows/remove-workspace.md end-to-end.
+Execute the remove-workspace workflow from @D:/Users/Mobius/Desktop/mine/AAA-code/bs-test-01/.cursor/get-shit-done/workflows/remove-workspace.md end-to-end.
 </process>

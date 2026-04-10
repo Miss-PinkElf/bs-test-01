@@ -37,7 +37,7 @@ Then suggest `Depends on` updates to ROADMAP.md.
 </objective>
 
 <execution_context>
-@E:/Learn/Vs/Code/bs-test-01/.cursor/get-shit-done/workflows/analyze-dependencies.md
+@D:/Users/Mobius/Desktop/mine/AAA-code/bs-test-01/.cursor/get-shit-done/workflows/analyze-dependencies.md
 </execution_context>
 
 <context>
@@ -47,6 +47,6 @@ Run this command BEFORE `/gsd-manager` to fill in missing `Depends on` fields an
 </context>
 
 <process>
-Execute the analyze-dependencies workflow from @E:/Learn/Vs/Code/bs-test-01/.cursor/get-shit-done/workflows/analyze-dependencies.md end-to-end.
+Execute the analyze-dependencies workflow from @D:/Users/Mobius/Desktop/mine/AAA-code/bs-test-01/.cursor/get-shit-done/workflows/analyze-dependencies.md end-to-end.
 Present dependency suggestions clearly and apply confirmed updates to ROADMAP.md.
 </process>

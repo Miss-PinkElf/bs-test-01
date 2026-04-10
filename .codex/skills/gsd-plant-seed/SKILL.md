@@ -55,9 +55,9 @@ Consumed by: /gsd-new-milestone (scans seeds and presents matches)
 </objective>
 
 <execution_context>
-@E:/Learn/Vs/Code/bs-test-01/.codex/get-shit-done/workflows/plant-seed.md
+@D:/Users/Mobius/Desktop/mine/AAA-code/bs-test-01/.codex/get-shit-done/workflows/plant-seed.md
 </execution_context>
 
 <process>
-Execute the plant-seed workflow from @E:/Learn/Vs/Code/bs-test-01/.codex/get-shit-done/workflows/plant-seed.md end-to-end.
+Execute the plant-seed workflow from @D:/Users/Mobius/Desktop/mine/AAA-code/bs-test-01/.codex/get-shit-done/workflows/plant-seed.md end-to-end.
 </process>

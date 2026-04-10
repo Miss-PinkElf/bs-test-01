@@ -35,9 +35,9 @@ Lightweight alternative to `/gsd-map-codebase` — spawns one mapper agent inste
 </objective>
 
 <execution_context>
-@E:/Learn/Vs/Code/bs-test-01/.cursor/get-shit-done/workflows/scan.md
+@D:/Users/Mobius/Desktop/mine/AAA-code/bs-test-01/.cursor/get-shit-done/workflows/scan.md
 </execution_context>
 
 <process>
-Execute the scan workflow from @E:/Learn/Vs/Code/bs-test-01/.cursor/get-shit-done/workflows/scan.md end-to-end.
+Execute the scan workflow from @D:/Users/Mobius/Desktop/mine/AAA-code/bs-test-01/.cursor/get-shit-done/workflows/scan.md end-to-end.
 </process>

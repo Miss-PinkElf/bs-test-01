@@ -56,10 +56,10 @@ Output ONLY the reference content below. Do NOT add:
 </objective>
 
 <execution_context>
-@E:/Learn/Vs/Code/bs-test-01/.codex/get-shit-done/workflows/help.md
+@D:/Users/Mobius/Desktop/mine/AAA-code/bs-test-01/.codex/get-shit-done/workflows/help.md
 </execution_context>
 
 <process>
-Output the complete GSD command reference from @E:/Learn/Vs/Code/bs-test-01/.codex/get-shit-done/workflows/help.md.
+Output the complete GSD command reference from @D:/Users/Mobius/Desktop/mine/AAA-code/bs-test-01/.codex/get-shit-done/workflows/help.md.
 Display the reference content directly — no additions or modifications.
 </process>

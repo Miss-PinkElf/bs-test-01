@@ -52,8 +52,8 @@ Routes to the profile-user workflow which orchestrates the full flow: consent ga
 </objective>
 
 <execution_context>
-@E:/Learn/Vs/Code/bs-test-01/.codex/get-shit-done/workflows/profile-user.md
-@E:/Learn/Vs/Code/bs-test-01/.codex/get-shit-done/references/ui-brand.md
+@D:/Users/Mobius/Desktop/mine/AAA-code/bs-test-01/.codex/get-shit-done/workflows/profile-user.md
+@D:/Users/Mobius/Desktop/mine/AAA-code/bs-test-01/.codex/get-shit-done/references/ui-brand.md
 </execution_context>
 
 <context>

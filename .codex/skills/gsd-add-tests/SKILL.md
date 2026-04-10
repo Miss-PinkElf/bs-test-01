@@ -54,7 +54,7 @@ Output: Test files committed with message `test(phase-{N}): add unit and E2E tes
 </objective>
 
 <execution_context>
-@E:/Learn/Vs/Code/bs-test-01/.codex/get-shit-done/workflows/add-tests.md
+@D:/Users/Mobius/Desktop/mine/AAA-code/bs-test-01/.codex/get-shit-done/workflows/add-tests.md
 </execution_context>
 
 <context>
@@ -65,6 +65,6 @@ Phase: {{GSD_ARGS}}
 </context>
 
 <process>
-Execute the add-tests workflow from @E:/Learn/Vs/Code/bs-test-01/.codex/get-shit-done/workflows/add-tests.md end-to-end.
+Execute the add-tests workflow from @D:/Users/Mobius/Desktop/mine/AAA-code/bs-test-01/.codex/get-shit-done/workflows/add-tests.md end-to-end.
 Preserve all workflow gates (classification approval, test plan approval, RED-GREEN verification, gap reporting).
 </process>

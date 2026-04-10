@@ -39,7 +39,7 @@ Output: {padded_phase}-REVIEW-FIX.md in phase directory + inline summary of fixe
 </objective>
 
 <execution_context>
-@E:/Learn/Vs/Code/bs-test-01/.cursor/get-shit-done/workflows/code-review-fix.md
+@D:/Users/Mobius/Desktop/mine/AAA-code/bs-test-01/.cursor/get-shit-done/workflows/code-review-fix.md
 </execution_context>
 
 <context>
@@ -55,7 +55,7 @@ Context files (.cursor/rules/, REVIEW.md, phase state) are resolved inside the w
 <process>
 This command is a thin dispatch layer. It parses arguments and delegates to the workflow.
 
-Execute the code-review-fix workflow from @E:/Learn/Vs/Code/bs-test-01/.cursor/get-shit-done/workflows/code-review-fix.md end-to-end.
+Execute the code-review-fix workflow from @D:/Users/Mobius/Desktop/mine/AAA-code/bs-test-01/.cursor/get-shit-done/workflows/code-review-fix.md end-to-end.
 
 The workflow (not this command) enforces these gates:
 - Phase validation (before config gate)

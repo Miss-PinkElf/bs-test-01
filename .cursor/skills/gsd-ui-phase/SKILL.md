@@ -34,8 +34,8 @@ Flow: Validate → Research UI → Verify UI-SPEC → Done
 </objective>
 
 <execution_context>
-@E:/Learn/Vs/Code/bs-test-01/.cursor/get-shit-done/workflows/ui-phase.md
-@E:/Learn/Vs/Code/bs-test-01/.cursor/get-shit-done/references/ui-brand.md
+@D:/Users/Mobius/Desktop/mine/AAA-code/bs-test-01/.cursor/get-shit-done/workflows/ui-phase.md
+@D:/Users/Mobius/Desktop/mine/AAA-code/bs-test-01/.cursor/get-shit-done/references/ui-brand.md
 </execution_context>
 
 <context>
@@ -43,6 +43,6 @@ Phase number: {{GSD_ARGS}} — optional, auto-detects next unplanned phase if om
 </context>
 
 <process>
-Execute @E:/Learn/Vs/Code/bs-test-01/.cursor/get-shit-done/workflows/ui-phase.md end-to-end.
+Execute @D:/Users/Mobius/Desktop/mine/AAA-code/bs-test-01/.cursor/get-shit-done/workflows/ui-phase.md end-to-end.
 Preserve all workflow gates.
 </process>

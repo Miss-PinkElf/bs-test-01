@@ -54,9 +54,9 @@ Future: `--prd` mode for PRD extraction is planned for a follow-up PR.
 </objective>
 
 <execution_context>
-@E:/Learn/Vs/Code/bs-test-01/.codex/get-shit-done/workflows/import.md
-@E:/Learn/Vs/Code/bs-test-01/.codex/get-shit-done/references/ui-brand.md
-@E:/Learn/Vs/Code/bs-test-01/.codex/get-shit-done/references/gate-prompts.md
+@D:/Users/Mobius/Desktop/mine/AAA-code/bs-test-01/.codex/get-shit-done/workflows/import.md
+@D:/Users/Mobius/Desktop/mine/AAA-code/bs-test-01/.codex/get-shit-done/references/ui-brand.md
+@D:/Users/Mobius/Desktop/mine/AAA-code/bs-test-01/.codex/get-shit-done/references/gate-prompts.md
 </execution_context>
 
 <context>

@@ -58,11 +58,11 @@ Routes to the resume-project workflow which handles:
   </objective>
 
 <execution_context>
-@E:/Learn/Vs/Code/bs-test-01/.codex/get-shit-done/workflows/resume-project.md
+@D:/Users/Mobius/Desktop/mine/AAA-code/bs-test-01/.codex/get-shit-done/workflows/resume-project.md
 </execution_context>
 
 <process>
-**Follow the resume-project workflow** from `@E:/Learn/Vs/Code/bs-test-01/.codex/get-shit-done/workflows/resume-project.md`.
+**Follow the resume-project workflow** from `@D:/Users/Mobius/Desktop/mine/AAA-code/bs-test-01/.codex/get-shit-done/workflows/resume-project.md`.
 
 The workflow handles all resumption logic including:
 

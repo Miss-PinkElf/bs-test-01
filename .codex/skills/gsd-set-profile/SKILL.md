@@ -47,4 +47,4 @@ Result parsing:
 
 Show the following output to the user verbatim, with no extra commentary:
 
-!`node "E:/Learn/Vs/Code/bs-test-01/.codex/get-shit-done/bin/gsd-tools.cjs" config-set-model-profile {{GSD_ARGS}} --raw`
+!`node "D:/Users/Mobius/Desktop/mine/AAA-code/bs-test-01/.codex/get-shit-done/bin/gsd-tools.cjs" config-set-model-profile {{GSD_ARGS}} --raw`

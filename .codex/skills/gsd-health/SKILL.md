@@ -50,10 +50,10 @@ Validate `.planning/` directory integrity and report actionable issues. Checks f
 </objective>
 
 <execution_context>
-@E:/Learn/Vs/Code/bs-test-01/.codex/get-shit-done/workflows/health.md
+@D:/Users/Mobius/Desktop/mine/AAA-code/bs-test-01/.codex/get-shit-done/workflows/health.md
 </execution_context>
 
 <process>
-Execute the health workflow from @E:/Learn/Vs/Code/bs-test-01/.codex/get-shit-done/workflows/health.md end-to-end.
+Execute the health workflow from @D:/Users/Mobius/Desktop/mine/AAA-code/bs-test-01/.codex/get-shit-done/workflows/health.md end-to-end.
 Parse --repair flag from arguments and pass to workflow.
 </process>

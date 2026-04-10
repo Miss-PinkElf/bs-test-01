@@ -37,9 +37,9 @@ Supports `--force` flag to bypass safety gates (checkpoint, error state, verific
 </objective>
 
 <execution_context>
-@E:/Learn/Vs/Code/bs-test-01/.cursor/get-shit-done/workflows/next.md
+@D:/Users/Mobius/Desktop/mine/AAA-code/bs-test-01/.cursor/get-shit-done/workflows/next.md
 </execution_context>
 
 <process>
-Execute the next workflow from @E:/Learn/Vs/Code/bs-test-01/.cursor/get-shit-done/workflows/next.md end-to-end.
+Execute the next workflow from @D:/Users/Mobius/Desktop/mine/AAA-code/bs-test-01/.cursor/get-shit-done/workflows/next.md end-to-end.
 </process>

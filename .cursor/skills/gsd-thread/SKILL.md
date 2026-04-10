@@ -81,7 +81,7 @@ Create a new thread:
 
 1. Generate slug from description:
    ```bash
-   SLUG=$(node "E:/Learn/Vs/Code/bs-test-01/.cursor/get-shit-done/bin/gsd-tools.cjs" generate-slug "{{GSD_ARGS}}" --raw)
+   SLUG=$(node "D:/Users/Mobius/Desktop/mine/AAA-code/bs-test-01/.cursor/get-shit-done/bin/gsd-tools.cjs" generate-slug "{{GSD_ARGS}}" --raw)
    ```
 
 2. Create the threads directory if needed:
@@ -120,7 +120,7 @@ Create a new thread:
 
 5. Commit:
    ```bash
-   node "E:/Learn/Vs/Code/bs-test-01/.cursor/get-shit-done/bin/gsd-tools.cjs" commit "docs: create thread — ${ARGUMENTS}" --files ".planning/threads/${SLUG}.md"
+   node "D:/Users/Mobius/Desktop/mine/AAA-code/bs-test-01/.cursor/get-shit-done/bin/gsd-tools.cjs" commit "docs: create thread — ${ARGUMENTS}" --files ".planning/threads/${SLUG}.md"
    ```
 
 6. Report:

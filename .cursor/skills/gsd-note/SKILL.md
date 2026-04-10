@@ -39,8 +39,8 @@ Runs inline — no Task, no conversational prompting, no Bash.
 </objective>
 
 <execution_context>
-@E:/Learn/Vs/Code/bs-test-01/.cursor/get-shit-done/workflows/note.md
-@E:/Learn/Vs/Code/bs-test-01/.cursor/get-shit-done/references/ui-brand.md
+@D:/Users/Mobius/Desktop/mine/AAA-code/bs-test-01/.cursor/get-shit-done/workflows/note.md
+@D:/Users/Mobius/Desktop/mine/AAA-code/bs-test-01/.cursor/get-shit-done/references/ui-brand.md
 </execution_context>
 
 <context>
@@ -48,6 +48,6 @@ Runs inline — no Task, no conversational prompting, no Bash.
 </context>
 
 <process>
-Execute the note workflow from @E:/Learn/Vs/Code/bs-test-01/.cursor/get-shit-done/workflows/note.md end-to-end.
+Execute the note workflow from @D:/Users/Mobius/Desktop/mine/AAA-code/bs-test-01/.cursor/get-shit-done/workflows/note.md end-to-end.
 Capture the note, list notes, or promote to todo — depending on arguments.
 </process>

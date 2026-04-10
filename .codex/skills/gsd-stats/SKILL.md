@@ -50,9 +50,9 @@ Display comprehensive project statistics including phase progress, plan executio
 </objective>
 
 <execution_context>
-@E:/Learn/Vs/Code/bs-test-01/.codex/get-shit-done/workflows/stats.md
+@D:/Users/Mobius/Desktop/mine/AAA-code/bs-test-01/.codex/get-shit-done/workflows/stats.md
 </execution_context>
 
 <process>
-Execute the stats workflow from @E:/Learn/Vs/Code/bs-test-01/.codex/get-shit-done/workflows/stats.md end-to-end.
+Execute the stats workflow from @D:/Users/Mobius/Desktop/mine/AAA-code/bs-test-01/.codex/get-shit-done/workflows/stats.md end-to-end.
 </process>

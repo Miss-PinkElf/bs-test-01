@@ -50,10 +50,10 @@ Scan `~/gsd-workspaces/` for workspace directories containing `WORKSPACE.md` man
 </objective>
 
 <execution_context>
-@E:/Learn/Vs/Code/bs-test-01/.codex/get-shit-done/workflows/list-workspaces.md
-@E:/Learn/Vs/Code/bs-test-01/.codex/get-shit-done/references/ui-brand.md
+@D:/Users/Mobius/Desktop/mine/AAA-code/bs-test-01/.codex/get-shit-done/workflows/list-workspaces.md
+@D:/Users/Mobius/Desktop/mine/AAA-code/bs-test-01/.codex/get-shit-done/references/ui-brand.md
 </execution_context>
 
 <process>
-Execute the list-workspaces workflow from @E:/Learn/Vs/Code/bs-test-01/.codex/get-shit-done/workflows/list-workspaces.md end-to-end.
+Execute the list-workspaces workflow from @D:/Users/Mobius/Desktop/mine/AAA-code/bs-test-01/.codex/get-shit-done/workflows/list-workspaces.md end-to-end.
 </process>

@@ -37,8 +37,8 @@ Output: Milestone archived (roadmap + requirements), PROJECT.md evolved, git tag
 <execution_context>
 **Load these files NOW (before proceeding):**
 
-- @E:/Learn/Vs/Code/bs-test-01/.cursor/get-shit-done/workflows/complete-milestone.md (main workflow)
-- @E:/Learn/Vs/Code/bs-test-01/.cursor/get-shit-done/templates/milestone-archive.md (archive template)
+- @D:/Users/Mobius/Desktop/mine/AAA-code/bs-test-01/.cursor/get-shit-done/workflows/complete-milestone.md (main workflow)
+- @D:/Users/Mobius/Desktop/mine/AAA-code/bs-test-01/.cursor/get-shit-done/templates/milestone-archive.md (archive template)
   </execution_context>
 
 <context>

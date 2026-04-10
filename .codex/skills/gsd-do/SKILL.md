@@ -54,8 +54,8 @@ Use when you know what you want but don't know which `/gsd-*` command to run.
 </objective>
 
 <execution_context>
-@E:/Learn/Vs/Code/bs-test-01/.codex/get-shit-done/workflows/do.md
-@E:/Learn/Vs/Code/bs-test-01/.codex/get-shit-done/references/ui-brand.md
+@D:/Users/Mobius/Desktop/mine/AAA-code/bs-test-01/.codex/get-shit-done/workflows/do.md
+@D:/Users/Mobius/Desktop/mine/AAA-code/bs-test-01/.codex/get-shit-done/references/ui-brand.md
 </execution_context>
 
 <context>
@@ -63,6 +63,6 @@ Use when you know what you want but don't know which `/gsd-*` command to run.
 </context>
 
 <process>
-Execute the do workflow from @E:/Learn/Vs/Code/bs-test-01/.codex/get-shit-done/workflows/do.md end-to-end.
+Execute the do workflow from @D:/Users/Mobius/Desktop/mine/AAA-code/bs-test-01/.codex/get-shit-done/workflows/do.md end-to-end.
 Route user intent to the best GSD command and invoke it.
 </process>

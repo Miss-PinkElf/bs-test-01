@@ -36,9 +36,9 @@ changes that are irrelevant to code review.
 </objective>
 
 <execution_context>
-@E:/Learn/Vs/Code/bs-test-01/.cursor/get-shit-done/workflows/pr-branch.md
+@D:/Users/Mobius/Desktop/mine/AAA-code/bs-test-01/.cursor/get-shit-done/workflows/pr-branch.md
 </execution_context>
 
 <process>
-Execute the pr-branch workflow from @E:/Learn/Vs/Code/bs-test-01/.cursor/get-shit-done/workflows/pr-branch.md end-to-end.
+Execute the pr-branch workflow from @D:/Users/Mobius/Desktop/mine/AAA-code/bs-test-01/.cursor/get-shit-done/workflows/pr-branch.md end-to-end.
 </process>

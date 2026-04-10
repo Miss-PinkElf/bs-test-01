@@ -55,7 +55,7 @@ Output: updated VALIDATION.md + generated test files.
 </objective>
 
 <execution_context>
-@E:/Learn/Vs/Code/bs-test-01/.codex/get-shit-done/workflows/validate-phase.md
+@D:/Users/Mobius/Desktop/mine/AAA-code/bs-test-01/.codex/get-shit-done/workflows/validate-phase.md
 </execution_context>
 
 <context>
@@ -63,6 +63,6 @@ Phase: {{GSD_ARGS}} — optional, defaults to last completed phase.
 </context>
 
 <process>
-Execute @E:/Learn/Vs/Code/bs-test-01/.codex/get-shit-done/workflows/validate-phase.md.
+Execute @D:/Users/Mobius/Desktop/mine/AAA-code/bs-test-01/.codex/get-shit-done/workflows/validate-phase.md.
 Preserve all workflow gates.
 </process>

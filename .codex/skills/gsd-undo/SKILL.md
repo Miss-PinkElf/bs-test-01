@@ -55,9 +55,9 @@ Three modes:
 </objective>
 
 <execution_context>
-@E:/Learn/Vs/Code/bs-test-01/.codex/get-shit-done/workflows/undo.md
-@E:/Learn/Vs/Code/bs-test-01/.codex/get-shit-done/references/ui-brand.md
-@E:/Learn/Vs/Code/bs-test-01/.codex/get-shit-done/references/gate-prompts.md
+@D:/Users/Mobius/Desktop/mine/AAA-code/bs-test-01/.codex/get-shit-done/workflows/undo.md
+@D:/Users/Mobius/Desktop/mine/AAA-code/bs-test-01/.codex/get-shit-done/references/ui-brand.md
+@D:/Users/Mobius/Desktop/mine/AAA-code/bs-test-01/.codex/get-shit-done/references/gate-prompts.md
 </execution_context>
 
 <context>
@@ -65,5 +65,5 @@ Three modes:
 </context>
 
 <process>
-Execute the undo workflow from @E:/Learn/Vs/Code/bs-test-01/.codex/get-shit-done/workflows/undo.md end-to-end.
+Execute the undo workflow from @D:/Users/Mobius/Desktop/mine/AAA-code/bs-test-01/.codex/get-shit-done/workflows/undo.md end-to-end.
 </process>

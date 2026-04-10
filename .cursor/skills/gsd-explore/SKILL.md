@@ -36,9 +36,9 @@ Accepts an optional topic argument: `/gsd-explore authentication strategy`
 </objective>
 
 <execution_context>
-@E:/Learn/Vs/Code/bs-test-01/.cursor/get-shit-done/workflows/explore.md
+@D:/Users/Mobius/Desktop/mine/AAA-code/bs-test-01/.cursor/get-shit-done/workflows/explore.md
 </execution_context>
 
 <process>
-Execute the explore workflow from @E:/Learn/Vs/Code/bs-test-01/.cursor/get-shit-done/workflows/explore.md end-to-end.
+Execute the explore workflow from @D:/Users/Mobius/Desktop/mine/AAA-code/bs-test-01/.cursor/get-shit-done/workflows/explore.md end-to-end.
 </process>

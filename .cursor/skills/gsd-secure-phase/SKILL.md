@@ -37,7 +37,7 @@ Output: updated SECURITY.md.
 </objective>
 
 <execution_context>
-@E:/Learn/Vs/Code/bs-test-01/.cursor/get-shit-done/workflows/secure-phase.md
+@D:/Users/Mobius/Desktop/mine/AAA-code/bs-test-01/.cursor/get-shit-done/workflows/secure-phase.md
 </execution_context>
 
 <context>
@@ -45,6 +45,6 @@ Phase: {{GSD_ARGS}} — optional, defaults to last completed phase.
 </context>
 
 <process>
-Execute @E:/Learn/Vs/Code/bs-test-01/.cursor/get-shit-done/workflows/secure-phase.md.
+Execute @D:/Users/Mobius/Desktop/mine/AAA-code/bs-test-01/.cursor/get-shit-done/workflows/secure-phase.md.
 Preserve all workflow gates.
 </process>
