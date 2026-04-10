@@ -500,6 +500,23 @@ body {
   margin-top: 12px;
 }
 
+.prediction-summary-flash {
+  outline: 2px solid var(--el-color-primary);
+  outline-offset: 2px;
+  border-radius: var(--el-border-radius-base);
+  animation: prediction-summary-flash-fade 1.5s ease-out forwards;
+}
+
+@keyframes prediction-summary-flash-fade {
+  from {
+    box-shadow: 0 0 0 4px color-mix(in srgb, var(--el-color-primary) 28%, transparent);
+  }
+
+  to {
+    box-shadow: 0 0 0 0 transparent;
+  }
+}
+
 .alert-scrollbar {
   max-height: 420px;
   padding-right: 8px;
@@ -513,7 +530,7 @@ body {
 }
 
 .interactive-table-row {
-  cursor: pointer;
+  cursor: default;
 }
 
 .el-table .is-active-row > td.el-table__cell {

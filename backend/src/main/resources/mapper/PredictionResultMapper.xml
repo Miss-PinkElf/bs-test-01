@@ -64,4 +64,9 @@
         where task_id = #{taskId}
         order by result_time asc, step_index asc
     </select>
+
+    <delete id="deleteByTaskId">
+        delete from prediction_result
+        where task_id = #{taskId}
+    </delete>
 </mapper>

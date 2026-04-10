@@ -10,12 +10,15 @@ import { filterRows } from "../utils/fuzzyText";
 const chartRef = ref();
 /** 预测后滚动定位，避免主视觉在视口外 */
 const chartAnchorRef = ref();
+/** 任务摘要卡片：查看摘要时滚动定位与短暂强调 */
+const taskSummaryCardRef = ref();
+
+let summaryFlashTimer = null;
 const loading = ref(false);
 const historyLoading = ref(false);
 const warehouses = ref([]);
 const predictionHistory = ref([]);
 const selectedTaskId = ref(null);
-const resultTableKeyword = ref("");
 const historyTableKeyword = ref("");
 
 const prediction = ref({
@@ -50,37 +53,25 @@ function getTargetLabel(value) {
   return targetOptions.find((item) => item.value === value)?.label || value;
 }
 
-const filteredResultList = computed(() =>
-  filterRows(prediction.value.resultList || [], resultTableKeyword.value, (row) => [
-    row.phaseType,
-    String(row.stepIndex ?? ""),
-    formatDateTime(row.resultTime),
-    row.actualValue,
-    row.predictedValue,
-    row.warningLevel,
-    row.warningMessage
-  ])
-);
-
 const filteredPredictionHistory = computed(() =>
-  filterRows(predictionHistory.value, historyTableKeyword.value, (row) => [
-    row.taskNo,
-    getTargetLabel(row.targetType),
-    row.warehouseName,
-    row.riskLevel,
-    String(row.forecastDays ?? ""),
-    formatDateTime(row.requestedAt)
-  ])
+  filterRows(predictionHistory.value, historyTableKeyword.value, (row) => {
+    const forecastStart = formatDateTime(row.forecastStartTime);
+    const forecastEnd = formatDateTime(row.forecastEndTime);
+    return [
+      row.taskNo,
+      getTargetLabel(row.targetType),
+      row.warehouseName,
+      row.riskLevel,
+      String(row.forecastDays ?? ""),
+      `${forecastStart} ~ ${forecastEnd}`,
+      formatDateTime(row.requestedAt)
+    ];
+  })
 );
 
-const resultPagination = useClientPagination(filteredResultList, {
-  initialPageSize: 10
-});
 const historyPagination = useClientPagination(filteredPredictionHistory);
 
-watch(resultTableKeyword, () => {
-  resultPagination.resetPagination();
-});
+const batchDeleteDisabled = computed(() => historySelection.value.length === 0);
 
 watch(historyTableKeyword, () => {
   historyPagination.resetPagination();
@@ -187,6 +178,31 @@ async function selectPredictionTask(item) {
   chartAnchorRef.value?.scrollIntoView?.({ behavior: "smooth", block: "nearest" });
 }
 
+async function focusTaskSummary(row) {
+  if (row.taskId !== selectedTaskId.value) {
+    await selectPredictionTask(row);
+  } else {
+    await nextTick();
+  }
+  await nextTick();
+  const cardInst = taskSummaryCardRef.value;
+  const el = cardInst?.$el ?? cardInst;
+  if (!el || typeof el.scrollIntoView !== "function") {
+    return;
+  }
+  el.scrollIntoView({ behavior: "smooth", block: "center" });
+  el.classList.remove("prediction-summary-flash");
+  void el.offsetWidth;
+  el.classList.add("prediction-summary-flash");
+  if (summaryFlashTimer != null) {
+    clearTimeout(summaryFlashTimer);
+  }
+  summaryFlashTimer = window.setTimeout(() => {
+    el.classList.remove("prediction-summary-flash");
+    summaryFlashTimer = null;
+  }, 1500);
+}
+
 function renderChart() {
   if (!chartRef.value) {
     return;
@@ -252,6 +268,9 @@ onMounted(async () => {
 });
 
 onBeforeUnmount(() => {
+  if (summaryFlashTimer != null) {
+    clearTimeout(summaryFlashTimer);
+  }
   if (chart) {
     chart.dispose();
   }
@@ -322,7 +341,7 @@ onBeforeUnmount(() => {
       </el-col>
 
       <el-col :xs="24" :sm="24" :md="9" :lg="9" :xl="9">
-        <el-card class="panel-card" shadow="never">
+        <el-card ref="taskSummaryCardRef" class="panel-card" shadow="never">
           <template #header>
             <div class="panel-title">任务摘要</div>
           </template>
@@ -380,70 +399,14 @@ onBeforeUnmount(() => {
     </div>
 
     <el-row :gutter="16">
-      <el-col :xs="24" :sm="24" :md="15" :lg="15" :xl="15">
+      <el-col :span="24">
         <el-card class="panel-card" shadow="never">
           <template #header>
             <div>
-              <div class="panel-title">预测结果列表</div>
+              <div class="panel-title">预测记录</div>
               <div class="panel-subtitle">
-                当前任务的分步明细：历史实际点（ACTUAL）与未来预测点（FUTURE），与曲线数据一致
+                每次预测一条记录（原「预测结果列表」与「历史归档」合并为一表）。曲线仍对应当前行选中的任务；请用「操作」列查看摘要或切换任务。
               </div>
-            </div>
-          </template>
-
-          <div class="toolbar-row table-toolbar">
-            <el-input
-              v-model="resultTableKeyword"
-              class="table-search-input"
-              clearable
-              placeholder="搜索阶段、时间、实际值、预测值、预警"
-              :prefix-icon="Search"
-            />
-          </div>
-
-          <el-table :data="resultPagination.pagedItems" stripe v-loading="loading">
-            <el-table-column prop="phaseType" label="阶段" width="90" />
-            <el-table-column prop="stepIndex" label="序号" width="90" />
-            <el-table-column label="时间">
-              <template #default="{ row }">
-                {{ formatDateTime(row.resultTime) }}
-              </template>
-            </el-table-column>
-            <el-table-column label="实际值">
-              <template #default="{ row }">
-                {{ row.actualValue ?? "--" }}
-              </template>
-            </el-table-column>
-            <el-table-column label="预测值">
-              <template #default="{ row }">
-                {{ row.predictedValue ?? "--" }}
-              </template>
-            </el-table-column>
-            <el-table-column prop="warningLevel" label="预警等级" width="110" />
-            <el-table-column prop="warningMessage" label="预警说明" min-width="180" />
-          </el-table>
-
-          <div class="table-pagination">
-            <el-pagination
-              background
-              layout="total, sizes, prev, pager, next"
-              :current-page="resultPagination.currentPage"
-              :page-size="resultPagination.pageSize"
-              :page-sizes="resultPagination.pageSizes"
-              :total="resultPagination.total"
-              @current-change="resultPagination.handleCurrentChange"
-              @size-change="resultPagination.handleSizeChange"
-            />
-          </div>
-        </el-card>
-      </el-col>
-
-      <el-col :xs="24" :sm="24" :md="9" :lg="9" :xl="9">
-        <el-card class="panel-card" shadow="never">
-          <template #header>
-            <div>
-              <div class="panel-title">历史归档记录</div>
-              <div class="panel-subtitle">历次预测任务；点击一行加载该任务，摘要、曲线与本表会同步更新</div>
             </div>
           </template>
 
@@ -452,7 +415,7 @@ onBeforeUnmount(() => {
               v-model="historyTableKeyword"
               class="table-search-input"
               clearable
-              placeholder="搜索任务号、仓库、风险等级、预测天数、时间"
+              placeholder="搜索任务号、仓库、风险、天数、预测区间、执行时间"
               :prefix-icon="Search"
             />
           </div>
@@ -462,7 +425,6 @@ onBeforeUnmount(() => {
             stripe
             v-loading="historyLoading"
             :row-class-name="resolveHistoryRowClassName"
-            @row-click="selectPredictionTask"
           >
             <el-table-column prop="taskNo" label="任务号" min-width="160" />
             <el-table-column label="预测对象" min-width="130">
@@ -473,9 +435,20 @@ onBeforeUnmount(() => {
             <el-table-column prop="warehouseName" label="仓库" min-width="120" />
             <el-table-column prop="riskLevel" label="风险等级" width="110" />
             <el-table-column prop="forecastDays" label="预测天数" width="110" />
+            <el-table-column label="预测区间" min-width="200">
+              <template #default="{ row }">
+                {{ formatDateTime(row.forecastStartTime) }} ~ {{ formatDateTime(row.forecastEndTime) }}
+              </template>
+            </el-table-column>
             <el-table-column label="执行时间" min-width="160">
               <template #default="{ row }">
                 {{ formatDateTime(row.requestedAt) }}
+              </template>
+            </el-table-column>
+            <el-table-column label="操作" fixed="right" width="184">
+              <template #default="{ row }">
+                <el-button link type="primary" @click.stop="focusTaskSummary(row)">查看摘要</el-button>
+                <el-button link type="primary" @click.stop="selectPredictionTask(row)">切换任务</el-button>
               </template>
             </el-table-column>
           </el-table>

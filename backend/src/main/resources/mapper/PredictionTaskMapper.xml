@@ -103,4 +103,9 @@
         where id = #{id}
         limit 1
     </select>
+
+    <delete id="deleteById">
+        delete from prediction_task
+        where id = #{id}
+    </delete>
 </mapper>

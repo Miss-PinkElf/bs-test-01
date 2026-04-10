@@ -11,4 +11,6 @@ public interface PredictionResultMapper {
     void insertBatch(@Param("list") List<PredictionResult> list);
 
     List<PredictionResult> selectByTaskId(@Param("taskId") Long taskId);
+
+    int deleteByTaskId(@Param("taskId") Long taskId);
 }

@@ -548,6 +548,21 @@ export async function fetchPredictionTasks() {
   return Array.isArray(raw) ? raw.map(normalizePredictionTask) : [];
 }
 
+export async function deletePredictionTask(taskId) {
+  await request({
+    url: `/api/predictions/tasks/${taskId}`,
+    method: "delete"
+  });
+}
+
+export async function batchDeletePredictionTasks(taskIds) {
+  await request({
+    url: "/api/predictions/tasks/batch-delete",
+    method: "post",
+    data: { taskIds }
+  });
+}
+
 function splitCsvValue(value) {
   return value ? String(value).split(",").filter(Boolean) : [];
 }

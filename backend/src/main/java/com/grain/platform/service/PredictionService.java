@@ -13,6 +13,7 @@ import com.grain.platform.mapper.PredictionResultMapper;
 import com.grain.platform.mapper.PredictionTaskMapper;
 import com.grain.platform.mapper.WarehouseMapper;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
 import java.math.RoundingMode;
@@ -20,6 +21,7 @@ import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.Comparator;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.UUID;
 
@@ -126,6 +128,34 @@ public class PredictionService {
                 loadActualSeries(task),
                 predictionResultMapper.selectByTaskId(taskId)
         );
+    }
+
+    @Transactional
+    public void deleteTask(Long taskId) {
+        PredictionTask task = predictionTaskMapper.selectById(taskId);
+        if (task == null) {
+            throw new IllegalArgumentException("预测任务不存在");
+        }
+        predictionResultMapper.deleteByTaskId(taskId);
+        predictionTaskMapper.deleteById(taskId);
+    }
+
+    @Transactional
+    public void deleteTasksBatch(List<Long> taskIds) {
+        if (taskIds == null || taskIds.isEmpty()) {
+            throw new IllegalArgumentException("请选择要删除的预测任务");
+        }
+        LinkedHashSet<Long> distinct = new LinkedHashSet<>(taskIds);
+        for (Long id : distinct) {
+            PredictionTask task = predictionTaskMapper.selectById(id);
+            if (task == null) {
+                throw new IllegalArgumentException("预测任务不存在: " + id);
+            }
+        }
+        for (Long id : distinct) {
+            predictionResultMapper.deleteByTaskId(id);
+            predictionTaskMapper.deleteById(id);
+        }
     }
 
     private List<PredictionPointDto> loadActualSeries(PredictionRequest request, String targetType) {

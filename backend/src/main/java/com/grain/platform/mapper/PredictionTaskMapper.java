@@ -12,4 +12,6 @@ public interface PredictionTaskMapper {
     List<PredictionTask> selectAll();
 
     PredictionTask selectById(Long id);
+
+    int deleteById(Long id);
 }

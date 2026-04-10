@@ -26,9 +26,23 @@
 
 ### Prediction flow / copy
 
-- [x] **UX2-01**: 页面区块顺序为「参数与摘要 → 双线图 → 预测结果表与历史归档表」；执行预测后用户无需滚到页底即可看到主曲线（2026-04-10：已调整顺序并 `scrollIntoView`）
-- [x] **UX2-02**: 「预测结果列表」与「历史归档记录」卡片均展示一句副标题，说明各自数据含义及历史表「点击行切换当前任务」（2026-04-10：副标题 + 图表区说明）
-- [x] **UX2-03**: 温度预测页首行（参数 \| 任务摘要）与次行（预测结果 \| 历史归档）在 **`md`（≥992px）起** 即按15:9 并排；`xs`/`sm` 整行叠放。避免仅配置 `xl` 导致 Element Plus 在常见笔记本宽度下将两列堆叠为上下布局（2026-04-10：`PredictionView.vue` `el-col` 断点）
+- [x] **UX2-01**: 页面区块顺序为「参数与摘要 → 双线图 → 预测结果表与历史归档表」；执行预测后用户无需滚到页底即可看到主曲线（2026-04-10：已调整顺序并 `scrollIntoView`）。**演进（Phase 4 / POLISH-04-01）：** 底部改为**单一「预测记录」表**，不再并列两张表；曲线仍在双线图区。
+- [x] **UX2-02**: 「预测结果列表」与「历史归档记录」卡片均展示一句副标题，说明各自数据含义及历史表「点击行切换当前任务」（2026-04-10：副标题 + 图表区说明）。**演进（Phase 4 / POLISH-04-02）：** 合并为一张「预测记录」表副标题；切换任务改为**操作列按钮**，无整行点击。
+- [x] **UX2-03**: 温度预测页首行（参数 \| 任务摘要）与次行（预测结果 \| 历史归档）在 **`md`（≥992px）起** 即按15:9 并排；`xs`/`sm` 整行叠放。避免仅配置 `xl` 导致 Element Plus 在常见笔记本宽度下将两列堆叠为上下布局（2026-04-10：`PredictionView.vue` `el-col` 断点）。**演进（Phase 4）：** 「次行」仅余**全宽单表**（无左右 15:9 第二行双列）；首行参数与摘要并排仍适用本条的 **`md` 起并排** 要求。
+
+## Phase 4 Requirements（温度预测页 · 单表与数据源）
+
+### Polish / prediction table
+
+- [x] **POLISH-04-01**: 预测页底部仅保留**一张**任务级「预测记录」表（合并原分步明细表与历史归档的心智）；表含 **「预测区间」**列（`forecastStartTime` ~ `forecastEndTime`）；列表数据来自 **`GET /api/predictions/tasks`**（`PredictionService` 读库归档，非前端 mock）（2026-04-10：`PredictionView.vue` + CONTEXT）
+- [x] **POLISH-04-02**: 该表提供 **「查看摘要」「切换任务」** 操作列，**禁止**整行 `row-click` 切换；「查看摘要」滚至任务摘要卡片并具备可验证的 **`prediction-summary-flash`** 强调样式（2026-04-10）
+
+## Phase 5 Requirements（温度预测页 · 预测记录删除）
+
+### Delete / prediction archive
+
+- [ ] **DEL-05-01**: 「预测记录」表 **最左侧多选列**；工具栏 **「批量删除」**（`danger`）；操作列在 Phase 4 基础上增加 **「删除」**；**单删与批量删**在请求接口前均需 **`ElMessageBox.confirm`**，且批量确认须展示 **选中数量**（或等价可读摘要）；删除成功后刷新列表并 **清空表格勾选**；若删除集合包含当前查看的 `taskId`，须 **清空**摘要区与图表主视觉（见 `05-CONTEXT.md` D-05～D-07）
+- [ ] **DEL-05-02**: 后端提供 **`DELETE /api/predictions/tasks/{taskId}`** 与 **`POST /api/predictions/tasks/batch-delete`**（请求体 `taskIds` 列表）；**物理删除**对应 `prediction_result` 与 `prediction_task`；**单事务**；空列表 **400**；单条不存在 **404**（或与项目统一错误形态一致）；批量部分 id 无效时推荐 **整批失败回滚**（见 `05-CONTEXT.md` D-02～D-03b）
 
 ## v2 Requirements
 
@@ -52,17 +66,23 @@
 | PRED-01 | Phase 2 | Done（待 UAT） |
 | PRED-02 | Phase 2 | Done（待 UAT） |
 | PRED-03 | Phase 2 | Done（待 UAT） |
-| UX2-01 | Phase 3 | Done（待 UAT） |
-| UX2-02 | Phase 3 | Done（待 UAT） |
-| UX2-03 | Phase 3 | Done（待 UAT） |
+| UX2-01 | Phase 3 / 4演进 | Done（待 UAT） |
+| UX2-02 | Phase 3 / 4 演进 | Done（待 UAT） |
+| UX2-03 | Phase 3 / 4 演进 | Done（待 UAT） |
+| POLISH-04-01 | Phase 4 | Done（待 UAT） |
+| POLISH-04-02 | Phase 4 | Done（待 UAT） |
+| DEL-05-01 | Phase 5 | Planned |
+| DEL-05-02 | Phase 5 | Planned |
 
 **Coverage:**
 
 - Phase 1 / 模板 v1：4 条（DATA-*，已交付）
 - Phase 2 / 预测页：3 条（PRED-*）
 - Phase 3 / 预测交互：3 条（UX2-*）
-- Mapped to phases: 10
+- Phase 4 / 预测页打磨：2 条（POLISH-04-*）
+- Phase 5 / 预测记录删除：2 条（DEL-05-*）
+- Mapped to phases: 14
 - Unmapped: 0
 
 ---
-*Last updated: 2026-04-10 Phase 3 补充 UX2-03（响应式栅格断点）*
+*Last updated: 2026-04-10 Phase 5 增加 DEL-05-*（多选、批量删、单删、后端 API）*

@@ -1,3 +1,18 @@
+---
+gsd_state_version: 1.0
+milestone: v1.0
+milestone_name: milestone
+status: Executing Phase 05
+last_updated: "2026-04-10T08:33:00.152Z"
+last_activity: 2026-04-10
+progress:
+  total_phases: 5
+  completed_phases: 0
+  total_plans: 2
+  completed_plans: 0
+  percent: 0
+---
+
 # STATE
 
 ## Project Reference
@@ -5,7 +20,7 @@
 See: `.planning/PROJECT.md`（updated 2026-04-10）
 
 **Core value:** 粮温与环境数据可导入、可查、可汇总，预测结果可追溯展示。  
-**Current focus:** **Phase 3** — 预测页图表顺序与双表语义（见 `.planning/phases/03-prediction-ux-pass2/ALIGNMENT.md`）；Phase 2 已实现待 UAT；DATA-05 仍可选  
+**Current focus:** Phase 05 — prediction-record-delete（计划已落盘，待执行）
 
 ## Implementation Truth Source
 
@@ -23,7 +38,7 @@ See: `.planning/PROJECT.md`（updated 2026-04-10）
 | 260410-jw9 | 粮温固定 XLSX 模板 v2：合并单元格与双语标签，解析兼容旧版，DataView 与 GSD/devflow 文档同步 | 2026-04-10 | `05b6c71` | [260410-jw9-xlsx-v2-dataview-gsd](./quick/260410-jw9-xlsx-v2-dataview-gsd/) |
 | 260410-k32 | Vue 管理端主内容横向无限变宽：`el-scrollbar` 与 ECharts ResizeObserver 反馈；主内容改原生滚动并收紧 flex / 预测页显式 resize | 2026-04-10 | `53ba2df` | [260410-k32-vue-scrollbar-echarts-layout-fix](./quick/260410-k32-vue-scrollbar-echarts-layout-fix/) |
 
-**Last activity:** 2026-04-10 — 已提交 quick **260410-k32**（`53ba2df`：布局修复 + GSD quick + devflow bug-log / learnings）
+**Last activity:** 2026-04-10
 
 ## Accumulated Context
 
@@ -31,9 +46,14 @@ See: `.planning/PROJECT.md`（updated 2026-04-10）
 
 - Phase 2 已添加：温度预测页体验优化（任务信息集中展示与预测参数扩展（训练区间等））；目录 `.planning/phases/02-prediction-view-ux/`
 - Phase 3 已添加：温度预测页交互二次优化（图表可达性与双表语义）；目录 `.planning/phases/03-prediction-ux-pass2/`
+- Phase 4 已添加：zzz-prompt-debug/origin/优化温度预测页/prompt.md；目录 `.planning/phases/04-zzz-prompt-debug-origin-prompt-md/`
+- Phase 5 已添加：温度预测页预测记录表操作列增加删除（清理脏数据）；目录 `.planning/phases/05-prediction-record-delete/`
 
 ## Session Notes
 
+- 2026-04-10：**Phase 5** — discuss 已落盘 `05-CONTEXT.md`（含多选、批量删、二次确认条数）；`05-DISCUSSION-LOG.md` 已同步；plan 工件：`05-UI-SPEC.md`、`05-01-PLAN.md`、`05-VERIFICATION.md`；`REQUIREMENTS` DEL-05-*、`ROADMAP` Phase 5 已更新。下一步：`/gsd-execute-phase 5` 或按 `05-01-PLAN.md` 实现。
+- 2026-04-10：**Phase 4 GSD 对齐** — 单表「预测记录」+「预测区间」列 + 操作列；CONTEXT / UI-SPEC / `04-01-PLAN`（含 Task 3 文档同步）/ SUMMARY / VERIFICATION、`ROADMAP`、`REQUIREMENTS`（POLISH-04-01/02 与 UX2-* 演进注记）、本 STATE 已更新；明确后端 `PredictionService` + `/api/predictions/tasks` 非 mock。
+- 2026-04-10：**Phase 4** — `/gsd-plan-phase 4` 已落盘 `04-UI-SPEC.md`、`04-01-PLAN.md`（1 个 plan、wave 1）；`research_enabled` 为 false 未生成 RESEARCH.md；未自动执行 `gsd-plan-checker` 子代理，可人工审阅 PLAN。
 - 2026-04-10：**交付归档** — `zzz-docs/归档/2026-04-10-温度预测页Phase2-Phase3交付归档.md`；`ROADMAP` Phase 2/3 标为已交付；整包里程碑归档未执行（仍可用 `/gsd-complete-milestone`）。
 - 2026-04-10：**Phase 3 discuss补完** — 已写 `03-prediction-ux-pass2/03-CONTEXT.md`、`03-DISCUSSION-LOG.md`（追溯对齐已实现预测页）；下一步可 `/gsd-plan-phase 3` 或 `/gsd-next`。
 - 2026-04-10：**Phase 3 / GSD 记录** — 预测页 `el-col` 增加 `md`/`lg` 断点（UX2-03），解决仅 `xl` 导致笔记本宽度下参数与摘要上下堆叠；已写入 `REQUIREMENTS.md`、`03-prediction-ux-pass2/ALIGNMENT.md` 落实记录、`ROADMAP.md` 成功准则。

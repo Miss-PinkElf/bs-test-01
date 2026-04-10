@@ -1,12 +1,14 @@
 package com.grain.platform.controller;
 
 import com.grain.platform.common.ApiResponse;
+import com.grain.platform.dto.prediction.PredictionBatchDeleteRequest;
 import com.grain.platform.dto.prediction.PredictionRequest;
 import com.grain.platform.dto.prediction.PredictionTaskResponse;
 import com.grain.platform.service.PredictionService;
 import jakarta.validation.Valid;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -54,5 +56,21 @@ public class PredictionController {
         int resultCount = response.resultList() == null ? 0 : response.resultList().size();
         log.info("获取预测任务详情成功，taskId={}, resultCount={}", response.taskId(), resultCount);
         return ApiResponse.success(response);
+    }
+
+    @DeleteMapping("/tasks/{taskId}")
+    public ApiResponse<Void> deleteTask(@PathVariable Long taskId) {
+        log.info("调用删除预测任务接口，taskId={}", taskId);
+        predictionService.deleteTask(taskId);
+        log.info("删除预测任务成功，taskId={}", taskId);
+        return ApiResponse.success(null);
+    }
+
+    @PostMapping("/tasks/batch-delete")
+    public ApiResponse<Void> batchDeleteTasks(@Valid @RequestBody PredictionBatchDeleteRequest request) {
+        log.info("调用批量删除预测任务接口，count={}", request.taskIds() == null ? 0 : request.taskIds().size());
+        predictionService.deleteTasksBatch(request.taskIds());
+        log.info("批量删除预测任务成功");
+        return ApiResponse.success(null);
     }
 }
