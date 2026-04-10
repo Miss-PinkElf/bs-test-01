@@ -358,6 +358,33 @@ body {
   margin-top: 16px;
 }
 
+/*
+ * 预测记录：el-card 为 flex 列布局，.el-card__body 默认 min-width:auto 会被宽表格撑开，
+ * 连带撑破 .page-stack，最终被 .console-main-native { overflow-x:hidden } 裁切。
+ * 给 body min-width:0 让子级 max-width:100% / overflow-x:auto 真正生效。
+ */
+.prediction-records-card {
+  min-width: 0;
+}
+
+.prediction-records-card :deep(.el-card__body) {
+  min-width: 0;
+}
+
+/* 列多时在表格外层横向滚动（操作列不再 fixed，避免与嵌套滚动叠加遮挡） */
+.prediction-history-table-wrap {
+  min-width: 0;
+  width: 100%;
+  max-width: 100%;
+  overflow-x: auto;
+  overflow-y: visible;
+  -webkit-overflow-scrolling: touch;
+}
+
+.prediction-history-table {
+  min-width: max(100%, 1100px);
+}
+
 .stack-list {
   display: grid;
   gap: 12px;

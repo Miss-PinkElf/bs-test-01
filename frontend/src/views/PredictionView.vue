@@ -1,9 +1,15 @@
 <script setup>
 import { Search } from "@element-plus/icons-vue";
-import { ElMessage } from "element-plus";
+import { ElMessage, ElMessageBox } from "element-plus";
 import * as echarts from "echarts";
 import { computed, nextTick, onBeforeUnmount, onMounted, reactive, ref, watch } from "vue";
-import { fetchPredictionTasks, fetchWarehouses, predictMetric } from "../api/grain";
+import {
+  batchDeletePredictionTasks,
+  deletePredictionTask,
+  fetchPredictionTasks,
+  fetchWarehouses,
+  predictMetric
+} from "../api/grain";
 import { useClientPagination } from "../composables/useClientPagination";
 import { filterRows } from "../utils/fuzzyText";
 
@@ -20,6 +26,8 @@ const warehouses = ref([]);
 const predictionHistory = ref([]);
 const selectedTaskId = ref(null);
 const historyTableKeyword = ref("");
+const historyTableRef = ref();
+const historySelection = ref([]);
 
 const prediction = ref({
   taskNo: "",
@@ -109,6 +117,97 @@ async function loadPredictionHistory() {
     predictionHistory.value = await fetchPredictionTasks();
   } finally {
     historyLoading.value = false;
+  }
+}
+
+function onHistorySelectionChange(rows) {
+  historySelection.value = rows ?? [];
+}
+
+function createEmptyPrediction() {
+  return {
+    taskNo: "",
+    warehouseName: "",
+    targetType: "AVG_TEMP",
+    algorithmName: "",
+    riskLevel: "NORMAL",
+    forecastDays: 0,
+    trainStartTime: "",
+    trainEndTime: "",
+    forecastStartTime: "",
+    forecastEndTime: "",
+    requestedAt: "",
+    summary: "",
+    resultList: []
+  };
+}
+
+function clearPredictionVisual() {
+  prediction.value = createEmptyPrediction();
+  selectedTaskId.value = null;
+  if (chart) {
+    chart.dispose();
+    chart = null;
+  }
+}
+
+async function afterDeleteRefresh(deletedIds) {
+  const idSet = new Set(deletedIds.map((id) => Number(id)));
+  const cur = selectedTaskId.value;
+  const touchedCurrent = cur != null && idSet.has(Number(cur));
+  await loadPredictionHistory();
+  await nextTick();
+  historyTableRef.value?.clearSelection?.();
+  historySelection.value = [];
+  if (touchedCurrent) {
+    clearPredictionVisual();
+  }
+}
+
+async function handleDeleteRow(row) {
+  try {
+    await ElMessageBox.confirm(
+      `确定删除任务「${row.taskNo}」吗？删除后不可恢复。`,
+      "删除确认",
+      { type: "warning", confirmButtonText: "删除", cancelButtonText: "取消" }
+    );
+  } catch {
+    return;
+  }
+
+  try {
+    await deletePredictionTask(row.taskId);
+    ElMessage.success("已删除");
+    await afterDeleteRefresh([row.taskId]);
+  } catch (err) {
+    ElMessage.error(err?.message || "删除失败");
+  }
+}
+
+async function handleBatchDelete() {
+  const rows = historySelection.value;
+  if (rows.length === 0) {
+    return;
+  }
+
+  const ids = rows.map((r) => r.taskId);
+
+  try {
+    await ElMessageBox.confirm(
+      `确定删除选中的 ${ids.length} 条预测记录吗？删除后不可恢复。`,
+      "批量删除确认",
+      { type: "warning", confirmButtonText: "删除", cancelButtonText: "取消" }
+    );
+  } catch {
+    return;
+  }
+
+  try {
+    await batchDeletePredictionTasks(ids);
+    ElMessage.success("已删除");
+    await afterDeleteRefresh(ids);
+  } catch (err) {
+    ElMessage.error(err?.message || "删除失败");
   }
 }
 
@@ -400,17 +499,20 @@ onBeforeUnmount(() => {
 
     <el-row :gutter="16">
       <el-col :span="24">
-        <el-card class="panel-card" shadow="never">
+        <el-card class="panel-card prediction-records-card" shadow="never">
           <template #header>
             <div>
               <div class="panel-title">预测记录</div>
               <div class="panel-subtitle">
-                每次预测一条记录（原「预测结果列表」与「历史归档」合并为一表）。曲线仍对应当前行选中的任务；请用「操作」列查看摘要或切换任务。
+                每次预测一条记录（原「预测结果列表」与「历史归档」合并为一表）。曲线仍对应当前在「操作」列切换的任务；可勾选多行后「批量删除」，或在操作列单条删除（均需确认）。
               </div>
             </div>
           </template>
 
           <div class="toolbar-row table-toolbar">
+            <el-button type="danger" :disabled="batchDeleteDisabled" @click="handleBatchDelete">
+              批量删除
+            </el-button>
             <el-input
               v-model="historyTableKeyword"
               class="table-search-input"
@@ -420,38 +522,45 @@ onBeforeUnmount(() => {
             />
           </div>
 
-          <el-table
-            :data="historyPagination.pagedItems"
-            stripe
-            v-loading="historyLoading"
-            :row-class-name="resolveHistoryRowClassName"
-          >
-            <el-table-column prop="taskNo" label="任务号" min-width="160" />
-            <el-table-column label="预测对象" min-width="130">
-              <template #default="{ row }">
-                {{ getTargetLabel(row.targetType) }}
-              </template>
-            </el-table-column>
-            <el-table-column prop="warehouseName" label="仓库" min-width="120" />
-            <el-table-column prop="riskLevel" label="风险等级" width="110" />
-            <el-table-column prop="forecastDays" label="预测天数" width="110" />
-            <el-table-column label="预测区间" min-width="200">
-              <template #default="{ row }">
-                {{ formatDateTime(row.forecastStartTime) }} ~ {{ formatDateTime(row.forecastEndTime) }}
-              </template>
-            </el-table-column>
-            <el-table-column label="执行时间" min-width="160">
-              <template #default="{ row }">
-                {{ formatDateTime(row.requestedAt) }}
-              </template>
-            </el-table-column>
-            <el-table-column label="操作" fixed="right" width="184">
-              <template #default="{ row }">
-                <el-button link type="primary" @click.stop="focusTaskSummary(row)">查看摘要</el-button>
-                <el-button link type="primary" @click.stop="selectPredictionTask(row)">切换任务</el-button>
-              </template>
-            </el-table-column>
-          </el-table>
+          <div class="prediction-history-table-wrap">
+            <el-table
+              ref="historyTableRef"
+              class="prediction-history-table"
+              :data="historyPagination.pagedItems"
+              stripe
+              v-loading="historyLoading"
+              :row-class-name="resolveHistoryRowClassName"
+              @selection-change="onHistorySelectionChange"
+            >
+              <el-table-column type="selection" width="48" />
+              <el-table-column prop="taskNo" label="任务号" min-width="160" />
+              <el-table-column label="预测对象" min-width="130">
+                <template #default="{ row }">
+                  {{ getTargetLabel(row.targetType) }}
+                </template>
+              </el-table-column>
+              <el-table-column prop="warehouseName" label="仓库" min-width="120" />
+              <el-table-column prop="riskLevel" label="风险等级" width="110" />
+              <el-table-column prop="forecastDays" label="预测天数" width="110" />
+              <el-table-column label="预测区间" min-width="200">
+                <template #default="{ row }">
+                  {{ formatDateTime(row.forecastStartTime) }} ~ {{ formatDateTime(row.forecastEndTime) }}
+                </template>
+              </el-table-column>
+              <el-table-column label="执行时间" min-width="160">
+                <template #default="{ row }">
+                  {{ formatDateTime(row.requestedAt) }}
+                </template>
+              </el-table-column>
+              <el-table-column label="操作" width="248">
+                <template #default="{ row }">
+                  <el-button link type="primary" @click.stop="focusTaskSummary(row)">查看摘要</el-button>
+                  <el-button link type="primary" @click.stop="selectPredictionTask(row)">切换任务</el-button>
+                  <el-button link type="danger" @click.stop="handleDeleteRow(row)">删除</el-button>
+                </template>
+              </el-table-column>
+            </el-table>
+          </div>
 
           <div class="table-pagination">
             <el-pagination
