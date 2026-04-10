@@ -33,7 +33,8 @@
 ### Active
 
 - [ ] **Phase 2 / 3 UAT**：预测页（PRED + UX2：摘要、训练区间、图表顺序、双表说明、滚动）；联调通过后可将对应 REQ 标为 Validated
-- [ ] 按需：验收脚本对新版模板布局的轻量断言（见 `REQUIREMENTS.md` DATA-05）
+- [ ] **Phase 7 / 环境数据页（粮温主线）UAT**：确认粮温汇总图表与汇总表共享仓库/时间范围，层级切换有效，表格细筛不影响图表，普通环境模式无回归
+- [ ] 按需：验收脚本对新版模板布局的轻量断言（见 REQUIREMENTS.md DATA-05）
 
 ### Out of Scope
 
@@ -61,6 +62,7 @@
 | 初始化跳过四向 research | 课题已进入收尾与体验优化 | 良好 |
 | 过程记录仍以 devflow 为主 | 用户既定工作流 | 良好 |
 | 固定模板标签双语 | 答辩可读性与程序识别兼顾；解析兼容旧模板 | 良好 |
+| 粮温汇总图表与汇总表查询态拆分 | 图表需要共享查询窗口，表格需要更细筛选；继续共用前端内存分页会串扰体验 | 已落地 |
 
 ## Evolution
 
@@ -75,4 +77,5 @@
 5. "What This Is" still accurate? → Update if drifted
 
 ---
-*Last updated: 2026-04-10 after Phase 2（温度预测页）需求落盘*
+*Last updated: 2026-04-11 after Phase 7（环境数据页 / 粮温汇总优化）执行落地*
+
