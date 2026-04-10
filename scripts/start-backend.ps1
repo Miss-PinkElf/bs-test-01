@@ -49,7 +49,9 @@ Write-Host "Using project Maven repository: $projectMavenRepo" -ForegroundColor 
 
 $runArgs = @(
     "-Dmaven.repo.local=$projectMavenRepo",
+    "clean",
     "spring-boot:run",
+    "-Dspring-boot.run.jvmArguments=-Dfile.encoding=UTF-8 -Dsun.stdout.encoding=UTF-8 -Dsun.stderr.encoding=UTF-8",
     "-Dspring-boot.run.arguments=--server.port=8081"
 )
 
