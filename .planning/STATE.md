@@ -20,7 +20,7 @@ See: `.planning/PROJECT.md`（updated 2026-04-10）
 
 | # | Description | Date | Commit | Directory |
 | --- | --- | --- | --- | --- |
-| 260410-jw9 | 粮温固定 XLSX 模板 v2：合并单元格与双语标签，解析兼容旧版，DataView 与 GSD/devflow 文档同步 | 2026-04-10 | — | [260410-jw9-xlsx-v2-dataview-gsd](./quick/260410-jw9-xlsx-v2-dataview-gsd/) |
+| 260410-jw9 | 粮温固定 XLSX 模板 v2：合并单元格与双语标签，解析兼容旧版，DataView 与 GSD/devflow 文档同步 | 2026-04-10 | `05b6c71` | [260410-jw9-xlsx-v2-dataview-gsd](./quick/260410-jw9-xlsx-v2-dataview-gsd/) |
 
 **Last activity:** 2026-04-10 — 补录 quick **260410-jw9**（模板 v2；未走 Codex 子代理，计划与摘要为事后对齐 GSD 工作流）
 
