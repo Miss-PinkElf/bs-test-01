@@ -70,11 +70,26 @@ function shutdown(exitCode) {
   }, 300);
 }
 
+function buildProcessArgs(scriptPath) {
+  if (!isWindows) {
+    return [scriptPath];
+  }
+
+  const escapedScriptPath = scriptPath.replace(/'/g, "''");
+  const command = [
+    "$utf8NoBom = New-Object System.Text.UTF8Encoding($false)",
+    "[Console]::InputEncoding = $utf8NoBom",
+    "[Console]::OutputEncoding = $utf8NoBom",
+    "$OutputEncoding = $utf8NoBom",
+    `& '${escapedScriptPath}'`
+  ].join('; ');
+
+  return ["-NoProfile", "-ExecutionPolicy", "Bypass", "-Command", command];
+}
+
 function startProcess(label, scriptName) {
   const scriptPath = path.join(repoRoot, "scripts", scriptName);
-  const args = isWindows
-    ? ["-NoProfile", "-ExecutionPolicy", "Bypass", "-File", scriptPath]
-    : [scriptPath];
+  const args = buildProcessArgs(scriptPath);
 
   const child = spawn(shellExe, args, {
     cwd: repoRoot,
@@ -85,11 +100,11 @@ function startProcess(label, scriptName) {
   childProcesses.push(child);
 
   child.stdout.on("data", (chunk) => {
-    flushBufferedLine(label, process.stdout, chunk.toString());
+    flushBufferedLine(label, process.stdout, chunk.toString("utf8"));
   });
 
   child.stderr.on("data", (chunk) => {
-    flushBufferedLine(label, process.stderr, chunk.toString());
+    flushBufferedLine(label, process.stderr, chunk.toString("utf8"));
   });
 
   child.on("exit", (code) => {
