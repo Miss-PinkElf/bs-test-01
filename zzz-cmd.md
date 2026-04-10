@@ -10,8 +10,8 @@ handoff，使用devflow这个skills的子skill
 
 export http_proxy=http://127.0.0.1:7897
 export https_proxy=http://127.0.0.1:7897  
-
-
+$env:HTTP_PROXY  = "http://127.0.0.1:7890"
+$env:HTTPS_PROXY = "http://127.0.0.1:7890"
 ```
 老师今天说不要用这种24小时的
 说变化不明显，要一年
