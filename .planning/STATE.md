@@ -6,7 +6,7 @@ status: Ready for next step
 last_updated: "2026-04-11T10:20:37.309Z"
 last_activity: 2026-04-11
 progress:
-  total_phases: 10
+  total_phases: 11
   completed_phases: 6
   total_plans: 10
   completed_plans: 9
@@ -20,7 +20,7 @@ progress:
 See: `.planning/PROJECT.md`（updated 2026-04-11）
 
 **Core value:** 粮温与环境数据可导入、可查、可汇总，预测结果可追溯展示。  
-**Current focus:** Phase 10 已完成；如需继续收口，可回到仍待 UAT 的历史 phase 或新增后续 phase
+**Current focus:** Phase 11 已完成 context gathered，待进入 planning；同时仍可回到历史待 UAT phase 做收口
 
 ## Implementation Truth Source
 
@@ -44,6 +44,7 @@ See: `.planning/PROJECT.md`（updated 2026-04-11）
 
 ### Roadmap Evolution
 
+- Phase 11 已添加：河南环境数据 1-4 月 mock、脏数据清理与 Windows 一键运行；目录 `.planning/phases/11-1-4-mock-windows/`
 - Phase 10 已完成：前后端补充简单注释提升可读性；目录 `.planning/phases/10-code-comment-readability/`
 - Phase 9 已完成：管理端列表去 mock 并收口服务端分页查询；目录 `.planning/phases/09-mock/`
 - Phase 8 已完成：zzz-prompt-debug/origin/展示大屏优化；目录 `.planning/phases/08-zzz-prompt-debug-origin/`
@@ -56,6 +57,7 @@ See: `.planning/PROJECT.md`（updated 2026-04-11）
 
 ## Session Notes
 
+- 2026-04-11：**Phase 11 已完成 discuss/context** — 已写入 `.planning/phases/11-1-4-mock-windows/11-CONTEXT.md` 与 `11-DISCUSSION-LOG.md`；本阶段范围明确收口为“河南 1-4 月环境 mock 数据 + 脏数据清理”，并已将“Windows 一键运行 / 类 docker 免安装依赖环境”拆出为后续单独 phase；已确认数据直接固化到 `backend/src/main/resources/db/schema.sql`，demo 库以 `scripts/reset-demo-db.ps1` 重置为标准演示库。
 - 2026-04-11：**Phase 10 已执行完成** — `10-01-SUMMARY.md`、`10-02-SUMMARY.md`、`10-VERIFICATION.md` 已落盘；前后端仅补复杂逻辑前的短中文注释，无行为改动；`cd frontend && npm run build` 与 `cd backend && mvn -q -DskipTests compile` 已通过；Phase 10 requirement IDs `COMMENT-10-01` ~ `COMMENT-10-03` 已收口完成。
 - 2026-04-11：**Phase 10 已完成 planning** — 目录 `.planning/phases/10-code-comment-readability/` 已写入 `10-01-PLAN.md` 与 `10-02-PLAN.md`；前端计划覆盖 `grain.js`、Prediction/Data/Dashboard/Users/Warehouse 页面中的归一化、分页状态、任务切换与选中态兜底注释；后端计划覆盖 Prediction/Dashboard/GrainTemp/SensorDataImport/User/Warehouse 服务与相关控制器中的预测编排、导入校验、汇总重算与统计边界注释；Phase 10 requirement IDs 已补为 `COMMENT-10-01` ~ `COMMENT-10-03`。
 - 2026-04-11：**Phase 9 已完成** — 后端新增 `/api/users/page`、`/api/users/stats`、`/api/warehouses/page`、`/api/warehouses/stats`、`/api/predictions/tasks/page`、`/api/dashboard/alerts`、`/api/dashboard/warehouse-health`、`/api/dashboard/grain-summaries`；前端 `UsersView`、`WarehouseView`、`PredictionView`、`DashboardView` 已切到服务端分页，`frontend/src/mock/platform.js` 已删除；`mvn -q -DskipTests compile` 与 `npm run build` 已通过，人工验收通过，归档文件已写入 `zzz-docs/归档/2026-04-11-管理端列表去mock与服务端分页收口归档.md`。
