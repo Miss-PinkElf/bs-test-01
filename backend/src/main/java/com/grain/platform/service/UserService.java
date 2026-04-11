@@ -45,6 +45,7 @@ public class UserService {
     }
 
     public PageResult<UserListItemResponse> listUsersPage(String keyword, Integer pageNum, Integer pageSize) {
+        // 用户分页统一在 service 层做页码和关键词归一化，控制器只负责转发查询参数。
         String kw = normalizeKeyword(keyword);
         int finalPageNum = normalizePageNum(pageNum);
         int finalPageSize = normalizePageSize(pageSize);
@@ -180,6 +181,7 @@ public class UserService {
             throw new IllegalArgumentException("至少选择一个角色");
         }
 
+        // 角色集合先去重再校验，避免前端重复提交时把同一个角色插入多次。
         Set<String> normalizedCodes = new LinkedHashSet<>();
         for (String roleCode : roleCodes) {
             if (!StringUtils.hasText(roleCode)) {
@@ -214,6 +216,7 @@ public class UserService {
         boolean existingActiveAdmin = isActiveAdmin(existingRoleCodes, existingStatus);
         boolean nextActiveAdmin = isActiveAdmin(nextRoleCodes, nextStatus);
 
+        // 至少保留一个启用中的管理员账号，删除或降权都要先过这道守卫。
         if (existingActiveAdmin && !nextActiveAdmin && userMapper.countActiveUsersByRoleCode(ADMIN_ROLE_CODE) <= 1) {
             throw new IllegalArgumentException("系统至少需要保留一个启用中的管理员账号");
         }

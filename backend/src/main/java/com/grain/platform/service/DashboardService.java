@@ -29,6 +29,7 @@ public class DashboardService {
     }
 
     public DashboardOverviewResponse getOverview() {
+        // overview 只返回顶部聚合卡片，列表模块各自分页，避免首页初次加载就拉全量列表。
         return new DashboardOverviewResponse(
                 dashboardMapper.countWarehouses(),
                 dashboardMapper.countGrainTempSummaryCount(),

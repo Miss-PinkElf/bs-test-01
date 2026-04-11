@@ -41,6 +41,7 @@ public class WarehouseService {
     }
 
     public WarehouseStatsResponse stats() {
+        // 仓库统计必须走全量聚合，不能拿当前页条数代替顶部卡片口径。
         long totalCount = warehouseMapper.countPage(null);
         long activeCount = warehouseMapper.countActive();
         long nonActiveCount = warehouseMapper.countNonActive();
@@ -69,6 +70,7 @@ public class WarehouseService {
         try {
             warehouseMapper.deleteById(id);
         } catch (DataIntegrityViolationException exception) {
+            // 删除失败直接保留“被引用”语义，方便前端区分校验问题和系统异常。
             throw new IllegalArgumentException("仓库已被用户、环境数据或粮温数据引用，暂不能删除");
         }
     }
