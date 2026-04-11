@@ -58,3 +58,10 @@ coverage/
 .cursor/agents/
 .cursor/get-shit-done/
 .cursor/gsd-file-manifest.json
+
+
+# GSD / Codex local installation artifacts
+.claude/config.toml
+.claude/agents/
+.claude/get-shit-done/
+.claude/gsd-file-manifest.json
