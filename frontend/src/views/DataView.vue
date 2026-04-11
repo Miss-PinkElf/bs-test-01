@@ -73,6 +73,7 @@ const dialogTitle = computed(() => (mode.value === "grain"
   : (isEditing.value ? "编辑普通环境数据" : "手工录入普通环境数据")));
 const latestGrainSummary = computed(() => grainSummarySeriesRows.value.at(-1) || null);
 const grainSummaryTargetLabel = computed(() => GRAIN_SUMMARY_TARGET_OPTIONS.find((item) => item.value === grainSummaryTarget.value)?.label || "整仓均温");
+// 不同模式共用分页组件时按当前主线切换状态源，避免 grain/env 两套页码互相污染。
 const currentRecordPageState = computed(() => (mode.value === "grain" ? grainRecordPageState : envRecordPageState));
 
 function formatDateTime(value) { return value ? String(value).replace("T", " ") : "-"; }
@@ -83,6 +84,7 @@ function resolveDateRange(rangeValue) {
     ? { startTime: rangeValue[0], endTime: rangeValue[1] }
     : { startTime: undefined, endTime: undefined };
 }
+// 温度范围允许用户倒序输入，前端先纠正成合法区间，避免把无意义筛选条件传回后端。
 function normalizeNumericRange(minValue, maxValue) {
   const parsedMin = minValue !== null && minValue !== "" && !Number.isNaN(Number(minValue)) ? Number(minValue) : null;
   const parsedMax = maxValue !== null && maxValue !== "" && !Number.isNaN(Number(maxValue)) ? Number(maxValue) : null;
@@ -153,6 +155,7 @@ async function loadGrainSummaryTable() {
   summaryLoading.value = true;
   try {
     const { startTime, endTime } = resolveDateRange(grainSummaryRange.value);
+    // 图表查询态和表格细筛态分开维护，汇总表会叠加 warning/keyword/温度区间这些更细的筛选条件。
     const { min, max } = normalizeNumericRange(grainSummaryFilters.tempMin, grainSummaryFilters.tempMax);
     const summaryPage = await fetchGrainTempSummaryPage({
       warehouseId: filters.warehouseId || undefined,
@@ -255,6 +258,7 @@ async function handleImportUpload(uploadFile) {
       if (result.failedCount > 0) { throw new Error(result.errorMessages?.[0] || "导入失败"); }
       ElMessage.success(`环境数据导入成功，批次号：${result.batchNo}`);
     }
+    // 导入成功后统一刷新图表与表格，保证最新批次同时反映在主图、汇总表和明细列表里。
     await reloadCurrentModeData();
   } catch (error) {
     ElMessage.error(error.message || "导入失败");

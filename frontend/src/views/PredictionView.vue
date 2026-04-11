@@ -112,6 +112,7 @@ function onHistorySelectionChange(rows) {
   historySelection.value = rows ?? [];
 }
 
+// 训练区间校验只拦截明显无效的前端输入，空区间仍交给后端按默认训练窗口处理。
 function validateTrainRange() {
   if (!trainRange.value || trainRange.value.length !== 2) {
     return true;
@@ -155,6 +156,7 @@ async function loadPredictionHistoryPage() {
       pageNum: historyPageState.pageNum,
       pageSize: historyPageState.pageSize
     });
+    // 历史分页刷新后尽量维持当前任务选中态，真正的摘要与图表切换仍由 selectedTaskId 单独控制。
     predictionHistory.value = page.list;
     historyPageState.pageNum = page.pageNum;
     historyPageState.pageSize = page.pageSize;
@@ -212,6 +214,7 @@ async function runPrediction() {
   }
 }
 
+// 当前任务详情和历史表格解耦，切换任务时只替换主视觉，不回写历史分页查询态。
 async function selectPredictionTask(item) {
   selectedTaskId.value = item.taskId;
   prediction.value = item;
@@ -254,6 +257,7 @@ async function afterDeleteRefresh(deletedIds) {
   historyTableRef.value?.clearSelection?.();
   historySelection.value = [];
   if (touchedCurrent) {
+    // 删除当前任务后同步清空摘要和图表主视觉，避免页面继续展示已失效的任务结果。
     clearPredictionVisual();
   }
 }
@@ -314,6 +318,7 @@ function renderChart() {
     chart = echarts.init(chartRef.value);
   }
 
+  // 图表直接消费 resultList 的混合时间线，让真实序列和未来预测共用一套横轴渲染。
   chart.setOption({
     tooltip: { trigger: "axis" },
     legend: { data: ["实际值", "预测值"] },
