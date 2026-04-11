@@ -1,4 +1,4 @@
-﻿param(
+param(
     [string]$ApiBase = "http://127.0.0.1:8081",
     [switch]$SkipReset,
     [switch]$SkipStaticChecks,
@@ -12,6 +12,7 @@ $repoRoot = Resolve-Path (Join-Path $PSScriptRoot "..")
 $backendDir = Join-Path $repoRoot "backend"
 $frontendDir = Join-Path $repoRoot "frontend"
 $resetScript = Join-Path $PSScriptRoot "reset-demo-db.ps1"
+$verifyBaselineScript = Join-Path $PSScriptRoot "verify-demo-baseline.ps1"
 $startBackendScript = Join-Path $PSScriptRoot "start-backend.ps1"
 $uri = [Uri]$ApiBase
 $port = $uri.Port
@@ -182,6 +183,16 @@ function Stop-Backend {
     }
 }
 
+function Convert-ToDateText {
+    param([object]$Value)
+
+    if ($Value -is [DateTime]) {
+        return $Value.ToString('yyyy-MM-dd HH:mm:ss')
+    }
+
+    return [string]$Value
+}
+
 function New-LegacyGrainCsv {
     param(
         [string]$FilePath,
@@ -280,7 +291,7 @@ function Assert-SummaryContainsCollectedAt {
         [string]$Context
     )
 
-    $matched = @($Summaries | Where-Object { $_.collectedAt -eq $CollectedAt })
+    $matched = @($Summaries | Where-Object { (Convert-ToDateText $_.collectedAt) -eq $CollectedAt })
     Assert-True ($matched.Count -ge 1) "$Context was not found in grain summaries: $CollectedAt"
 }
 
@@ -315,6 +326,10 @@ try {
         $shellPath = Get-ShellPath
         Invoke-ExternalCommand -Command $shellPath -Arguments @("-ExecutionPolicy", "Bypass", "-File", $resetScript) -WorkingDirectory $repoRoot -Label "demo database reset"
         Write-Pass "Demo database reset passed"
+
+        Write-Step "Verifying Phase 11 baseline"
+        Invoke-ExternalCommand -Command $shellPath -Arguments @("-ExecutionPolicy", "Bypass", "-File", $verifyBaselineScript) -WorkingDirectory $repoRoot -Label "Phase 11 baseline verification"
+        Write-Pass "Phase 11 baseline verification passed"
     }
 
     Write-Step "Starting backend on port $port"
@@ -328,12 +343,44 @@ try {
     Wait-BackendReady
     Write-Pass "Backend is ready"
 
+    Write-Step "Checking Phase 11 baseline APIs"
+    $sensorHumidityPage = Assert-ApiSuccess (Invoke-ApiRequest -Method "GET" -Path "/api/sensor-data?warehouseId=2&metricCode=humidity&pageNum=1&pageSize=150") "sensor humidity baseline"
+    Assert-True ($sensorHumidityPage.total -eq 120) "Sensor humidity baseline should expose 120 Jan-Apr rows for warehouse 2."
+    Assert-True (@($sensorHumidityPage.list | Where-Object { (Convert-ToDateText $_.collectedAt) -like '2025-09*' }).Count -eq 0) "Sensor humidity baseline still contains September rows."
+    Assert-True (@($sensorHumidityPage.list | Where-Object { (Convert-ToDateText $_.collectedAt) -like '2025-04*' }).Count -ge 1) "Sensor humidity baseline does not surface April rows."
+
+    $sensorTrend = Assert-ApiSuccess (Invoke-ApiRequest -Method "GET" -Path "/api/sensor-data/trend?warehouseId=6&metricCode=co2") "sensor co2 trend baseline"
+    Assert-True (@($sensorTrend.points).Count -eq 120) "Sensor trend baseline should expose 120 Jan-Apr points for warehouse 6 co2."
+    Assert-True (@($sensorTrend.points | Where-Object { (Convert-ToDateText $_.time) -like '2025-09*' }).Count -eq 0) "Sensor trend baseline still contains September points."
+
+    $grainSummaries = Assert-ApiSuccess (Invoke-ApiRequest -Method "GET" -Path "/api/grain-temp/summaries?warehouseId=2") "grain summary baseline"
+    Assert-True (@($grainSummaries).Count -eq 120) "Grain summary baseline should expose 120 Jan-Apr rows for warehouse 2."
+    Assert-True (@($grainSummaries | Where-Object { (Convert-ToDateText $_.collectedAt) -like '2025-09*' }).Count -eq 0) "Grain summary baseline still contains September rows."
+    Assert-True (@($grainSummaries | Where-Object { $_.warningFlag -eq $true }).Count -ge 1) "Risk warehouse grain summaries should contain alert rows near April end."
+
+    $phase11Tasks = Assert-ApiSuccess (Invoke-ApiRequest -Method "GET" -Path "/api/predictions/tasks") "Phase 11 prediction task list"
+    Assert-True (@($phase11Tasks).Count -eq 3) "Prediction task archive should contain exactly three Phase 11 tasks after reset."
+    Assert-True (@($phase11Tasks | Where-Object { $_.taskNo -like 'TASK-ROLLING-*' }).Count -eq 0) "Legacy rolling prediction tasks are still present after reset."
+    Assert-True (@($phase11Tasks | Where-Object { (Convert-ToDateText $_.forecastStartTime) -notlike '2025-05*' }).Count -eq 0) "Prediction tasks are not anchored to post-Apr baseline forecast windows."
+    $riskTask = @($phase11Tasks | Where-Object { $_.warehouseId -eq 2 })[0]
+    Assert-True ($null -ne $riskTask) "Phase 11 prediction archive is missing the warehouse 2 risk task."
+    $riskTaskDetail = Assert-ApiSuccess (Invoke-ApiRequest -Method "GET" -Path "/api/predictions/tasks/$($riskTask.taskId)") "Phase 11 risk task detail"
+    Assert-True ((Convert-ToDateText $riskTaskDetail.trainEndTime) -like '2025-04-30*') "Risk task is not trained against the Jan-Apr baseline."
+    $futureRiskPoints = @($riskTaskDetail.resultList | Where-Object { $_.phaseType -eq 'FUTURE' })
+    Assert-True ($futureRiskPoints.Count -ge 5) "Risk task detail should retain May future prediction points."
+    Assert-True (@($futureRiskPoints | Where-Object { (Convert-ToDateText $_.resultTime) -notlike '2025-05*' }).Count -eq 0) "Risk task future predictions still contain non-May results."
+    Write-Pass "Phase 11 baseline API checks passed"
+
     Write-Step "Checking dashboard overview"
     $overviewBefore = Assert-ApiSuccess (Invoke-ApiRequest -Method "GET" -Path "/api/dashboard/overview") "dashboard overview"
     Assert-OverviewFields -Overview $overviewBefore
-    $alertSourceTypes = @($overviewBefore.latestAlerts | ForEach-Object { $_.sourceType })
-    Assert-True ($alertSourceTypes -contains "REAL") "Dashboard overview does not include REAL alerts."
-    Assert-True ($alertSourceTypes -contains "PREDICTION") "Dashboard overview does not include PREDICTION alerts."
+    Assert-True ([int]$overviewBefore.realAlertCount -ge 1) "Dashboard overview realAlertCount should be positive after reset."
+    Assert-True ([int]$overviewBefore.predictionAlertCount -ge 1) "Dashboard overview predictionAlertCount should be positive after reset."
+    $alertPage = Assert-ApiSuccess (Invoke-ApiRequest -Method "GET" -Path "/api/dashboard/alerts?pageNum=1&pageSize=10") "dashboard alerts page"
+    Assert-True (@($alertPage.list).Count -ge 1) "Dashboard alerts page is empty."
+    $alertSourceTypes = @($alertPage.list | ForEach-Object { $_.sourceType })
+    Assert-True ($alertSourceTypes -contains "REAL") "Dashboard alerts page does not include REAL alerts."
+    Assert-True ($alertSourceTypes -contains "PREDICTION") "Dashboard alerts page does not include PREDICTION alerts."
     $grainSummaryCountBefore = [int]$overviewBefore.grainSummaryCount
     Write-Pass "Dashboard overview passed"
 
@@ -417,8 +464,10 @@ try {
     $overviewAfter = Assert-ApiSuccess (Invoke-ApiRequest -Method "GET" -Path "/api/dashboard/overview") "dashboard overview after imports"
     Assert-OverviewFields -Overview $overviewAfter
     Assert-True ([int]$overviewAfter.grainSummaryCount -gt $grainSummaryCountBefore) "grainSummaryCount did not increase after imports."
-    Assert-True (@($overviewAfter.latestGrainSummaries).Count -ge 1) "latestGrainSummaries is empty after imports."
-    Assert-True (@($overviewAfter.warehouseHealthList).Count -ge 1) "warehouseHealthList is empty after imports."
+    $dashboardSummaryPage = Assert-ApiSuccess (Invoke-ApiRequest -Method "GET" -Path "/api/dashboard/grain-summaries?pageNum=1&pageSize=10") "dashboard grain summary page"
+    $warehouseHealthPage = Assert-ApiSuccess (Invoke-ApiRequest -Method "GET" -Path "/api/dashboard/warehouse-health?pageNum=1&pageSize=10") "dashboard warehouse health page"
+    Assert-True (@($dashboardSummaryPage.list).Count -ge 1) "Dashboard grain summary page is empty after imports."
+    Assert-True (@($warehouseHealthPage.list).Count -ge 1) "Dashboard warehouse health page is empty after imports."
     Write-Pass "Dashboard post-import checks passed"
 
     Write-Host ""

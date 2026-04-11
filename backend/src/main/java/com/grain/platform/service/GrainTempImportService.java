@@ -76,7 +76,18 @@ public class GrainTempImportService {
     }
 
     public GrainTempImportResultDto importData(MultipartFile file) throws IOException {
-        List<ImportRow> rows = parse(file);
+        String originalFilename = file.getOriginalFilename();
+        String lowerFilename = originalFilename == null ? "" : originalFilename.toLowerCase(Locale.ROOT);
+        List<ImportRow> rows;
+        if (lowerFilename.contains("grain-temp-fixed-template")) {
+            rows = retryFixedTemplateIfApplicable(file, new IllegalArgumentException("固定模板直接解析"));
+        } else {
+            try {
+                rows = parse(file);
+            } catch (IllegalArgumentException ex) {
+                rows = retryFixedTemplateIfApplicable(file, ex);
+            }
+        }
         if (rows.isEmpty()) {
             throw new IllegalArgumentException("粮温导入文件为空或没有有效数据");
         }
@@ -144,6 +155,73 @@ public class GrainTempImportService {
 
     public String getCsvTemplate() {
         return UTF8_BOM + CSV_TEMPLATE;
+    }
+
+    private List<ImportRow> retryFixedTemplateIfApplicable(MultipartFile file, IllegalArgumentException original) throws IOException {
+        String filename = file.getOriginalFilename();
+        String lowerFilename = filename == null ? "" : filename.toLowerCase(Locale.ROOT);
+        if (!(lowerFilename.endsWith(".xlsx") || lowerFilename.endsWith(".xls"))) {
+            throw original;
+        }
+        try (Workbook workbook = WorkbookFactory.create(file.getInputStream())) {
+            return parseGeneratedFixedTemplate(workbook.getSheetAt(0), new DataFormatter());
+        } catch (Exception fallbackEx) {
+            throw new IllegalArgumentException("固定模板回退失败：" + fallbackEx.getMessage(), fallbackEx);
+        }
+    }
+
+    private List<ImportRow> parseGeneratedFixedTemplate(Sheet sheet, DataFormatter formatter) {
+        Long warehouseId = parseLong(getCellText(sheet.getRow(4), 1, formatter), 5, "warehouseId");
+        LocalDateTime collectedAt = parseDateTimeCell(sheet.getRow(5).getCell(1), formatter, 6);
+        List<ImportRow> rows = new ArrayList<>();
+        appendGeneratedFixedZone(sheet, formatter, 10, warehouseId, collectedAt, rows);
+        appendGeneratedFixedZone(sheet, formatter, 17, warehouseId, collectedAt, rows);
+        if (rows.isEmpty()) {
+            throw new IllegalArgumentException("固定模板中未解析到任何测点温度数据");
+        }
+        return rows;
+    }
+
+    private void appendGeneratedFixedZone(Sheet sheet,
+            DataFormatter formatter,
+            int zoneRowIndex,
+            Long warehouseId,
+            LocalDateTime collectedAt,
+            List<ImportRow> rows) {
+        Row zoneRow = sheet.getRow(zoneRowIndex);
+        if (zoneRow == null) {
+            return;
+        }
+        String zoneCode = requireText(getCellText(zoneRow, 1, formatter), zoneRowIndex + 1, "zoneCode");
+        String probeCode = getCellText(zoneRow, 3, formatter);
+        Row headerRow = sheet.getRow(zoneRowIndex + 1);
+        if (headerRow == null) {
+            throw new IllegalArgumentException("固定模板缺少测点矩阵表头");
+        }
+        List<Integer> pointNumbers = new ArrayList<>();
+        for (int cellIndex = 1; cellIndex <= FIXED_TEMPLATE_POINT_COUNT; cellIndex++) {
+            pointNumbers.add(parseInteger(getCellText(headerRow, cellIndex, formatter), zoneRowIndex + 2, "pointNo"));
+        }
+        for (int rowOffset = 0; rowOffset < FIXED_TEMPLATE_LAYER_COUNT; rowOffset++) {
+            int dataRowIndex = zoneRowIndex + 2 + rowOffset;
+            Row dataRow = sheet.getRow(dataRowIndex);
+            Integer layerNo = parseInteger(getCellText(dataRow, 0, formatter), dataRowIndex + 1, "layerNo");
+            for (int pointIndex = 0; pointIndex < pointNumbers.size(); pointIndex++) {
+                String valueText = getCellText(dataRow, pointIndex + 1, formatter);
+                if (valueText.isBlank()) {
+                    continue;
+                }
+                rows.add(new ImportRow(
+                        warehouseId,
+                        collectedAt,
+                        zoneCode,
+                        layerNo,
+                        pointNumbers.get(pointIndex),
+                        parseDouble(valueText, dataRowIndex + 1, "temperatureValue"),
+                        probeCode,
+                        "固定模板导入"));
+            }
+        }
     }
 
     public byte[] getExcelTemplate() throws IOException {
@@ -312,7 +390,7 @@ public class GrainTempImportService {
             return parseCsv(file);
         }
         if (lowerFilename.endsWith(".xlsx") || lowerFilename.endsWith(".xls")) {
-            return parseExcel(file);
+            return parseExcel(file, lowerFilename);
         }
         throw new IllegalArgumentException("仅支持 CSV、XLS、XLSX 文件");
     }
@@ -347,11 +425,15 @@ public class GrainTempImportService {
         return rows;
     }
 
-    private List<ImportRow> parseExcel(MultipartFile file) throws IOException {
+    private List<ImportRow> parseExcel(MultipartFile file, String lowerFilename) throws IOException {
         DataFormatter formatter = new DataFormatter();
         try (Workbook workbook = WorkbookFactory.create(file.getInputStream())) {
             Sheet sheet = workbook.getSheetAt(0);
-            if (isFixedTemplateSheet(sheet, formatter)) {
+            String titleCell = getCellText(sheet.getRow(0), 0, formatter);
+            boolean fixedTemplateHint = lowerFilename.contains("grain-temp-fixed-template")
+                    || titleCell.contains("粮温固定导入模板")
+                    || titleCell.contains("测点矩阵");
+            if (fixedTemplateHint || isFixedTemplateSheet(sheet, formatter)) {
                 return parseFixedTemplate(sheet, formatter);
             }
             return parseRowStyleSheet(sheet, formatter);
@@ -392,10 +474,10 @@ public class GrainTempImportService {
             return true;
         }
         return switch (englishKey) {
-            case "warehouseId" -> t.contains("仓库编号");
-            case "collectedAt" -> t.contains("采集时间");
-            case "zoneCode" -> t.contains("区域编码");
-            case "probeCode" -> t.contains("缆号") || t.contains("探头编码") || t.contains("探头");
+            case "warehouseId" -> t.startsWith("仓库编号");
+            case "collectedAt" -> t.startsWith("采集时间");
+            case "zoneCode" -> t.startsWith("区域编码");
+            case "probeCode" -> t.startsWith("缆号") || t.startsWith("探头编码") || t.startsWith("探头");
             default -> false;
         };
     }
@@ -620,3 +702,12 @@ public class GrainTempImportService {
             String remark) {
     }
 }
+
+
+
+
+
+
+
+
+
