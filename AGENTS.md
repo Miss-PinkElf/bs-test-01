@@ -59,9 +59,17 @@ Do not make direct repo edits outside a GSD workflow unless the user explicitly 
 
 
 
+## Completion Reminder
+
+当某个 phase 的代码已经做完并且你确认可接受时，必须立即补齐 GSD 收口：
+- 更新该 phase 的 `*-SUMMARY.md`、`*-VERIFICATION.md`、`*-HUMAN-UAT.md`（如适用）
+- 同步 `ROADMAP.md`、`REQUIREMENTS.md`、`STATE.md`
+- 如已交付，补一份归档说明到 `zzz-docs/归档/`
+- 不要让已完成的 phase 长时间停留在 planned / pending / human_needed 状态
 <!-- GSD:profile-start -->
 ## Developer Profile
 
 > Profile not yet configured. Run `/gsd-profile-user` to generate your developer profile.
 > This section is managed by `generate-claude-profile` -- do not edit manually.
 <!-- GSD:profile-end -->
+

@@ -11,7 +11,7 @@
 | 2 | 温度预测页体验优化 | 任务信息集中可读；预测前可配置训练区间 | PRED-01 — PRED-03 | **已交付**（UAT 见 REQ） |
 | 3 | 温度预测页交互二次优化 | 图表先达、双表语义可读 | UX2-01 — UX2-03（见 REQUIREMENTS） | **已交付**（UAT 见 REQ）；底部表形态见 Phase 4 演进 |
 | 4 | 温度预测页单表与预测区间 | 单表、预测区间列、操作列；后端可追溯 | POLISH-04-01 — POLISH-04-02 | **已落地**（待 UAT） |
-| 5 | 预测记录表支持删除 | 多选 + 批量删 + 单删；二次确认；DEL-05-* | 已规划（待执行） |
+| 5 | 预测记录表支持删除 | 多选 + 批量删 + 单删；二次确认；DEL-05-* | **已完成**（2026-04-11） |
 | 6 | 预测页 overflow-x 收口 | 恢复正常横向滚动；摘要局部收口；不回退高风险滚动模型 | OVERFLOW-06-01 — OVERFLOW-06-03 | **已落地**（待 UAT） |
 | 7 | 环境数据页 / 粮温汇总优化 | 1/1 | Complete   | 2026-04-10 |
 | 8 | 展示大屏优化 | `/screen` 稳定打开并升级为答辩展示大屏 | SCREEN-08-01 — SCREEN-08-03 | **已完成**（2026-04-11） |
@@ -87,7 +87,7 @@
 
 - [x] `04-01-PLAN.md` — 单表、预测区间、操作列、GSD 同步（Wave 1）
 
-### Phase 5: 温度预测页预测记录表操作列增加删除，用于清理无用或脏数据记录
+### Phase 5: 温度预测页预测记录表操作列增加删除，用于清理无用或脏数据记录（已完成）
 
 **阶段目录：** `.planning/phases/05-prediction-record-delete/`（`05-CONTEXT.md`、`05-UI-SPEC.md`、`05-01-PLAN.md`）
 
@@ -106,7 +106,7 @@
 
 **Plans:**
 
-- [ ] `05-01-PLAN.md` — 后端删除、前端 API、PredictionView 多选与批量删、文档同步（Wave 1）
+- [x] `05-01-PLAN.md` — 后端删除、前端 API、PredictionView 多选与批量删、文档同步（Wave 1）
 
 ### Phase 6: 预测页过宽：任务摘要横向滚动与主内容区 overflow-x 裁切问题
 
@@ -162,7 +162,9 @@ Plans:
 2. 页面稳定落为 **上总览 / 中图表 / 下明细** 三段式，且中部存在 **粮温趋势、预警趋势、预测趋势、仓库对比** 4 个真实信息位。
 3. 顶部指标、重点仓库、最新预警、最近预测任务与主图表优先来自真实接口，并支持共享 **仓库 + 时间范围** 查询。
 
-**Delivered（2026-04-11）：** `/api/dashboard/screen` 聚合接口、`fetchScreenDashboard()`、`/screen` 三段式大屏、四块图表位、四块底部明细位、文字对比度收口。`r`n`r`n**Plans:** 2/2 plans complete
+**Delivered（2026-04-11）：** `/api/dashboard/screen` 聚合接口、`fetchScreenDashboard()`、`/screen` 三段式大屏、四块图表位、四块底部明细位、文字对比度收口。
+
+**Plans:** 2/2 plans complete
 
 Plans:
 - [x] `08-01-PLAN.md` — 大屏真实数据聚合接口与前端 API 封装（Wave 1）
@@ -171,6 +173,11 @@ Plans:
 ---
 
 *Roadmap updated: 2026-04-11（Phase 8：展示大屏优化；Phase 7：环境数据页 / 粮温汇总优化；Phase 6：overflow-x 收口；Phase 5：预测记录删除；Phase 4 单表打磨；Phase 2/3 归档见 zzz-docs/归档）*
+
+
+
+
+
 
 
 

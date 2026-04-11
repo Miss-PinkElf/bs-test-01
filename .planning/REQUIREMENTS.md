@@ -41,8 +41,8 @@
 
 ### Delete / prediction archive
 
-- [ ] **DEL-05-01**: 「预测记录」表 **最左侧多选列**；工具栏 **「批量删除」**（`danger`）；操作列在 Phase 4 基础上增加 **「删除」**；**单删与批量删**在请求接口前均需 **`ElMessageBox.confirm`**，且批量确认须展示 **选中数量**（或等价可读摘要）；删除成功后刷新列表并 **清空表格勾选**；若删除集合包含当前查看的 `taskId`，须 **清空**摘要区与图表主视觉（见 `05-CONTEXT.md` D-05～D-07）
-- [ ] **DEL-05-02**: 后端提供 **`DELETE /api/predictions/tasks/{taskId}`** 与 **`POST /api/predictions/tasks/batch-delete`**（请求体 `taskIds` 列表）；**物理删除**对应 `prediction_result` 与 `prediction_task`；**单事务**；空列表 **400**；单条不存在 **404**（或与项目统一错误形态一致）；批量部分 id 无效时推荐 **整批失败回滚**（见 `05-CONTEXT.md` D-02～D-03b）
+- [x] **DEL-05-01**: 「预测记录」表 **最左侧多选列**；工具栏 **「批量删除」**（`danger`）；操作列在 Phase 4 基础上增加 **「删除」**；**单删与批量删**在请求接口前均需 **`ElMessageBox.confirm`**，且批量确认须展示 **选中数量**（或等价可读摘要）；删除成功后刷新列表并 **清空表格勾选**；若删除集合包含当前查看的 `taskId`，须 **清空**摘要区与图表主视觉（见 `05-CONTEXT.md` D-05～D-07）（2026-04-11：`PredictionView.vue` 多选、批量删、单删、删除后状态清理已确认）
+- [x] **DEL-05-02**: 后端提供 **`DELETE /api/predictions/tasks/{taskId}`** 与 **`POST /api/predictions/tasks/batch-delete`**（请求体 `taskIds` 列表）；**物理删除**对应 `prediction_result` 与 `prediction_task`；**单事务**；空列表 **400**；单条不存在 **404**（或与项目统一错误形态一致）；批量部分 id 无效时推荐 **整批失败回滚**（见 `05-CONTEXT.md` D-02～D-03b）（2026-04-11：`PredictionController`、`PredictionService`、Mapper 删除链路已确认）
 
 ## Phase 6 Requirements（温度预测页 · overflow-x 收口）
 
@@ -94,8 +94,8 @@
 | UX2-03 | Phase 3 / 4 演进 | Done（待 UAT） |
 | POLISH-04-01 | Phase 4 | Done（待 UAT） |
 | POLISH-04-02 | Phase 4 | Done（待 UAT） |
-| DEL-05-01 | Phase 5 | Planned |
-| DEL-05-02 | Phase 5 | Planned |
+| DEL-05-01 | Phase 5 | Done |
+| DEL-05-02 | Phase 5 | Done |
 | OVERFLOW-06-01 | Phase 6 | Done（待 UAT） |
 | OVERFLOW-06-02 | Phase 6 | Done（待 UAT） |
 | OVERFLOW-06-03 | Phase 6 | Done（待 UAT） |
@@ -120,6 +120,7 @@
 - Unmapped: 0
 
 ---
-*Last updated: 2026-04-11 Phase 8 SCREEN-08-* 已完成（展示大屏稳定首屏、三段式图表布局、真实数据优先，人工验收通过）*
+*Last updated: 2026-04-11 Phase 5 DEL-05-* 与 Phase 8 SCREEN-08-* 已完成（删除能力与展示大屏均已收口）*
+
 
 
