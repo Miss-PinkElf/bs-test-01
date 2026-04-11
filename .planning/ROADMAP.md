@@ -229,31 +229,6 @@ Plans:
 - [x] `11-01-PLAN.md` — 重写标准演示库种子并收口 reset-demo-db 校验（Wave 1）
 - [x] `11-02-PLAN.md` — 接入 Phase 11 baseline smoke 校验并同步 Phase 文档（Wave 2）
 
-### Phase 12: Windows 免依赖运行封装与根目录 README 双运行说明（手动运行 / 免安装运行）
-
-**Goal:** 在不把大二进制提交进仓库的前提下，为 Windows 生成可压缩分发的 portable 发布目录：内含 JRE、真实 MySQL portable、预构建前端静态资源与 Spring Boot jar，并在根 README 中清晰区分手动开发运行与免安装 portable 运行。
-**Requirements**: Context decisions D-01 — D-12 (`.planning/phases/12-windows-readme/12-CONTEXT.md`)
-**Depends on:** Phase 11
-**Plans:** 3 plans
-
-Plans:
-- [ ] `12-01-PLAN.md` — Portable 发布目录合同、忽略策略与 backend static jar 打包基础（Wave 1）
-- [ ] `12-02-PLAN.md` — 真实 MySQL + JRE 的 portable 启停 / reset 脚本与数据保留语义（Wave 2）
-- [ ] `12-03-PLAN.md` — Portable 自动验证脚本与根 README 双运行说明（Wave 3）
-
 ---
 
-*Roadmap updated: 2026-04-11（新增 Phase 12：Windows 免依赖运行封装与根目录 README 双运行说明；Phase 11：河南环境数据 1-4 月 mock、脏数据清理与 Windows 一键运行；Phase 10：前后端补充简单注释提升可读性；Phase 9：管理端列表去 mock 并收口服务端分页查询；Phase 8：展示大屏优化；Phase 7：环境数据页 / 粮温汇总优化；Phase 6：overflow-x 收口；Phase 5：预测记录删除；Phase 4 单表打磨；Phase 2/3 归档见 zzz-docs/归档）*
-
-
-
-
-
-
-
-
-
-
-
-
-
+*Roadmap updated: 2026-04-11（Phase 11：河南环境数据 1-4 月 mock、脏数据清理与 Windows 一键运行；Phase 10：前后端补充简单注释提升可读性；Phase 9：管理端列表去 mock 并收口服务端分页查询；Phase 8：展示大屏优化；Phase 7：环境数据页 / 粮温汇总优化；Phase 6：overflow-x 收口；Phase 5：预测记录删除；Phase 4 单表打磨；Phase 2/3 归档见 zzz-docs/归档）*
