@@ -4,6 +4,66 @@
         "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
 <mapper namespace="com.grain.platform.mapper.DashboardMapper">
 
+    <sql id="screenWarehouseFilterW">
+        <if test="warehouseId != null">
+            and w.id = #{warehouseId}
+        </if>
+    </sql>
+
+    <sql id="screenWarehouseFilterW2">
+        <if test="warehouseId != null">
+            and w2.id = #{warehouseId}
+        </if>
+    </sql>
+
+    <sql id="screenWarehouseFilterW3">
+        <if test="warehouseId != null">
+            and w3.id = #{warehouseId}
+        </if>
+    </sql>
+
+    <sql id="screenWarehouseFilterPt">
+        <if test="warehouseId != null">
+            and pt.warehouse_id = #{warehouseId}
+        </if>
+    </sql>
+
+    <sql id="screenGrainSummaryTimeFilter">
+        <if test="startTime != null">
+            and s.collected_at <![CDATA[ >= ]]> #{startTime}
+        </if>
+        <if test="endTime != null">
+            and s.collected_at <![CDATA[ <= ]]> #{endTime}
+        </if>
+    </sql>
+
+    <sql id="screenGrainSummaryTimeFilterS2">
+        <if test="startTime != null">
+            and s2.collected_at <![CDATA[ >= ]]> #{startTime}
+        </if>
+        <if test="endTime != null">
+            and s2.collected_at <![CDATA[ <= ]]> #{endTime}
+        </if>
+    </sql>
+
+    <sql id="screenPredictionTaskTimeFilter">
+        <if test="startTime != null">
+            and pt.requested_at <![CDATA[ >= ]]> #{startTime}
+        </if>
+        <if test="endTime != null">
+            and pt.requested_at <![CDATA[ <= ]]> #{endTime}
+        </if>
+    </sql>
+
+    <sql id="screenPredictionResultTimeFilter">
+        <if test="startTime != null">
+            and pr.result_time <![CDATA[ >= ]]> #{startTime}
+        </if>
+        <if test="endTime != null">
+            and pr.result_time <![CDATA[ <= ]]> #{endTime}
+        </if>
+    </sql>
+
     <select id="countWarehouses" resultType="int">
         select count(*) from warehouse where status != 'DISABLED'
     </select>
@@ -180,5 +240,359 @@
         where w.status != 'DISABLED'
         order by healthScore asc, w.id asc
         limit 6
+    </select>
+
+    <select id="countScreenWarehouses" resultType="int">
+        select count(*)
+        from warehouse w
+        where w.status != 'DISABLED'
+        <include refid="screenWarehouseFilterW"/>
+    </select>
+
+    <select id="countScreenGrainSummaryCount" resultType="int">
+        select count(*)
+        from grain_temp_summary s
+                 join warehouse w on w.id = s.warehouse_id
+        where w.status != 'DISABLED'
+        <include refid="screenWarehouseFilterW"/>
+        <include refid="screenGrainSummaryTimeFilter"/>
+    </select>
+
+    <select id="countScreenRealAlertCount" resultType="int">
+        select count(*)
+        from grain_temp_summary s
+                 join warehouse w on w.id = s.warehouse_id
+        where w.status != 'DISABLED'
+          and s.warning_flag = 1
+        <include refid="screenWarehouseFilterW"/>
+        <include refid="screenGrainSummaryTimeFilter"/>
+    </select>
+
+    <select id="countScreenPredictionAlertCount" resultType="int">
+        select count(*)
+        from prediction_result pr
+                 join prediction_task pt on pt.id = pr.task_id
+                 join warehouse w on w.id = pt.warehouse_id
+        where w.status != 'DISABLED'
+          and pr.phase_type = 'FUTURE'
+          and pr.warning_flag = 1
+        <include refid="screenWarehouseFilterW"/>
+        <include refid="screenPredictionResultTimeFilter"/>
+    </select>
+
+    <select id="countScreenArchivedPredictionCount" resultType="int">
+        select count(*)
+        from prediction_task pt
+                 join warehouse w on w.id = pt.warehouse_id
+        where w.status != 'DISABLED'
+        <include refid="screenWarehouseFilterW"/>
+        <include refid="screenPredictionTaskTimeFilter"/>
+    </select>
+
+    <select id="selectScreenLatestRealAlerts" resultType="com.grain.platform.dto.dashboard.DashboardAlertItemResponse">
+        select concat(w.warehouse_name, ' 实时粮温预警') as title,
+               s.warning_level as level,
+               'REAL' as sourceType,
+               w.warehouse_name as warehouseName,
+               date_format(s.collected_at, '%Y-%m-%d %H:%i:%s') as eventTime,
+               coalesce(
+                       s.warning_message,
+                       concat('整仓均温 ', round(s.avg_temp, 2), '°C，最高温 ', round(s.max_temp, 2), '°C')
+               ) as description
+        from grain_temp_summary s
+                 join warehouse w on w.id = s.warehouse_id
+        where w.status != 'DISABLED'
+          and s.warning_flag = 1
+        <include refid="screenWarehouseFilterW"/>
+        <include refid="screenGrainSummaryTimeFilter"/>
+        order by s.collected_at desc, s.id desc
+        limit 6
+    </select>
+
+    <select id="selectScreenLatestPredictionAlerts" resultType="com.grain.platform.dto.dashboard.DashboardAlertItemResponse">
+        select concat(w.warehouse_name, ' 预测高温预警') as title,
+               pr.warning_level as level,
+               'PREDICTION' as sourceType,
+               w.warehouse_name as warehouseName,
+               date_format(pr.result_time, '%Y-%m-%d %H:%i:%s') as eventTime,
+               coalesce(
+                       pr.warning_message,
+                       concat('预测值 ', round(pr.predicted_value, 2), '°C')
+               ) as description
+        from prediction_result pr
+                 join prediction_task pt on pt.id = pr.task_id
+                 join warehouse w on w.id = pt.warehouse_id
+        where w.status != 'DISABLED'
+          and pr.phase_type = 'FUTURE'
+          and pr.warning_flag = 1
+        <include refid="screenWarehouseFilterW"/>
+        <include refid="screenPredictionResultTimeFilter"/>
+        order by pr.result_time desc, pr.id desc
+        limit 6
+    </select>
+
+    <select id="selectScreenLatestGrainSummaries" resultType="com.grain.platform.dto.dashboard.DashboardLatestSummaryResponse">
+        select s.id as id,
+               s.warehouse_id as warehouseId,
+               w.warehouse_name as warehouseName,
+               s.avg_temp as avgTemp,
+               s.max_temp as maxTemp,
+               s.min_temp as minTemp,
+               date_format(s.collected_at, '%Y-%m-%d %H:%i:%s') as collectedAt,
+               s.warning_level as warningLevel,
+               s.warning_flag as warningFlag,
+               s.warning_message as warningMessage
+        from grain_temp_summary s
+                 join warehouse w on w.id = s.warehouse_id
+                 join (
+            select s2.warehouse_id, max(s2.collected_at) as latest_collected_at
+            from grain_temp_summary s2
+                     join warehouse w2 on w2.id = s2.warehouse_id
+            where w2.status != 'DISABLED'
+            <include refid="screenWarehouseFilterW2"/>
+            <include refid="screenGrainSummaryTimeFilterS2"/>
+            group by s2.warehouse_id
+        ) latest_summary on latest_summary.warehouse_id = s.warehouse_id
+                        and latest_summary.latest_collected_at = s.collected_at
+        where w.status != 'DISABLED'
+        <include refid="screenWarehouseFilterW"/>
+        order by s.warning_flag desc, s.collected_at desc, s.max_temp desc
+        limit 6
+    </select>
+
+    <select id="selectScreenWarehouseHealthList" resultType="com.grain.platform.dto.dashboard.DashboardWarehouseHealthResponse">
+        select w.id as warehouseId,
+               w.warehouse_name as warehouseName,
+               case
+                   when w.status = 'MAINTENANCE' then 72
+                   when greatest(ifnull(real_warning.level_score, 1), ifnull(prediction_warning.level_score, 1)) = 3 then 68
+                   when greatest(ifnull(real_warning.level_score, 1), ifnull(prediction_warning.level_score, 1)) = 2 then 84
+                   else 96
+                   end as healthScore,
+               case
+                   when w.status = 'MAINTENANCE' then 'MAINTENANCE'
+                   when greatest(ifnull(real_warning.level_score, 1), ifnull(prediction_warning.level_score, 1)) = 3 then 'WARNING'
+                   when greatest(ifnull(real_warning.level_score, 1), ifnull(prediction_warning.level_score, 1)) = 2 then 'ATTENTION'
+                   else 'NORMAL'
+                   end as riskLevel,
+               case ifnull(real_warning.level_score, 1)
+                   when 3 then 'WARNING'
+                   when 2 then 'ATTENTION'
+                   else 'NORMAL'
+                   end as realWarningLevel,
+               case ifnull(prediction_warning.level_score, 1)
+                   when 3 then 'WARNING'
+                   when 2 then 'ATTENTION'
+                   else 'NORMAL'
+                   end as predictionWarningLevel,
+               real_warning.latest_avg_temp as latestAvgTemp,
+               prediction_warning.latest_forecast_value as latestForecastValue
+        from warehouse w
+                 left join (
+            select latest_real.warehouse_id,
+                   case latest_real.warning_level
+                       when 'WARNING' then 3
+                       when 'ATTENTION' then 2
+                       else 1
+                       end as level_score,
+                   latest_real.avg_temp as latest_avg_temp
+            from grain_temp_summary latest_real
+                     join (
+                select s2.warehouse_id, max(s2.collected_at) as latest_collected_at
+                from grain_temp_summary s2
+                         join warehouse w2 on w2.id = s2.warehouse_id
+                where w2.status != 'DISABLED'
+                <include refid="screenWarehouseFilterW2"/>
+                <include refid="screenGrainSummaryTimeFilterS2"/>
+                group by s2.warehouse_id
+            ) latest_summary on latest_summary.warehouse_id = latest_real.warehouse_id
+                            and latest_summary.latest_collected_at = latest_real.collected_at
+        ) real_warning on real_warning.warehouse_id = w.id
+                 left join (
+            select pt.warehouse_id,
+                   max(case pr.warning_level
+                           when 'WARNING' then 3
+                           when 'ATTENTION' then 2
+                           else 1
+                       end) as level_score,
+                   max(pr.predicted_value) as latest_forecast_value
+            from prediction_task pt
+                     join warehouse w3 on w3.id = pt.warehouse_id
+                     left join prediction_result pr on pr.task_id = pt.id and pr.phase_type = 'FUTURE'
+            where w3.status != 'DISABLED'
+            <include refid="screenWarehouseFilterW3"/>
+            <include refid="screenPredictionTaskTimeFilter"/>
+            group by pt.warehouse_id
+        ) prediction_warning on prediction_warning.warehouse_id = w.id
+        where w.status != 'DISABLED'
+        <include refid="screenWarehouseFilterW"/>
+        order by healthScore asc, w.id asc
+        limit 6
+    </select>
+
+    <select id="selectScreenGrainTrend" resultType="com.grain.platform.dto.dashboard.ScreenTrendPointResponse">
+        select date_format(data.collected_at, '%m-%d %H:%i') as timeLabel,
+               data.avg_temp as primaryValue,
+               data.max_temp as secondaryValue,
+               null as realAlertCount,
+               null as predictionAlertCount
+        from (
+            select s.collected_at,
+                   round(s.avg_temp, 2) as avg_temp,
+                   round(s.max_temp, 2) as max_temp
+            from grain_temp_summary s
+                     join warehouse w on w.id = s.warehouse_id
+            where w.status != 'DISABLED'
+            <include refid="screenWarehouseFilterW"/>
+            <include refid="screenGrainSummaryTimeFilter"/>
+            order by s.collected_at desc, s.id desc
+            limit 12
+        ) data
+        order by data.collected_at asc
+    </select>
+
+    <select id="selectScreenAlertTrend" resultType="com.grain.platform.dto.dashboard.ScreenTrendPointResponse">
+        select date_format(data.bucket_time, '%m-%d') as timeLabel,
+               null as primaryValue,
+               null as secondaryValue,
+               data.real_alert_count as realAlertCount,
+               data.prediction_alert_count as predictionAlertCount
+        from (
+            select merged.bucket_time,
+                   sum(merged.real_alert_count) as real_alert_count,
+                   sum(merged.prediction_alert_count) as prediction_alert_count
+            from (
+                select date(s.collected_at) as bucket_time,
+                       count(*) as real_alert_count,
+                       0 as prediction_alert_count
+                from grain_temp_summary s
+                         join warehouse w on w.id = s.warehouse_id
+                where w.status != 'DISABLED'
+                  and s.warning_flag = 1
+                <include refid="screenWarehouseFilterW"/>
+                <include refid="screenGrainSummaryTimeFilter"/>
+                group by date(s.collected_at)
+
+                union all
+
+                select date(pr.result_time) as bucket_time,
+                       0 as real_alert_count,
+                       count(*) as prediction_alert_count
+                from prediction_result pr
+                         join prediction_task pt on pt.id = pr.task_id
+                         join warehouse w on w.id = pt.warehouse_id
+                where w.status != 'DISABLED'
+                  and pr.phase_type = 'FUTURE'
+                  and pr.warning_flag = 1
+                <include refid="screenWarehouseFilterW"/>
+                <include refid="screenPredictionResultTimeFilter"/>
+                group by date(pr.result_time)
+            ) merged
+            group by merged.bucket_time
+            order by merged.bucket_time desc
+            limit 10
+        ) data
+        order by data.bucket_time asc
+    </select>
+
+    <select id="selectScreenPredictionTrend" resultType="com.grain.platform.dto.dashboard.ScreenTrendPointResponse">
+        select date_format(data.bucket_time, '%m-%d') as timeLabel,
+               data.task_count as primaryValue,
+               data.warning_count as secondaryValue,
+               null as realAlertCount,
+               null as predictionAlertCount
+        from (
+            select date(pt.requested_at) as bucket_time,
+                   count(distinct pt.id) as task_count,
+                   count(distinct case when pr.warning_flag = 1 and pr.phase_type = 'FUTURE' then pr.id end) as warning_count
+            from prediction_task pt
+                     join warehouse w on w.id = pt.warehouse_id
+                     left join prediction_result pr on pr.task_id = pt.id and pr.phase_type = 'FUTURE'
+            where w.status != 'DISABLED'
+            <include refid="screenWarehouseFilterW"/>
+            <include refid="screenPredictionTaskTimeFilter"/>
+            group by date(pt.requested_at)
+            order by date(pt.requested_at) desc
+            limit 10
+        ) data
+        order by data.bucket_time asc
+    </select>
+
+    <select id="selectScreenWarehouseComparison" resultType="com.grain.platform.dto.dashboard.ScreenWarehouseCompareResponse">
+        select w.id as warehouseId,
+               w.warehouse_name as warehouseName,
+               case
+                   when w.status = 'MAINTENANCE' then 72
+                   when greatest(ifnull(real_warning.level_score, 1), ifnull(prediction_warning.level_score, 1)) = 3 then 68
+                   when greatest(ifnull(real_warning.level_score, 1), ifnull(prediction_warning.level_score, 1)) = 2 then 84
+                   else 96
+                   end as healthScore,
+               real_warning.latest_avg_temp as avgTemp,
+               prediction_warning.latest_forecast_value as latestForecastValue,
+               case
+                   when w.status = 'MAINTENANCE' then 'MAINTENANCE'
+                   when greatest(ifnull(real_warning.level_score, 1), ifnull(prediction_warning.level_score, 1)) = 3 then 'WARNING'
+                   when greatest(ifnull(real_warning.level_score, 1), ifnull(prediction_warning.level_score, 1)) = 2 then 'ATTENTION'
+                   else 'NORMAL'
+                   end as riskLevel
+        from warehouse w
+                 left join (
+            select latest_real.warehouse_id,
+                   case latest_real.warning_level
+                       when 'WARNING' then 3
+                       when 'ATTENTION' then 2
+                       else 1
+                       end as level_score,
+                   latest_real.avg_temp as latest_avg_temp
+            from grain_temp_summary latest_real
+                     join (
+                select s2.warehouse_id, max(s2.collected_at) as latest_collected_at
+                from grain_temp_summary s2
+                         join warehouse w2 on w2.id = s2.warehouse_id
+                where w2.status != 'DISABLED'
+                <include refid="screenWarehouseFilterW2"/>
+                <include refid="screenGrainSummaryTimeFilterS2"/>
+                group by s2.warehouse_id
+            ) latest_summary on latest_summary.warehouse_id = latest_real.warehouse_id
+                            and latest_summary.latest_collected_at = latest_real.collected_at
+        ) real_warning on real_warning.warehouse_id = w.id
+                 left join (
+            select pt.warehouse_id,
+                   max(case pr.warning_level
+                           when 'WARNING' then 3
+                           when 'ATTENTION' then 2
+                           else 1
+                       end) as level_score,
+                   max(pr.predicted_value) as latest_forecast_value
+            from prediction_task pt
+                     join warehouse w3 on w3.id = pt.warehouse_id
+                     left join prediction_result pr on pr.task_id = pt.id and pr.phase_type = 'FUTURE'
+            where w3.status != 'DISABLED'
+            <include refid="screenWarehouseFilterW3"/>
+            <include refid="screenPredictionTaskTimeFilter"/>
+            group by pt.warehouse_id
+        ) prediction_warning on prediction_warning.warehouse_id = w.id
+        where w.status != 'DISABLED'
+        <include refid="screenWarehouseFilterW"/>
+        order by healthScore asc, w.id asc
+        limit 6
+    </select>
+
+    <select id="selectRecentPredictionTasks" resultType="com.grain.platform.dto.dashboard.ScreenPredictionTaskItemResponse">
+        select pt.id as taskId,
+               pt.task_no as taskNo,
+               pt.warehouse_id as warehouseId,
+               w.warehouse_name as warehouseName,
+               pt.risk_level as riskLevel,
+               date_format(pt.requested_at, '%Y-%m-%d %H:%i:%s') as requestedAt,
+               pt.forecast_days as forecastDays,
+               pt.summary as summary
+        from prediction_task pt
+                 join warehouse w on w.id = pt.warehouse_id
+        where w.status != 'DISABLED'
+        <include refid="screenWarehouseFilterW"/>
+        <include refid="screenPredictionTaskTimeFilter"/>
+        order by pt.requested_at desc, pt.id desc
+        limit 5
     </select>
 </mapper>

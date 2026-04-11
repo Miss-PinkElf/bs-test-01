@@ -2,12 +2,17 @@ package com.grain.platform.controller;
 
 import com.grain.platform.common.ApiResponse;
 import com.grain.platform.dto.dashboard.DashboardOverviewResponse;
+import com.grain.platform.dto.dashboard.ScreenDashboardResponse;
 import com.grain.platform.service.DashboardService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
+
+import java.time.LocalDateTime;
 
 @RestController
 @RequestMapping("/api/dashboard")
@@ -29,5 +34,15 @@ public class DashboardController {
         log.info("获取仪表盘概览成功，warehouseCount={}, realAlertCount={}, predictionAlertCount={}",
                 response.warehouseCount(), response.realAlertCount(), response.predictionAlertCount());
         return ApiResponse.success(response);
+    }
+
+    @GetMapping("/screen")
+    public ApiResponse<ScreenDashboardResponse> screen(
+            @RequestParam(required = false) Long warehouseId,
+            @RequestParam(required = false) @DateTimeFormat(pattern = "yyyy-MM-dd HH:mm:ss") LocalDateTime startTime,
+            @RequestParam(required = false) @DateTimeFormat(pattern = "yyyy-MM-dd HH:mm:ss") LocalDateTime endTime
+    ) {
+        log.info("调用展示大屏聚合接口，warehouseId={}, startTime={}, endTime={}", warehouseId, startTime, endTime);
+        return ApiResponse.success(dashboardService.getScreenDashboard(warehouseId, startTime, endTime));
     }
 }
