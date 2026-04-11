@@ -231,13 +231,15 @@ Plans:
 
 ### Phase 12: Windows 免依赖运行封装与根目录 README 双运行说明（手动运行 / 免安装运行）
 
-**Goal:** [To be planned]
-**Requirements**: TBD
+**Goal:** 在不把大二进制提交进仓库的前提下，为 Windows 生成可压缩分发的 portable 发布目录：内含 JRE、真实 MySQL portable、预构建前端静态资源与 Spring Boot jar，并在根 README 中清晰区分手动开发运行与免安装 portable 运行。
+**Requirements**: Context decisions D-01 — D-12 (`.planning/phases/12-windows-readme/12-CONTEXT.md`)
 **Depends on:** Phase 11
-**Plans:** 0 plans
+**Plans:** 3 plans
 
 Plans:
-- [ ] TBD (run /gsd-plan-phase 12 to break down)
+- [ ] `12-01-PLAN.md` — Portable 发布目录合同、忽略策略与 backend static jar 打包基础（Wave 1）
+- [ ] `12-02-PLAN.md` — 真实 MySQL + JRE 的 portable 启停 / reset 脚本与数据保留语义（Wave 2）
+- [ ] `12-03-PLAN.md` — Portable 自动验证脚本与根 README 双运行说明（Wave 3）
 
 ---
 
