@@ -58,6 +58,7 @@ public class GrainTempService {
     }
 
     public GrainTempRecordFilterOptionsDto recordFilterOptions(Long warehouseId) {
+        // 筛选选项只返回当前仓库已有值，避免前端再自己去重并承担脏数据清洗。
         List<String> zoneCodes = grainTempRecordMapper.selectDistinctZoneCodes(warehouseId).stream()
                 .filter(Objects::nonNull)
                 .map(String::trim)
@@ -87,6 +88,7 @@ public class GrainTempService {
                                                              String keyword,
                                                              Integer pageNum,
                                                              Integer pageSize) {
+        // 分页查询先做关键词与页码归一化，再统一裁到合法页，避免空结果时页码漂到末尾之外。
         String kw = (keyword == null || keyword.isBlank()) ? null : keyword.trim();
         int finalPageNum = pageNum == null || pageNum < 1 ? 1 : pageNum;
         int finalPageSize = pageSize == null || pageSize < 1 ? 10 : pageSize;
@@ -205,6 +207,7 @@ public class GrainTempService {
         existing.setCreatedBy(1L);
         grainTempRecordMapper.update(existing);
 
+        // 原始记录一旦变更就重算对应时间点汇总，仓库或采集时间变了还要把新旧两个桶都补齐。
         rebuildSummary(oldWarehouseId, oldCollectedAt);
         if (!oldWarehouseId.equals(request.warehouseId()) || !oldCollectedAt.equals(request.collectedAt())) {
             rebuildSummary(request.warehouseId(), request.collectedAt());
@@ -281,6 +284,7 @@ public class GrainTempService {
             return;
         }
 
+        // 汇总重建统一收口均温、分层均温和预警口径，原始记录写操作后都复用这一条链路。
         SensorMetric metric = metricService.getMetric("temperature");
         GrainTempSummary summary = new GrainTempSummary();
         summary.setWarehouseId(warehouseId);

@@ -38,6 +38,7 @@ public class SensorDataImportService {
         String filename = file.getOriginalFilename();
         String lowerFilename = filename == null ? "" : filename.toLowerCase(Locale.ROOT);
 
+        // CSV 和 Excel 走不同解析入口，但统一产出导入行结构，后续导入校验只处理一种 DTO。
         if (lowerFilename.endsWith(".csv")) {
             return parseCsv(file);
         }
@@ -71,6 +72,7 @@ public class SensorDataImportService {
                     throw new IllegalArgumentException("CSV 第 " + rowIndex + " 行字段不足，至少需要 warehouseId, metricCode, metricValue, collectedAt");
                 }
 
+                // 行级字段不足在解析阶段就失败，前端提示才能精确对应到模板里的出错行号。
                 rows.add(new SensorDataImportRowDto(
                         parseLong(parts[0], rowIndex, "warehouseId"),
                         parts[1].trim(),
@@ -148,6 +150,7 @@ public class SensorDataImportService {
             throw new IllegalArgumentException("第 " + rowIndex + " 行字段 collectedAt 不能为空");
         }
 
+        // Excel 日期单元格优先按真实日期解析，文本格式再走统一的 yyyy-MM-dd HH:mm:ss 校验。
         if (cell.getCellType() == CellType.NUMERIC && DateUtil.isCellDateFormatted(cell)) {
             return LocalDateTime.ofInstant(cell.getDateCellValue().toInstant(), ZoneId.systemDefault());
         }

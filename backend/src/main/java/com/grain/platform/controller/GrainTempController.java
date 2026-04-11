@@ -116,6 +116,7 @@ public class GrainTempController {
         return ApiResponse.success(grainTempService.listSummaries(warehouseId, startTime, endTime));
     }
 
+    // 汇总全量接口给图表序列，分页接口给表格，两边共享同一套 service 过滤口径。
     @GetMapping("/summaries/page")
     public ApiResponse<PageResult<GrainTempSummaryItemDto>> listSummaryPage(
             @RequestParam(required = false) Long warehouseId,
