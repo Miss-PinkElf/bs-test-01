@@ -81,9 +81,9 @@
 
 ### Comment readability / maintenance handoff
 
-- [ ] **COMMENT-10-01**: `frontend/src/api/grain.js`、`PredictionView.vue`、`DataView.vue`、`DashboardView.vue`、`UsersView.vue`、`WarehouseView.vue` 只在数据归一化、分页状态回源、任务切换、导入刷新、选中态兜底等非显而易见逻辑块前补充简短中文注释；不注释显而易见模板或简单赋值，不改行为
-- [ ] **COMMENT-10-02**: `PredictionService.java`、`DashboardService.java`、`GrainTempService.java`、`SensorDataImportService.java`、`UserService.java`、`WarehouseService.java`、`PredictionController.java`、`GrainTempController.java` 只在预测编排、分页归一化、导入校验、汇总重算、统计口径与接口边界等非显而易见逻辑块前补充简短中文注释；不写大段 Javadoc，不改行为
-- [ ] **COMMENT-10-03**: Phase 10 验证必须同时包含 `cd frontend && npm run build`、`cd backend && mvn -q -DskipTests compile` 通过，以及 `rg` 证据证明注释确实加在计划指定文件与指定逻辑附近
+- [x] **COMMENT-10-01**: `frontend/src/api/grain.js`、`PredictionView.vue`、`DataView.vue`、`DashboardView.vue`、`UsersView.vue`、`WarehouseView.vue` 只在数据归一化、分页状态回源、任务切换、导入刷新、选中态兜底等非显而易见逻辑块前补充简短中文注释；不注释显而易见模板或简单赋值，不改行为
+- [x] **COMMENT-10-02**: `PredictionService.java`、`DashboardService.java`、`GrainTempService.java`、`SensorDataImportService.java`、`UserService.java`、`WarehouseService.java`、`PredictionController.java`、`GrainTempController.java` 只在预测编排、分页归一化、导入校验、汇总重算、统计口径与接口边界等非显而易见逻辑块前补充简短中文注释；不写大段 Javadoc，不改行为
+- [x] **COMMENT-10-03**: Phase 10 验证必须同时包含 `cd frontend && npm run build`、`cd backend && mvn -q -DskipTests compile` 通过，以及 `rg` 证据证明注释确实加在计划指定文件与指定逻辑附近
 ## v2 Requirements
 
 - [ ] **DATA-05**: 验收脚本 `run-acceptance-smoke.ps1` 增加针对新版模板版式或关键标签的断言（可选）
@@ -126,9 +126,9 @@
 | MOCK-09-02 | Phase 9 | Done |
 | MOCK-09-03 | Phase 9 | Done |
 | MOCK-09-04 | Phase 9 | Done |
-| COMMENT-10-01 | Phase 10 | Planned |
-| COMMENT-10-02 | Phase 10 | Planned |
-| COMMENT-10-03 | Phase 10 | Planned |
+| COMMENT-10-01 | Phase 10 | Done |
+| COMMENT-10-02 | Phase 10 | Done |
+| COMMENT-10-03 | Phase 10 | Done |
 
 **Coverage:**
 
@@ -146,7 +146,7 @@
 - Unmapped: 0
 
 ---
-*Last updated: 2026-04-11 Phase 10 COMMENT-10-* 已规划；Phase 9 MOCK-09-* 已完成，Phase 5 DEL-05-* 与 Phase 8 SCREEN-08-* 已完成*
+*Last updated: 2026-04-11 Phase 10 COMMENT-10-* 已完成；Phase 9 MOCK-09-* 已完成，Phase 5 DEL-05-* 与 Phase 8 SCREEN-08-* 已完成*
 
 
 

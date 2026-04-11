@@ -16,7 +16,7 @@
 | 7 | 环境数据页 / 粮温汇总优化 | 1/1 | Complete   | 2026-04-10 |
 | 8 | 展示大屏优化 | `/screen` 稳定打开并升级为答辩展示大屏 | SCREEN-08-01 — SCREEN-08-03 | **已完成**（2026-04-11） |
 | 9 | 管理端列表去 mock 并收口服务端分页查询 | 移除残留 mock，并把 Users/Warehouse/Prediction/Dashboard 收口到后端分页与 keyword 查询 | MOCK-09-01 — MOCK-09-04 | **已完成**（2026-04-11） |
-| 10 | 前后端补充简单注释提升可读性 | 在关键逻辑处补简单注释，降低阅读与接手成本 | COMMENT-10-01 — COMMENT-10-03 | 已规划（2 plans，待执行） |
+| 10 | 前后端补充简单注释提升可读性 | 在关键逻辑处补简单注释，降低阅读与接手成本 | COMMENT-10-01 — COMMENT-10-03 | **已完成**（2026-04-11） |
 
 ## Phase 1: 粮温 Excel 模板与导入一致化（已完成）
 
@@ -194,9 +194,11 @@ Plans:
 - [x] `09-01-PLAN.md` — 后端补齐用户、仓库、预测任务分页与统计接口（Wave 1）
 - [x] `09-02-PLAN.md` — Dashboard 拆分分页接口、四页前端迁移与 mock 清理（Wave 2）
 
-### Phase 10: 前后端补充简单注释提升可读性
+### Phase 10: 前后端补充简单注释提升可读性（已完成）
 
 **阶段目录：** `.planning/phases/10-code-comment-readability/`
+
+**Delivered（2026-04-11）：** 前端 `grain.js` 与 Prediction/Data/Dashboard/Users/Warehouse 视图补齐状态同步与归一化注释；后端 Prediction/Dashboard/GrainTemp/SensorDataImport/User/Warehouse 服务与相关控制器补齐分页、导入、汇总与统计边界注释；`npm run build` 与 `mvn -q -DskipTests compile` 通过。
 
 **Goal:** 在前后端高阅读成本、但当前注释偏少的关键逻辑文件中，补充简短中文注释，帮助后续维护者理解数据归一化、分页状态、任务切换、导入校验、服务编排等非显而易见流程；严格避免行为改动、注释泛滥、以及把显而易见代码重复解释一遍。
 **Requirements**: COMMENT-10-01 — COMMENT-10-03
@@ -207,11 +209,11 @@ Plans:
 2. 后端目标文件只在预测编排、分页归一化、导入校验、汇总重算、统计口径等非显而易见逻辑块前补充短中文注释。
 3. `npm run build` 与 `mvn -q -DskipTests compile` 均通过，且 `rg` 可证明注释落在计划指定文件与指定逻辑附近。
 
-**Plans:** 2 plans
+**Plans:** 2/2 plans complete
 
 Plans:
-- [ ] `10-01-PLAN.md` — 前端归一化、分页状态与任务切换注释收口（Wave 1）
-- [ ] `10-02-PLAN.md` — 后端预测编排、导入校验与统计边界注释收口（Wave 1）
+- [x] `10-01-PLAN.md` — 前端归一化、分页状态与任务切换注释收口（Wave 1）
+- [x] `10-02-PLAN.md` — 后端预测编排、导入校验与统计边界注释收口（Wave 1）
 
 ---
 
