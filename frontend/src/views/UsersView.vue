@@ -164,6 +164,7 @@ async function loadMeta() {
   metaLoading.value = true;
 
   try {
+    // 角色元数据与用户列表首屏并行加载，保证弹窗选项和顶部统计在管理页一起就绪。
     const [roleList, warehouseList, stats] = await Promise.all([
       fetchRoleOptions(),
       fetchWarehouses(),
@@ -199,6 +200,7 @@ async function loadUsersPage() {
   }
 }
 
+// 列表和顶部统计共用一次刷新入口，新增/编辑/删除后不让卡片数字和表格内容出现不同步。
 async function refreshUsersAndStats() {
   await Promise.all([loadUsersPage(), loadMeta()]);
 }

@@ -96,6 +96,7 @@ function handleRowClick(row) {
   setSelectedWarehouse(row);
 }
 
+// 翻页后优先复用当前选中 id，当前页找不到时才退回快照或第一页，保证列表驱动详情不轻易跳变。
 function syncSelectedWarehouse({ deletedId = null, preferredId = null } = {}) {
   if (warehouses.value.length === 0) {
     if (deletedId != null && deletedId === selectedWarehouseId.value) {
@@ -159,6 +160,7 @@ async function loadWarehousePage(options = {}) {
 }
 
 async function refreshWarehouseData(options = {}) {
+  // 统计卡片和分页列表并行刷新，但选中态仍由列表返回结果统一兜底。
   await Promise.all([loadWarehouseStats(), loadWarehousePage(options)]);
 }
 

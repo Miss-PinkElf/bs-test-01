@@ -18,6 +18,7 @@ const overview = ref({
   archivedPredictionCount: 0
 });
 
+// 三个分页模块各自维护独立的查询态，互不影响各自的关键词、页码和错误状态。
 function createPageSection(pageSize = 5) {
   return reactive({
     list: [],
@@ -37,6 +38,7 @@ const summarySection = createPageSection(5);
 watch(
   () => alertsSection.keyword,
   async () => {
+    // 关键词变化时先回到第一页再回源，避免旧页码落到新的更小结果集之外。
     alertsSection.pageNum = 1;
     await loadAlertsPage();
   }
@@ -126,6 +128,7 @@ async function loadSection(section, fetcher, fallbackMessage) {
     section.pageSize = page.pageSize;
     section.total = page.total;
   } catch (error) {
+    // 模块错误只留在各自卡片内部，其他分页区块仍可继续独立加载和操作。
     section.error = error?.message || fallbackMessage;
   } finally {
     section.loading = false;
