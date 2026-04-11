@@ -1,9 +1,11 @@
 package com.grain.platform.controller;
 
 import com.grain.platform.common.ApiResponse;
+import com.grain.platform.common.PageResult;
 import com.grain.platform.dto.user.RoleOptionResponse;
 import com.grain.platform.dto.user.UserCreateRequest;
 import com.grain.platform.dto.user.UserListItemResponse;
+import com.grain.platform.dto.user.UserListStatsResponse;
 import com.grain.platform.dto.user.UserPasswordResetRequest;
 import com.grain.platform.dto.user.UserUpdateRequest;
 import com.grain.platform.service.UserService;
@@ -18,6 +20,7 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import java.util.List;
@@ -40,6 +43,27 @@ public class UserController {
         log.info("调用用户列表接口");
         List<UserListItemResponse> response = userService.listUsers();
         log.info("获取用户列表成功，count={}", response.size());
+        return ApiResponse.success(response);
+    }
+
+    @GetMapping("/users/page")
+    public ApiResponse<PageResult<UserListItemResponse>> listUsersPage(
+            @RequestParam(required = false) String keyword,
+            @RequestParam(required = false) Integer pageNum,
+            @RequestParam(required = false) Integer pageSize
+    ) {
+        log.info("调用用户分页列表接口，keyword={}, pageNum={}, pageSize={}", keyword, pageNum, pageSize);
+        PageResult<UserListItemResponse> response = userService.listUsersPage(keyword, pageNum, pageSize);
+        log.info("获取用户分页列表成功，pageNum={}, pageSize={}, total={}",
+                response.pageNum(), response.pageSize(), response.total());
+        return ApiResponse.success(response);
+    }
+
+    @GetMapping("/users/stats")
+    public ApiResponse<UserListStatsResponse> userStats() {
+        log.info("调用用户统计接口");
+        UserListStatsResponse response = userService.listUserStats();
+        log.info("获取用户统计成功，totalUsers={}, activeUsers={}", response.totalUsers(), response.activeUsers());
         return ApiResponse.success(response);
     }
 

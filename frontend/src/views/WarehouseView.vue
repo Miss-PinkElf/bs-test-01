@@ -2,33 +2,34 @@
 import { Search } from "@element-plus/icons-vue";
 import { computed, onMounted, reactive, ref, watch } from "vue";
 import { ElMessage, ElMessageBox } from "element-plus";
-import { createWarehouse, deleteWarehouse, fetchWarehouses, updateWarehouse } from "../api/grain";
-import { useClientPagination } from "../composables/useClientPagination";
-import { filterRows } from "../utils/fuzzyText";
+import {
+  createWarehouse,
+  deleteWarehouse,
+  fetchWarehousePage,
+  fetchWarehouseStats,
+  updateWarehouse
+} from "../api/grain";
 
 const loading = ref(false);
+const statsLoading = ref(false);
 const dialogVisible = ref(false);
 const warehouses = ref([]);
+const warehouseStats = ref({ totalCount: 0, activeCount: 0, nonActiveCount: 0 });
 const selectedWarehouseId = ref(null);
+const selectedWarehouseSnapshot = ref(null);
 const editingWarehouseId = ref(null);
 const warehouseTableKeyword = ref("");
-
-const filteredWarehouses = computed(() =>
-  filterRows(warehouses.value, warehouseTableKeyword.value, (row) => [
-    row.warehouseCode,
-    row.warehouseName,
-    row.location,
-    String(row.capacityTon ?? ""),
-    row.managerName,
-    row.status
-  ])
-);
-
-const warehousePagination = useClientPagination(filteredWarehouses);
-
-watch(warehouseTableKeyword, () => {
-  warehousePagination.resetPagination();
+const warehousePageState = reactive({
+  pageNum: 1,
+  pageSize: 10,
+  total: 0
 });
+
+watch(warehouseTableKeyword, async () => {
+  warehousePageState.pageNum = 1;
+  await loadWarehousePage();
+});
+
 const form = reactive({
   warehouseCode: "",
   warehouseName: "",
@@ -39,28 +40,22 @@ const form = reactive({
 });
 
 const summaryCards = computed(() => [
-  { label: "仓库总数", value: warehouses.value.length, note: "当前纳入平台管理的仓库数量" },
+  { label: "仓库总数", value: warehouseStats.value.totalCount, note: "当前纳入平台管理的仓库数量" },
   {
     label: "运行中",
-    value: warehouses.value.filter((item) => item.status === "ACTIVE").length,
+    value: warehouseStats.value.activeCount,
     note: "状态为 ACTIVE 的仓库"
   },
   {
     label: "维护/关注",
-    value: warehouses.value.filter((item) => item.status !== "ACTIVE").length,
+    value: warehouseStats.value.nonActiveCount,
     note: "需重点关注的仓库"
   }
 ]);
 
 const selectedWarehouse = computed(() => {
-  if (selectedWarehouseId.value != null) {
-    const matched = warehouses.value.find((item) => item.id === selectedWarehouseId.value);
-    if (matched) {
-      return matched;
-    }
-  }
-
-  return warehouses.value[0] || null;
+  const matched = warehouses.value.find((item) => item.id === selectedWarehouseId.value);
+  return matched || selectedWarehouseSnapshot.value || null;
 });
 
 const dialogTitle = computed(() => (editingWarehouseId.value == null ? "新增仓库" : "编辑仓库"));
@@ -92,61 +87,140 @@ function openEditDialog(row) {
   dialogVisible.value = true;
 }
 
-function handleRowClick(row) {
-  selectedWarehouseId.value = row.id;
+function setSelectedWarehouse(row) {
+  selectedWarehouseId.value = row?.id ?? null;
+  selectedWarehouseSnapshot.value = row || null;
 }
 
-async function loadWarehouses() {
+function handleRowClick(row) {
+  setSelectedWarehouse(row);
+}
+
+function syncSelectedWarehouse({ deletedId = null, preferredId = null } = {}) {
+  if (warehouses.value.length === 0) {
+    if (deletedId != null && deletedId === selectedWarehouseId.value) {
+      selectedWarehouseId.value = null;
+      selectedWarehouseSnapshot.value = null;
+    }
+    if (selectedWarehouseId.value == null) {
+      selectedWarehouseSnapshot.value = null;
+    }
+    return;
+  }
+
+  const targetId = preferredId ?? selectedWarehouseId.value;
+  const matched = targetId != null ? warehouses.value.find((item) => item.id === targetId) : null;
+  if (matched) {
+    setSelectedWarehouse(matched);
+    return;
+  }
+
+  if (deletedId != null && deletedId === targetId) {
+    setSelectedWarehouse(warehouses.value[0]);
+    return;
+  }
+
+  if (targetId == null || !selectedWarehouseSnapshot.value) {
+    setSelectedWarehouse(warehouses.value[0]);
+  }
+}
+
+async function loadWarehouseStats() {
+  statsLoading.value = true;
+
+  try {
+    warehouseStats.value = await fetchWarehouseStats();
+  } catch (error) {
+    ElMessage.error(error?.message || "仓库统计加载失败");
+  } finally {
+    statsLoading.value = false;
+  }
+}
+
+async function loadWarehousePage(options = {}) {
   loading.value = true;
 
   try {
-    warehouses.value = await fetchWarehouses();
-
-    if (warehouses.value.length === 0) {
-      selectedWarehouseId.value = null;
-      return;
-    }
-
-    const stillExists = warehouses.value.some((item) => item.id === selectedWarehouseId.value);
-    if (!stillExists) {
-      selectedWarehouseId.value = warehouses.value[0].id;
-    }
+    const page = await fetchWarehousePage({
+      keyword: warehouseTableKeyword.value.trim() || undefined,
+      pageNum: warehousePageState.pageNum,
+      pageSize: warehousePageState.pageSize
+    });
+    warehouses.value = page.list;
+    warehousePageState.pageNum = page.pageNum;
+    warehousePageState.pageSize = page.pageSize;
+    warehousePageState.total = page.total;
+    syncSelectedWarehouse(options);
+  } catch (error) {
+    ElMessage.error(error?.message || "仓库列表加载失败");
   } finally {
     loading.value = false;
   }
 }
 
-async function submit() {
-  if (editingWarehouseId.value == null) {
-    await createWarehouse(form);
-    ElMessage.success("仓库已写入数据库");
-  } else {
-    await updateWarehouse(editingWarehouseId.value, form);
-    selectedWarehouseId.value = editingWarehouseId.value;
-    ElMessage.success("仓库已更新");
-  }
+async function refreshWarehouseData(options = {}) {
+  await Promise.all([loadWarehouseStats(), loadWarehousePage(options)]);
+}
 
-  dialogVisible.value = false;
-  resetForm();
-  await loadWarehouses();
+async function handleWarehousePageChange(pageNum) {
+  warehousePageState.pageNum = pageNum;
+  await loadWarehousePage();
+}
+
+async function handleWarehousePageSizeChange(pageSize) {
+  warehousePageState.pageSize = pageSize;
+  warehousePageState.pageNum = 1;
+  await loadWarehousePage();
+}
+
+async function submit() {
+  try {
+    if (editingWarehouseId.value == null) {
+      await createWarehouse(form);
+      ElMessage.success("仓库已写入数据库");
+      dialogVisible.value = false;
+      resetForm();
+      await refreshWarehouseData();
+      return;
+    }
+
+    await updateWarehouse(editingWarehouseId.value, form);
+    ElMessage.success("仓库已更新");
+    dialogVisible.value = false;
+    const preferredId = editingWarehouseId.value;
+    resetForm();
+    await refreshWarehouseData({ preferredId });
+  } catch (error) {
+    ElMessage.error(error?.message || "仓库保存失败");
+  }
 }
 
 async function handleDelete(row) {
-  await ElMessageBox.confirm(`确定删除仓库“${row.warehouseName}”吗？`, "确认删除", {
-    type: "warning"
-  });
+  try {
+    await ElMessageBox.confirm(`确定删除仓库“${row.warehouseName}”吗？`, "确认删除", {
+      type: "warning"
+    });
+  } catch {
+    return;
+  }
 
-  await deleteWarehouse(row.id);
-  ElMessage.success("仓库已删除");
-  await loadWarehouses();
+  try {
+    await deleteWarehouse(row.id);
+    ElMessage.success("仓库已删除");
+    await refreshWarehouseData({ deletedId: row.id });
+  } catch (error) {
+    ElMessage.error(error?.message || "仓库删除失败");
+  }
 }
 
-onMounted(loadWarehouses);
+onMounted(async () => {
+  await refreshWarehouseData();
+});
 </script>
 
 <template>
   <div class="page-stack">
-    <div class="metrics-grid">
+    <div class="metrics-grid" v-loading="statsLoading">
       <el-card
         v-for="item in summaryCards"
         :key="item.label"
@@ -212,7 +286,7 @@ onMounted(loadWarehouses);
       </div>
 
       <el-table
-        :data="warehousePagination.pagedItems"
+        :data="warehouses"
         stripe
         v-loading="loading"
         highlight-current-row
@@ -238,12 +312,12 @@ onMounted(loadWarehouses);
         <el-pagination
           background
           layout="total, sizes, prev, pager, next"
-          :current-page="warehousePagination.currentPage"
-          :page-size="warehousePagination.pageSize"
-          :page-sizes="warehousePagination.pageSizes"
-          :total="warehousePagination.total"
-          @current-change="warehousePagination.handleCurrentChange"
-          @size-change="warehousePagination.handleSizeChange"
+          :current-page="warehousePageState.pageNum"
+          :page-size="warehousePageState.pageSize"
+          :page-sizes="[10, 20, 50]"
+          :total="warehousePageState.total"
+          @current-change="handleWarehousePageChange"
+          @size-change="handleWarehousePageSizeChange"
         />
       </div>
     </el-card>

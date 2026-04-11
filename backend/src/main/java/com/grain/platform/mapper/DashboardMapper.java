@@ -32,6 +32,24 @@ public interface DashboardMapper {
 
     List<DashboardWarehouseHealthResponse> selectWarehouseHealthList();
 
+    long countAlertPage(@Param("keyword") String keyword);
+
+    List<DashboardAlertItemResponse> selectAlertPage(@Param("keyword") String keyword,
+                                                     @Param("offset") int offset,
+                                                     @Param("pageSize") int pageSize);
+
+    long countWarehouseHealthPage(@Param("keyword") String keyword);
+
+    List<DashboardWarehouseHealthResponse> selectWarehouseHealthPage(@Param("keyword") String keyword,
+                                                                     @Param("offset") int offset,
+                                                                     @Param("pageSize") int pageSize);
+
+    long countGrainSummaryPage(@Param("keyword") String keyword);
+
+    List<DashboardLatestSummaryResponse> selectGrainSummaryPage(@Param("keyword") String keyword,
+                                                                @Param("offset") int offset,
+                                                                @Param("pageSize") int pageSize);
+
     int countScreenWarehouses(@Param("warehouseId") Long warehouseId);
 
     int countScreenGrainSummaryCount(@Param("warehouseId") Long warehouseId,

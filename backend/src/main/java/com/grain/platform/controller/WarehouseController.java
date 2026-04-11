@@ -1,19 +1,22 @@
 package com.grain.platform.controller;
 
 import com.grain.platform.common.ApiResponse;
+import com.grain.platform.common.PageResult;
 import com.grain.platform.dto.warehouse.WarehouseDto;
+import com.grain.platform.dto.warehouse.WarehouseStatsResponse;
 import com.grain.platform.service.WarehouseService;
 import com.grain.platform.vo.common.IdVO;
 import jakarta.validation.Valid;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PutMapping;
+import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import java.util.List;
@@ -36,6 +39,28 @@ public class WarehouseController {
         log.info("调用仓库列表接口");
         List<WarehouseDto> response = warehouseService.list();
         log.info("获取仓库列表成功，count={}", response.size());
+        return ApiResponse.success(response);
+    }
+
+    @GetMapping("/page")
+    public ApiResponse<PageResult<WarehouseDto>> listPage(
+            @RequestParam(required = false) String keyword,
+            @RequestParam(required = false) Integer pageNum,
+            @RequestParam(required = false) Integer pageSize
+    ) {
+        log.info("调用仓库分页列表接口，keyword={}, pageNum={}, pageSize={}", keyword, pageNum, pageSize);
+        PageResult<WarehouseDto> response = warehouseService.listPage(keyword, pageNum, pageSize);
+        log.info("获取仓库分页列表成功，pageNum={}, pageSize={}, total={}",
+                response.pageNum(), response.pageSize(), response.total());
+        return ApiResponse.success(response);
+    }
+
+    @GetMapping("/stats")
+    public ApiResponse<WarehouseStatsResponse> stats() {
+        log.info("调用仓库统计接口");
+        WarehouseStatsResponse response = warehouseService.stats();
+        log.info("获取仓库统计成功，totalCount={}, activeCount={}, nonActiveCount={}",
+                response.totalCount(), response.activeCount(), response.nonActiveCount());
         return ApiResponse.success(response);
     }
 

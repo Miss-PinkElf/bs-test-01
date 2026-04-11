@@ -1,5 +1,6 @@
 package com.grain.platform.service;
 
+import com.grain.platform.common.PageResult;
 import com.grain.platform.dto.dashboard.DashboardAlertItemResponse;
 import com.grain.platform.dto.dashboard.DashboardLatestSummaryResponse;
 import com.grain.platform.dto.dashboard.DashboardOverviewResponse;
@@ -19,6 +20,8 @@ import java.util.stream.Stream;
 @Service
 public class DashboardService {
 
+    private static final int DEFAULT_PAGE_SIZE = 5;
+
     private final DashboardMapper dashboardMapper;
 
     public DashboardService(DashboardMapper dashboardMapper) {
@@ -26,17 +29,52 @@ public class DashboardService {
     }
 
     public DashboardOverviewResponse getOverview() {
-        return buildOverview(
+        return new DashboardOverviewResponse(
                 dashboardMapper.countWarehouses(),
                 dashboardMapper.countGrainTempSummaryCount(),
                 dashboardMapper.countLatestRealAlertCount(),
                 dashboardMapper.countLatestPredictionAlertCount(),
                 dashboardMapper.countArchivedPredictionCount(),
-                dashboardMapper.selectLatestRealAlerts(),
-                dashboardMapper.selectLatestPredictionAlerts(),
-                dashboardMapper.selectLatestGrainSummaries(),
-                dashboardMapper.selectWarehouseHealthList()
+                List.of(),
+                List.of(),
+                List.of()
         );
+    }
+
+    public PageResult<DashboardAlertItemResponse> getAlertPage(String keyword, Integer pageNum, Integer pageSize) {
+        String kw = normalizeKeyword(keyword);
+        int finalPageNum = normalizePageNum(pageNum);
+        int finalPageSize = normalizePageSize(pageSize);
+        long total = dashboardMapper.countAlertPage(kw);
+        int maxPage = total == 0 ? 1 : (int) Math.ceil((double) total / finalPageSize);
+        finalPageNum = Math.min(finalPageNum, maxPage);
+        int offset = (finalPageNum - 1) * finalPageSize;
+        List<DashboardAlertItemResponse> list = dashboardMapper.selectAlertPage(kw, offset, finalPageSize);
+        return new PageResult<>(list, finalPageNum, finalPageSize, total);
+    }
+
+    public PageResult<DashboardWarehouseHealthResponse> getWarehouseHealthPage(String keyword, Integer pageNum, Integer pageSize) {
+        String kw = normalizeKeyword(keyword);
+        int finalPageNum = normalizePageNum(pageNum);
+        int finalPageSize = normalizePageSize(pageSize);
+        long total = dashboardMapper.countWarehouseHealthPage(kw);
+        int maxPage = total == 0 ? 1 : (int) Math.ceil((double) total / finalPageSize);
+        finalPageNum = Math.min(finalPageNum, maxPage);
+        int offset = (finalPageNum - 1) * finalPageSize;
+        List<DashboardWarehouseHealthResponse> list = dashboardMapper.selectWarehouseHealthPage(kw, offset, finalPageSize);
+        return new PageResult<>(list, finalPageNum, finalPageSize, total);
+    }
+
+    public PageResult<DashboardLatestSummaryResponse> getGrainSummaryPage(String keyword, Integer pageNum, Integer pageSize) {
+        String kw = normalizeKeyword(keyword);
+        int finalPageNum = normalizePageNum(pageNum);
+        int finalPageSize = normalizePageSize(pageSize);
+        long total = dashboardMapper.countGrainSummaryPage(kw);
+        int maxPage = total == 0 ? 1 : (int) Math.ceil((double) total / finalPageSize);
+        finalPageNum = Math.min(finalPageNum, maxPage);
+        int offset = (finalPageNum - 1) * finalPageSize;
+        List<DashboardLatestSummaryResponse> list = dashboardMapper.selectGrainSummaryPage(kw, offset, finalPageSize);
+        return new PageResult<>(list, finalPageNum, finalPageSize, total);
     }
 
     public ScreenDashboardResponse getScreenDashboard(Long warehouseId,
@@ -100,5 +138,17 @@ public class DashboardService {
                 latestGrainSummaries,
                 warehouseHealthList
         );
+    }
+
+    private String normalizeKeyword(String keyword) {
+        return keyword == null || keyword.isBlank() ? null : keyword.trim();
+    }
+
+    private int normalizePageNum(Integer pageNum) {
+        return pageNum == null || pageNum < 1 ? 1 : pageNum;
+    }
+
+    private int normalizePageSize(Integer pageSize) {
+        return pageSize == null || pageSize < 1 ? DEFAULT_PAGE_SIZE : pageSize;
     }
 }

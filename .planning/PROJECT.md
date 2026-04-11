@@ -17,6 +17,7 @@
 - 数据库优先 MVP 主链（粮温导入与汇总、`prediction_task` / `prediction_result`、首页与数据页）— 详见 `.devflow/grain-platform-bootstrap/state.md`
 - 管理端 `ConsoleLayout` 视口限高与侧栏/主区独立滚动（2026-04-10）
 - 粮温原始测点记录服务端分页与多条件筛选（`pointNo` / `tempMin` / `tempMax`、`filter-options`）及 `DataView` 工具栏（2026-04-10）
+- Phase 9 管理端列表去 mock：Users / Warehouse / Prediction / Dashboard 已统一切到服务端分页，Dashboard 采用 `overview + 独立分页模块`，运行时不再依赖 `frontend/src/mock/platform.js`（Validated in Phase 9）
 
 **工程现状（摘自 `.planning/codebase/`，便于 GSD 规划）**
 
@@ -28,7 +29,6 @@
 **体验（2026-04-10，模板 v2）**
 
 - **GSD-UX-01～03**：粮温固定 XLSX 采用中文分区标题、合并单元格与填写说明；标签兼容「中文（英文键）」与旧版纯英文键；`DataView.vue` 说明与表结构一致；解析与生成均在 `GrainTempImportService` 中同源维护
-
 
 ### Active
 
@@ -63,6 +63,7 @@
 | 过程记录仍以 devflow 为主 | 用户既定工作流 | 良好 |
 | 固定模板标签双语 | 答辩可读性与程序识别兼顾；解析兼容旧模板 | 良好 |
 | 粮温汇总图表与汇总表查询态拆分 | 图表需要共享查询窗口，表格需要更细筛选；继续共用前端内存分页会串扰体验 | 已落地 |
+| 管理端列表统一收口服务端分页 | 保持数据库优先 MVP 口径一致，减少前端假状态与 mock 残留 | 已落地 |
 
 ## Evolution
 
@@ -77,5 +78,4 @@
 5. "What This Is" still accurate? → Update if drifted
 
 ---
-*Last updated: 2026-04-11 after Phase 7（环境数据页 / 粮温汇总优化）执行落地*
-
+*Last updated: 2026-04-11 after Phase 9 completion（管理端列表去 mock 与服务端分页收口）*

@@ -2,24 +2,22 @@
 import { Search } from "@element-plus/icons-vue";
 import { ElMessage, ElMessageBox } from "element-plus";
 import * as echarts from "echarts";
-import { computed, nextTick, onBeforeUnmount, onMounted, reactive, ref, watch } from "vue";
+import { nextTick, onBeforeUnmount, onMounted, reactive, ref, watch } from "vue";
 import {
   batchDeletePredictionTasks,
   deletePredictionTask,
-  fetchPredictionTasks,
+  fetchPredictionTasksPage,
   fetchWarehouses,
   predictMetric
 } from "../api/grain";
-import { useClientPagination } from "../composables/useClientPagination";
-import { filterRows } from "../utils/fuzzyText";
 
 const chartRef = ref();
-/** 预测后滚动定位，避免主视觉在视口外 */
 const chartAnchorRef = ref();
-/** 任务摘要卡片：查看摘要时滚动定位与短暂强调 */
 const taskSummaryCardRef = ref();
 
 let summaryFlashTimer = null;
+let chart;
+
 const loading = ref(false);
 const historyLoading = ref(false);
 const warehouses = ref([]);
@@ -28,6 +26,16 @@ const selectedTaskId = ref(null);
 const historyTableKeyword = ref("");
 const historyTableRef = ref();
 const historySelection = ref([]);
+const historyPageState = reactive({
+  pageNum: 1,
+  pageSize: 10,
+  total: 0
+});
+
+watch(historyTableKeyword, async () => {
+  historyPageState.pageNum = 1;
+  await loadPredictionHistoryPage();
+});
 
 const prediction = ref({
   taskNo: "",
@@ -53,6 +61,14 @@ const targetOptions = [
   { value: "LAYER_4_AVG", label: "第四层平均温度" }
 ];
 
+const form = reactive({
+  warehouseId: "",
+  targetType: "AVG_TEMP",
+  forecastDays: 7
+});
+const trainRange = ref(null);
+const trainCollapse = ref([]);
+
 function formatDateTime(value) {
   return value ? String(value).replace("T", " ") : "-";
 }
@@ -61,67 +77,8 @@ function getTargetLabel(value) {
   return targetOptions.find((item) => item.value === value)?.label || value;
 }
 
-const filteredPredictionHistory = computed(() =>
-  filterRows(predictionHistory.value, historyTableKeyword.value, (row) => {
-    const forecastStart = formatDateTime(row.forecastStartTime);
-    const forecastEnd = formatDateTime(row.forecastEndTime);
-    return [
-      row.taskNo,
-      getTargetLabel(row.targetType),
-      row.warehouseName,
-      row.riskLevel,
-      String(row.forecastDays ?? ""),
-      `${forecastStart} ~ ${forecastEnd}`,
-      formatDateTime(row.requestedAt)
-    ];
-  })
-);
-
-const historyPagination = useClientPagination(filteredPredictionHistory);
-
-const batchDeleteDisabled = computed(() => historySelection.value.length === 0);
-
-watch(historyTableKeyword, () => {
-  historyPagination.resetPagination();
-});
-
-const form = reactive({
-  warehouseId: "",
-  targetType: "AVG_TEMP",
-  forecastDays: 7
-});
-
-/** 可选训练窗口，提交时映射为 trainStartTime / trainEndTime；清空则不传（全量历史） */
-const trainRange = ref(null);
-/** 默认折叠「高级：训练数据区间」 */
-const trainCollapse = ref([]);
-
-let chart;
-
 function resolveHistoryRowClassName({ row }) {
   return row.taskId === selectedTaskId.value ? "interactive-table-row is-active-row" : "interactive-table-row";
-}
-
-async function loadWarehouses() {
-  warehouses.value = await fetchWarehouses();
-
-  if (!form.warehouseId && warehouses.value.length > 0) {
-    form.warehouseId = warehouses.value[0].id;
-  }
-}
-
-async function loadPredictionHistory() {
-  historyLoading.value = true;
-
-  try {
-    predictionHistory.value = await fetchPredictionTasks();
-  } finally {
-    historyLoading.value = false;
-  }
-}
-
-function onHistorySelectionChange(rows) {
-  historySelection.value = rows ?? [];
 }
 
 function createEmptyPrediction() {
@@ -151,64 +108,8 @@ function clearPredictionVisual() {
   }
 }
 
-async function afterDeleteRefresh(deletedIds) {
-  const idSet = new Set(deletedIds.map((id) => Number(id)));
-  const cur = selectedTaskId.value;
-  const touchedCurrent = cur != null && idSet.has(Number(cur));
-  await loadPredictionHistory();
-  await nextTick();
-  historyTableRef.value?.clearSelection?.();
-  historySelection.value = [];
-  if (touchedCurrent) {
-    clearPredictionVisual();
-  }
-}
-
-async function handleDeleteRow(row) {
-  try {
-    await ElMessageBox.confirm(
-      `确定删除任务「${row.taskNo}」吗？删除后不可恢复。`,
-      "删除确认",
-      { type: "warning", confirmButtonText: "删除", cancelButtonText: "取消" }
-    );
-  } catch {
-    return;
-  }
-
-  try {
-    await deletePredictionTask(row.taskId);
-    ElMessage.success("已删除");
-    await afterDeleteRefresh([row.taskId]);
-  } catch (err) {
-    ElMessage.error(err?.message || "删除失败");
-  }
-}
-
-async function handleBatchDelete() {
-  const rows = historySelection.value;
-  if (rows.length === 0) {
-    return;
-  }
-
-  const ids = rows.map((r) => r.taskId);
-
-  try {
-    await ElMessageBox.confirm(
-      `确定删除选中的 ${ids.length} 条预测记录吗？删除后不可恢复。`,
-      "批量删除确认",
-      { type: "warning", confirmButtonText: "删除", cancelButtonText: "取消" }
-    );
-  } catch {
-    return;
-  }
-
-  try {
-    await batchDeletePredictionTasks(ids);
-    ElMessage.success("已删除");
-    await afterDeleteRefresh(ids);
-  } catch (err) {
-    ElMessage.error(err?.message || "删除失败");
-  }
+function onHistorySelectionChange(rows) {
+  historySelection.value = rows ?? [];
 }
 
 function validateTrainRange() {
@@ -234,6 +135,48 @@ function clearTrainRange() {
   trainRange.value = null;
 }
 
+async function loadWarehouses() {
+  try {
+    warehouses.value = await fetchWarehouses();
+    if (!form.warehouseId && warehouses.value.length > 0) {
+      form.warehouseId = warehouses.value[0].id;
+    }
+  } catch (error) {
+    ElMessage.error(error?.message || "仓库列表加载失败");
+  }
+}
+
+async function loadPredictionHistoryPage() {
+  historyLoading.value = true;
+
+  try {
+    const page = await fetchPredictionTasksPage({
+      keyword: historyTableKeyword.value.trim() || undefined,
+      pageNum: historyPageState.pageNum,
+      pageSize: historyPageState.pageSize
+    });
+    predictionHistory.value = page.list;
+    historyPageState.pageNum = page.pageNum;
+    historyPageState.pageSize = page.pageSize;
+    historyPageState.total = page.total;
+  } catch (error) {
+    ElMessage.error(error?.message || "预测记录加载失败");
+  } finally {
+    historyLoading.value = false;
+  }
+}
+
+async function handleHistoryPageChange(pageNum) {
+  historyPageState.pageNum = pageNum;
+  await loadPredictionHistoryPage();
+}
+
+async function handleHistoryPageSizeChange(pageSize) {
+  historyPageState.pageSize = pageSize;
+  historyPageState.pageNum = 1;
+  await loadPredictionHistoryPage();
+}
+
 async function runPrediction() {
   if (!validateTrainRange()) {
     return;
@@ -256,13 +199,14 @@ async function runPrediction() {
 
     prediction.value = await predictMetric(payload);
     selectedTaskId.value = prediction.value.taskId;
-    await loadPredictionHistory();
+    historyPageState.pageNum = 1;
+    await loadPredictionHistoryPage();
     await nextTick();
     renderChart();
     await nextTick();
     chartAnchorRef.value?.scrollIntoView?.({ behavior: "smooth", block: "start" });
-  } catch (err) {
-    ElMessage.error(err?.message || "预测失败");
+  } catch (error) {
+    ElMessage.error(error?.message || "预测失败");
   } finally {
     loading.value = false;
   }
@@ -285,21 +229,80 @@ async function focusTaskSummary(row) {
   }
   await nextTick();
   const cardInst = taskSummaryCardRef.value;
-  const el = cardInst?.$el ?? cardInst;
-  if (!el || typeof el.scrollIntoView !== "function") {
+  const element = cardInst?.$el ?? cardInst;
+  if (!element || typeof element.scrollIntoView !== "function") {
     return;
   }
-  el.scrollIntoView({ behavior: "smooth", block: "center" });
-  el.classList.remove("prediction-summary-flash");
-  void el.offsetWidth;
-  el.classList.add("prediction-summary-flash");
+  element.scrollIntoView({ behavior: "smooth", block: "center" });
+  element.classList.remove("prediction-summary-flash");
+  void element.offsetWidth;
+  element.classList.add("prediction-summary-flash");
   if (summaryFlashTimer != null) {
     clearTimeout(summaryFlashTimer);
   }
   summaryFlashTimer = window.setTimeout(() => {
-    el.classList.remove("prediction-summary-flash");
+    element.classList.remove("prediction-summary-flash");
     summaryFlashTimer = null;
   }, 1500);
+}
+
+async function afterDeleteRefresh(deletedIds) {
+  const deletedSet = new Set(deletedIds.map((id) => Number(id)));
+  const touchedCurrent = selectedTaskId.value != null && deletedSet.has(Number(selectedTaskId.value));
+  await loadPredictionHistoryPage();
+  await nextTick();
+  historyTableRef.value?.clearSelection?.();
+  historySelection.value = [];
+  if (touchedCurrent) {
+    clearPredictionVisual();
+  }
+}
+
+async function handleDeleteRow(row) {
+  try {
+    await ElMessageBox.confirm(
+      `确定删除任务“${row.taskNo}”吗？删除后不可恢复。`,
+      "删除确认",
+      { type: "warning", confirmButtonText: "删除", cancelButtonText: "取消" }
+    );
+  } catch {
+    return;
+  }
+
+  try {
+    await deletePredictionTask(row.taskId);
+    ElMessage.success("已删除");
+    await afterDeleteRefresh([row.taskId]);
+  } catch (error) {
+    ElMessage.error(error?.message || "删除失败");
+  }
+}
+
+async function handleBatchDelete() {
+  const rows = historySelection.value;
+  if (rows.length === 0) {
+    return;
+  }
+
+  const ids = rows.map((row) => row.taskId);
+
+  try {
+    await ElMessageBox.confirm(
+      `确定删除选中的 ${ids.length} 条预测记录吗？删除后不可恢复。`,
+      "批量删除确认",
+      { type: "warning", confirmButtonText: "删除", cancelButtonText: "取消" }
+    );
+  } catch {
+    return;
+  }
+
+  try {
+    await batchDeletePredictionTasks(ids);
+    ElMessage.success("已删除");
+    await afterDeleteRefresh(ids);
+  } catch (error) {
+    ElMessage.error(error?.message || "删除失败");
+  }
 }
 
 function renderChart() {
@@ -344,14 +347,14 @@ function renderChart() {
   });
 
   requestAnimationFrame(() => {
-    const el = chartRef.value;
-    if (!el || !chart) {
+    const element = chartRef.value;
+    if (!element || !chart) {
       return;
     }
 
     chart.resize({
-      width: el.clientWidth,
-      height: el.clientHeight,
+      width: element.clientWidth,
+      height: element.clientHeight,
       animation: { duration: 0 }
     });
   });
@@ -359,7 +362,7 @@ function renderChart() {
 
 onMounted(async () => {
   await loadWarehouses();
-  await loadPredictionHistory();
+  await loadPredictionHistoryPage();
 
   if (form.warehouseId) {
     await runPrediction();
@@ -379,7 +382,6 @@ onBeforeUnmount(() => {
 <template>
   <div class="page-stack">
     <el-row :gutter="16">
-      <!-- md 起并排：仅写 xl 时 EP 默认 xl≥1920 才生效，常见笔记本会上下堆叠 -->
       <el-col :xs="24" :sm="24" :md="15" :lg="15" :xl="15">
         <el-card class="panel-card" shadow="never">
           <template #header>
@@ -508,13 +510,13 @@ onBeforeUnmount(() => {
             <div>
               <div class="panel-title">预测记录</div>
               <div class="panel-subtitle">
-                每次预测一条记录（原「预测结果列表」与「历史归档」合并为一表）。曲线仍对应当前在「操作」列切换的任务；可勾选多行后「批量删除」，或在操作列单条删除（均需确认）。
+                每次预测一条记录。曲线仍对应当前在「操作」列切换的任务；可勾选多行后「批量删除」，或在操作列单条删除（均需确认）。
               </div>
             </div>
           </template>
 
           <div class="toolbar-row table-toolbar">
-            <el-button type="danger" :disabled="batchDeleteDisabled" @click="handleBatchDelete">
+            <el-button type="danger" :disabled="historySelection.length === 0" @click="handleBatchDelete">
               批量删除
             </el-button>
             <el-input
@@ -530,7 +532,7 @@ onBeforeUnmount(() => {
             <el-table
               ref="historyTableRef"
               class="prediction-history-table"
-              :data="historyPagination.pagedItems"
+              :data="predictionHistory"
               stripe
               v-loading="historyLoading"
               :row-class-name="resolveHistoryRowClassName"
@@ -570,12 +572,12 @@ onBeforeUnmount(() => {
             <el-pagination
               background
               layout="total, sizes, prev, pager, next"
-              :current-page="historyPagination.currentPage"
-              :page-size="historyPagination.pageSize"
-              :page-sizes="historyPagination.pageSizes"
-              :total="historyPagination.total"
-              @current-change="historyPagination.handleCurrentChange"
-              @size-change="historyPagination.handleSizeChange"
+              :current-page="historyPageState.pageNum"
+              :page-size="historyPageState.pageSize"
+              :page-sizes="[10, 20, 50]"
+              :total="historyPageState.total"
+              @current-change="handleHistoryPageChange"
+              @size-change="handleHistoryPageSizeChange"
             />
           </div>
         </el-card>

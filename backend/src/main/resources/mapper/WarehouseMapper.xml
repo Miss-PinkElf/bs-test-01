@@ -25,6 +25,34 @@
         order by id asc
     </select>
 
+    <select id="countPage" resultType="long">
+        select count(*)
+        from warehouse
+        <if test="keyword != null and keyword != ''">
+            where warehouse_code like concat('%', #{keyword}, '%')
+               or warehouse_name like concat('%', #{keyword}, '%')
+               or ifnull(location, '') like concat('%', #{keyword}, '%')
+               or ifnull(cast(capacity_ton as char), '') like concat('%', #{keyword}, '%')
+               or ifnull(manager_name, '') like concat('%', #{keyword}, '%')
+               or ifnull(status, '') like concat('%', #{keyword}, '%')
+        </if>
+    </select>
+
+    <select id="selectPage" resultMap="warehouseResultMap">
+        select *
+        from warehouse
+        <if test="keyword != null and keyword != ''">
+            where warehouse_code like concat('%', #{keyword}, '%')
+               or warehouse_name like concat('%', #{keyword}, '%')
+               or ifnull(location, '') like concat('%', #{keyword}, '%')
+               or ifnull(cast(capacity_ton as char), '') like concat('%', #{keyword}, '%')
+               or ifnull(manager_name, '') like concat('%', #{keyword}, '%')
+               or ifnull(status, '') like concat('%', #{keyword}, '%')
+        </if>
+        order by id asc
+        limit #{offset}, #{pageSize}
+    </select>
+
     <select id="selectOptions" resultMap="warehouseResultMap">
         select id,
                warehouse_code,
@@ -48,6 +76,18 @@
         from warehouse
         where id = #{id}
         limit 1
+    </select>
+
+    <select id="countActive" resultType="long">
+        select count(*)
+        from warehouse
+        where status = 'ACTIVE'
+    </select>
+
+    <select id="countNonActive" resultType="long">
+        select count(*)
+        from warehouse
+        where status != 'ACTIVE'
     </select>
 
     <insert id="insert" parameterType="com.grain.platform.entity.Warehouse" useGeneratedKeys="true" keyProperty="id">

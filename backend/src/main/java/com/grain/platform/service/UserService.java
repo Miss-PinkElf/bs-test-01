@@ -1,8 +1,10 @@
 package com.grain.platform.service;
 
+import com.grain.platform.common.PageResult;
 import com.grain.platform.dto.user.RoleOptionResponse;
 import com.grain.platform.dto.user.UserCreateRequest;
 import com.grain.platform.dto.user.UserListItemResponse;
+import com.grain.platform.dto.user.UserListStatsResponse;
 import com.grain.platform.dto.user.UserPasswordResetRequest;
 import com.grain.platform.dto.user.UserUpdateRequest;
 import com.grain.platform.entity.SysRole;
@@ -40,6 +42,22 @@ public class UserService {
 
     public List<UserListItemResponse> listUsers() {
         return userMapper.selectAllUsers();
+    }
+
+    public PageResult<UserListItemResponse> listUsersPage(String keyword, Integer pageNum, Integer pageSize) {
+        String kw = normalizeKeyword(keyword);
+        int finalPageNum = normalizePageNum(pageNum);
+        int finalPageSize = normalizePageSize(pageSize);
+        long total = userMapper.countUserPage(kw);
+        int maxPage = total == 0 ? 1 : (int) Math.ceil((double) total / finalPageSize);
+        finalPageNum = Math.min(finalPageNum, maxPage);
+        int offset = (finalPageNum - 1) * finalPageSize;
+        List<UserListItemResponse> list = userMapper.selectUserPage(kw, offset, finalPageSize);
+        return new PageResult<>(list, finalPageNum, finalPageSize, total);
+    }
+
+    public UserListStatsResponse listUserStats() {
+        return userMapper.selectUserStats();
     }
 
     public List<RoleOptionResponse> listRoleOptions() {
@@ -133,8 +151,20 @@ public class UserService {
         return StringUtils.hasText(phone) ? phone.trim() : null;
     }
 
+    private String normalizeKeyword(String keyword) {
+        return StringUtils.hasText(keyword) ? keyword.trim() : null;
+    }
+
     private Long normalizeWarehouseId(Long warehouseId) {
         return warehouseId == null || warehouseId <= 0 ? null : warehouseId;
+    }
+
+    private int normalizePageNum(Integer pageNum) {
+        return pageNum == null || pageNum < 1 ? 1 : pageNum;
+    }
+
+    private int normalizePageSize(Integer pageSize) {
+        return pageSize == null || pageSize < 1 ? 10 : pageSize;
     }
 
     private String normalizeStatus(String status) {

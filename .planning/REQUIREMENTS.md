@@ -67,6 +67,15 @@
 - [x] **SCREEN-08-01**: `/screen` 继续沿用现有公开路由与 `BigScreenView.vue`，但首屏必须先渲染标题、操作区与模块骨架；任一图表或明细模块失败时不得整页白屏；页面不再以 `mockScreenMetrics` / `mockScreenAlerts` 作为常态展示源，图表初始化必须在容器可用后执行（2026-04-11：`/api/dashboard/screen` + `BigScreenView.vue` 首屏壳层 + 图表生命周期安全初始化）
 - [x] **SCREEN-08-02**: 页面结构固定为 **上总览 / 中图表 / 下明细**；中部至少有 **粮温趋势、预警趋势、预测趋势、仓库对比** 4 个稳定信息位，且粮温趋势为主图；底部必须展示 **最新预警、最近预测任务、重点仓库、说明**（2026-04-11：`BigScreenView.vue` 三段式布局与四图四明细完成）
 - [x] **SCREEN-08-03**: 大屏遵循“能真实就真实”：顶部指标、重点仓库、最新预警、最近预测任务与图表序列优先来自真实接口；新增或扩展的大屏统计接口需支持共享 **仓库 + 时间范围** 查询，并保持“后台面板增强版”信息风格而不是回退为说明页（2026-04-11：screen 聚合接口 + 共享筛选 + 人工验收通过）
+
+## Phase 9 Requirements（管理端列表去 mock 与分页收口）
+
+### Admin list / dashboard pagination
+
+- [x] **MOCK-09-01**: `UsersView.vue`、`WarehouseView.vue`、`PredictionView.vue` 对应后端提供真实分页接口与 keyword 查询，页面切页与关键字变化均回源，不再对全量数组执行本地分页主链（2026-04-11：`/api/users/page`、`/api/warehouses/page`、`/api/predictions/tasks/page`）
+- [x] **MOCK-09-02**: `PredictionView.vue` 分页接口继续返回完整 `PredictionTaskResponse` 与 `resultList`，且查看摘要、切换任务、单删、批量删交互不回退（2026-04-11：`PredictionService.listTaskPage()` + `PredictionView.vue` 服务端分页迁移）
+- [x] **MOCK-09-03**: `DashboardView.vue` 改为 `overview + 近期预警分页 + 仓库运行健康度分页 + 最新粮温汇总分页`，三块模块各自维护 `keyword / pageNum / pageSize / total / loading / error`（2026-04-11：`/api/dashboard/alerts`、`/warehouse-health`、`/grain-summaries` + `DashboardView.vue`）
+- [x] **MOCK-09-04**: `frontend/src/mock/platform.js` 删除，目标页面运行时不再以本地 mock 数据兜底，接口失败时显式显示模块错误态（2026-04-11：mock 文件删除，Dashboard / Users / Warehouse / Prediction 页清理完成）
 ## v2 Requirements
 
 - [ ] **DATA-05**: 验收脚本 `run-acceptance-smoke.ps1` 增加针对新版模板版式或关键标签的断言（可选）
@@ -105,6 +114,10 @@
 | SCREEN-08-01 | Phase 8 | Done |
 | SCREEN-08-02 | Phase 8 | Done |
 | SCREEN-08-03 | Phase 8 | Done |
+| MOCK-09-01 | Phase 9 | Done |
+| MOCK-09-02 | Phase 9 | Done |
+| MOCK-09-03 | Phase 9 | Done |
+| MOCK-09-04 | Phase 9 | Done |
 
 **Coverage:**
 
@@ -116,11 +129,14 @@
 - Phase 6 / overflow-x 收口：3 条（OVERFLOW-06-*）
 - Phase 7 / 粮温汇总优化：3 条（ENV-07-*）
 - Phase 8 / 展示大屏优化：3 条（SCREEN-08-*）
-- Mapped to phases: 23
+- Phase 9 / 管理端列表去 mock：4 条（MOCK-09-*）
+- Mapped to phases: 27
 - Unmapped: 0
 
 ---
-*Last updated: 2026-04-11 Phase 5 DEL-05-* 与 Phase 8 SCREEN-08-* 已完成（删除能力与展示大屏均已收口）*
+*Last updated: 2026-04-11 Phase 9 MOCK-09-* 已完成，Phase 5 DEL-05-* 与 Phase 8 SCREEN-08-* 已完成*
+
+
 
 
 

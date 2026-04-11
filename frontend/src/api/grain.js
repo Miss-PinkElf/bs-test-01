@@ -40,7 +40,7 @@ function normalizeAlert(item) {
       sourceType: "REAL",
       warehouseName: "-",
       eventTime: "",
-      description: "当前演示后端仅返回简化预警文本，正式版会升级为结构化预警对象。"
+      description: "当前接口返回的是简化预警文本，页面按兼容模式展示。"
     };
   }
 
@@ -266,6 +266,48 @@ export async function fetchOverview() {
   return normalizeOverview(raw);
 }
 
+export async function fetchDashboardAlertsPage(params = {}) {
+  const raw = await request({
+    url: "/api/dashboard/alerts",
+    method: "get",
+    params: {
+      keyword: params.keyword || undefined,
+      pageNum: params.pageNum || 1,
+      pageSize: params.pageSize || 5
+    }
+  });
+
+  return normalizePageResult(raw, normalizeAlert);
+}
+
+export async function fetchDashboardWarehouseHealthPage(params = {}) {
+  const raw = await request({
+    url: "/api/dashboard/warehouse-health",
+    method: "get",
+    params: {
+      keyword: params.keyword || undefined,
+      pageNum: params.pageNum || 1,
+      pageSize: params.pageSize || 5
+    }
+  });
+
+  return normalizePageResult(raw, normalizeDashboardWarehouseHealth);
+}
+
+export async function fetchDashboardGrainSummariesPage(params = {}) {
+  const raw = await request({
+    url: "/api/dashboard/grain-summaries",
+    method: "get",
+    params: {
+      keyword: params.keyword || undefined,
+      pageNum: params.pageNum || 1,
+      pageSize: params.pageSize || 5
+    }
+  });
+
+  return normalizePageResult(raw, normalizeDashboardSummary);
+}
+
 export async function fetchScreenDashboard(params = {}) {
   const raw = await request({
     url: "/api/dashboard/screen",
@@ -298,6 +340,29 @@ export async function fetchWarehouses() {
   });
 
   return Array.isArray(raw) ? raw.map(normalizeWarehouse) : [];
+}
+
+export async function fetchWarehousePage(params = {}) {
+  const raw = await request({
+    url: "/api/warehouses/page",
+    method: "get",
+    params: {
+      keyword: params.keyword || undefined,
+      pageNum: params.pageNum || 1,
+      pageSize: params.pageSize || 10
+    }
+  });
+
+  return normalizePageResult(raw, normalizeWarehouse);
+}
+
+export async function fetchWarehouseStats() {
+  const raw = await request({
+    url: "/api/warehouses/stats",
+    method: "get"
+  });
+
+  return normalizeWarehouseStats(raw);
 }
 
 export async function createWarehouse(payload) {
@@ -634,6 +699,20 @@ export async function fetchPredictionTasks() {
   return Array.isArray(raw) ? raw.map(normalizePredictionTask) : [];
 }
 
+export async function fetchPredictionTasksPage(params = {}) {
+  const raw = await request({
+    url: "/api/predictions/tasks/page",
+    method: "get",
+    params: {
+      keyword: params.keyword || undefined,
+      pageNum: params.pageNum || 1,
+      pageSize: params.pageSize || 10
+    }
+  });
+
+  return normalizePageResult(raw, normalizePredictionTask);
+}
+
 export async function deletePredictionTask(taskId) {
   await request({
     url: `/api/predictions/tasks/${taskId}`,
@@ -676,6 +755,21 @@ function normalizeRoleOption(item) {
   };
 }
 
+function normalizeUserStats(raw) {
+  return {
+    totalUsers: raw?.totalUsers ?? 0,
+    activeUsers: raw?.activeUsers ?? 0
+  };
+}
+
+function normalizeWarehouseStats(raw) {
+  return {
+    totalCount: raw?.totalCount ?? 0,
+    activeCount: raw?.activeCount ?? 0,
+    nonActiveCount: raw?.nonActiveCount ?? 0
+  };
+}
+
 export async function fetchUsers() {
   const raw = await request({
     url: "/api/users",
@@ -683,6 +777,29 @@ export async function fetchUsers() {
   });
 
   return Array.isArray(raw) ? raw.map(normalizeUser) : [];
+}
+
+export async function fetchUsersPage(params = {}) {
+  const raw = await request({
+    url: "/api/users/page",
+    method: "get",
+    params: {
+      keyword: params.keyword || undefined,
+      pageNum: params.pageNum || 1,
+      pageSize: params.pageSize || 10
+    }
+  });
+
+  return normalizePageResult(raw, normalizeUser);
+}
+
+export async function fetchUserStats() {
+  const raw = await request({
+    url: "/api/users/stats",
+    method: "get"
+  });
+
+  return normalizeUserStats(raw);
 }
 
 export async function fetchRoleOptions() {
@@ -761,6 +878,15 @@ export async function fetchMetricOptions() {
 
   return Array.isArray(raw) ? raw.map(normalizeMetricOption) : [];
 }
+
+
+
+
+
+
+
+
+
 
 
 

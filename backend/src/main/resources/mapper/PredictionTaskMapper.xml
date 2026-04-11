@@ -97,6 +97,40 @@
         order by requested_at desc, id desc
     </select>
 
+    <select id="countPage" resultType="long">
+        select count(*)
+        from prediction_task pt
+                 left join warehouse w on w.id = pt.warehouse_id
+        <if test="keyword != null and keyword != ''">
+            where pt.task_no like concat('%', #{keyword}, '%')
+               or ifnull(w.warehouse_name, '') like concat('%', #{keyword}, '%')
+               or ifnull(pt.risk_level, '') like concat('%', #{keyword}, '%')
+               or ifnull(cast(pt.forecast_days as char), '') like concat('%', #{keyword}, '%')
+               or ifnull(date_format(pt.forecast_start_time, '%Y-%m-%d %H:%i:%s'), '') like concat('%', #{keyword}, '%')
+               or ifnull(date_format(pt.forecast_end_time, '%Y-%m-%d %H:%i:%s'), '') like concat('%', #{keyword}, '%')
+               or ifnull(date_format(pt.requested_at, '%Y-%m-%d %H:%i:%s'), '') like concat('%', #{keyword}, '%')
+               or ifnull(pt.target_type, '') like concat('%', #{keyword}, '%')
+        </if>
+    </select>
+
+    <select id="selectPage" resultMap="predictionTaskMap">
+        select pt.*
+        from prediction_task pt
+                 left join warehouse w on w.id = pt.warehouse_id
+        <if test="keyword != null and keyword != ''">
+            where pt.task_no like concat('%', #{keyword}, '%')
+               or ifnull(w.warehouse_name, '') like concat('%', #{keyword}, '%')
+               or ifnull(pt.risk_level, '') like concat('%', #{keyword}, '%')
+               or ifnull(cast(pt.forecast_days as char), '') like concat('%', #{keyword}, '%')
+               or ifnull(date_format(pt.forecast_start_time, '%Y-%m-%d %H:%i:%s'), '') like concat('%', #{keyword}, '%')
+               or ifnull(date_format(pt.forecast_end_time, '%Y-%m-%d %H:%i:%s'), '') like concat('%', #{keyword}, '%')
+               or ifnull(date_format(pt.requested_at, '%Y-%m-%d %H:%i:%s'), '') like concat('%', #{keyword}, '%')
+               or ifnull(pt.target_type, '') like concat('%', #{keyword}, '%')
+        </if>
+        order by pt.requested_at desc, pt.id desc
+        limit #{offset}, #{pageSize}
+    </select>
+
     <select id="selectById" resultMap="predictionTaskMap">
         select *
         from prediction_task

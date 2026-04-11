@@ -1,6 +1,7 @@
 package com.grain.platform.controller;
 
 import com.grain.platform.common.ApiResponse;
+import com.grain.platform.common.PageResult;
 import com.grain.platform.dto.prediction.PredictionBatchDeleteRequest;
 import com.grain.platform.dto.prediction.PredictionRequest;
 import com.grain.platform.dto.prediction.PredictionTaskResponse;
@@ -14,6 +15,7 @@ import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import java.util.List;
@@ -46,6 +48,19 @@ public class PredictionController {
         log.info("调用预测任务列表接口");
         List<PredictionTaskResponse> response = predictionService.listTasks();
         log.info("获取预测任务列表成功，count={}", response.size());
+        return ApiResponse.success(response);
+    }
+
+    @GetMapping("/tasks/page")
+    public ApiResponse<PageResult<PredictionTaskResponse>> listTaskPage(
+            @RequestParam(required = false) String keyword,
+            @RequestParam(required = false) Integer pageNum,
+            @RequestParam(required = false) Integer pageSize
+    ) {
+        log.info("调用预测任务分页列表接口，keyword={}, pageNum={}, pageSize={}", keyword, pageNum, pageSize);
+        PageResult<PredictionTaskResponse> response = predictionService.listTaskPage(keyword, pageNum, pageSize);
+        log.info("获取预测任务分页列表成功，pageNum={}, pageSize={}, total={}",
+                response.pageNum(), response.pageSize(), response.total());
         return ApiResponse.success(response);
     }
 

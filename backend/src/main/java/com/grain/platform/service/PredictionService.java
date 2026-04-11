@@ -1,5 +1,6 @@
 package com.grain.platform.service;
 
+import com.grain.platform.common.PageResult;
 import com.grain.platform.dto.prediction.PredictionPointDto;
 import com.grain.platform.dto.prediction.PredictionRequest;
 import com.grain.platform.dto.prediction.PredictionResultItemDto;
@@ -114,6 +115,26 @@ public class PredictionService {
                         predictionResultMapper.selectByTaskId(task.getId())
                 ))
                 .toList();
+    }
+
+    public PageResult<PredictionTaskResponse> listTaskPage(String keyword, Integer pageNum, Integer pageSize) {
+        String kw = (keyword == null || keyword.isBlank()) ? null : keyword.trim();
+        int finalPageNum = pageNum == null || pageNum < 1 ? 1 : pageNum;
+        int finalPageSize = pageSize == null || pageSize < 1 ? 10 : pageSize;
+        long total = predictionTaskMapper.countPage(kw);
+        int maxPage = total == 0 ? 1 : (int) Math.ceil((double) total / finalPageSize);
+        finalPageNum = Math.min(finalPageNum, maxPage);
+        int offset = (finalPageNum - 1) * finalPageSize;
+        List<PredictionTaskResponse> list = predictionTaskMapper.selectPage(kw, offset, finalPageSize).stream()
+                .map(task -> toResponse(
+                        task,
+                        requireWarehouse(task.getWarehouseId()),
+                        metricService.getMetric(task.getMetricCode()),
+                        loadActualSeries(task),
+                        predictionResultMapper.selectByTaskId(task.getId())
+                ))
+                .toList();
+        return new PageResult<>(list, finalPageNum, finalPageSize, total);
     }
 
     public PredictionTaskResponse getTask(Long taskId) {
@@ -348,3 +369,5 @@ public class PredictionService {
     private record WarningInfo(String level, boolean flag, String message) {
     }
 }
+
+

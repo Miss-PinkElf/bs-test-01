@@ -1,7 +1,11 @@
 package com.grain.platform.controller;
 
 import com.grain.platform.common.ApiResponse;
+import com.grain.platform.common.PageResult;
+import com.grain.platform.dto.dashboard.DashboardAlertItemResponse;
+import com.grain.platform.dto.dashboard.DashboardLatestSummaryResponse;
 import com.grain.platform.dto.dashboard.DashboardOverviewResponse;
+import com.grain.platform.dto.dashboard.DashboardWarehouseHealthResponse;
 import com.grain.platform.dto.dashboard.ScreenDashboardResponse;
 import com.grain.platform.service.DashboardService;
 import org.slf4j.Logger;
@@ -34,6 +38,36 @@ public class DashboardController {
         log.info("获取仪表盘概览成功，warehouseCount={}, realAlertCount={}, predictionAlertCount={}",
                 response.warehouseCount(), response.realAlertCount(), response.predictionAlertCount());
         return ApiResponse.success(response);
+    }
+
+    @GetMapping("/alerts")
+    public ApiResponse<PageResult<DashboardAlertItemResponse>> alerts(
+            @RequestParam(required = false) String keyword,
+            @RequestParam(required = false) Integer pageNum,
+            @RequestParam(required = false) Integer pageSize
+    ) {
+        log.info("调用仪表盘预警分页接口，keyword={}, pageNum={}, pageSize={}", keyword, pageNum, pageSize);
+        return ApiResponse.success(dashboardService.getAlertPage(keyword, pageNum, pageSize));
+    }
+
+    @GetMapping("/warehouse-health")
+    public ApiResponse<PageResult<DashboardWarehouseHealthResponse>> warehouseHealth(
+            @RequestParam(required = false) String keyword,
+            @RequestParam(required = false) Integer pageNum,
+            @RequestParam(required = false) Integer pageSize
+    ) {
+        log.info("调用仪表盘仓库健康度分页接口，keyword={}, pageNum={}, pageSize={}", keyword, pageNum, pageSize);
+        return ApiResponse.success(dashboardService.getWarehouseHealthPage(keyword, pageNum, pageSize));
+    }
+
+    @GetMapping("/grain-summaries")
+    public ApiResponse<PageResult<DashboardLatestSummaryResponse>> grainSummaries(
+            @RequestParam(required = false) String keyword,
+            @RequestParam(required = false) Integer pageNum,
+            @RequestParam(required = false) Integer pageSize
+    ) {
+        log.info("调用仪表盘粮温汇总分页接口，keyword={}, pageNum={}, pageSize={}", keyword, pageNum, pageSize);
+        return ApiResponse.success(dashboardService.getGrainSummaryPage(keyword, pageNum, pageSize));
     }
 
     @GetMapping("/screen")

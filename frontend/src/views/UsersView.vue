@@ -6,44 +6,39 @@ import {
   createUser,
   deleteUser,
   fetchRoleOptions,
-  fetchUsers,
+  fetchUserStats,
+  fetchUsersPage,
   fetchWarehouses,
   resetUserPassword,
   updateUser
 } from "../api/grain";
-import { useClientPagination } from "../composables/useClientPagination";
 import { filterRows } from "../utils/fuzzyText";
 
 const loading = ref(false);
+const metaLoading = ref(false);
 const dialogVisible = ref(false);
 const passwordDialogVisible = ref(false);
 const users = ref([]);
 const roles = ref([]);
 const warehouses = ref([]);
+const userStats = ref({ totalUsers: 0, activeUsers: 0 });
 const editingUserId = ref(null);
 const passwordTarget = ref(null);
 const userTableKeyword = ref("");
 const roleTableKeyword = ref("");
-
-const filteredUsers = computed(() =>
-  filterRows(users.value, userTableKeyword.value, (row) => [
-    row.username,
-    row.displayName,
-    row.phone,
-    ...(row.roleNames || []),
-    row.warehouseName,
-    formatStatus(row.status)
-  ])
-);
+const userPageState = reactive({
+  pageNum: 1,
+  pageSize: 10,
+  total: 0
+});
 
 const filteredRoles = computed(() =>
   filterRows(roles.value, roleTableKeyword.value, (row) => [row.roleName, row.roleCode, row.roleDesc])
 );
 
-const userPagination = useClientPagination(filteredUsers);
-
-watch(userTableKeyword, () => {
-  userPagination.resetPagination();
+watch(userTableKeyword, async () => {
+  userPageState.pageNum = 1;
+  await loadUsersPage();
 });
 
 const userForm = reactive({
@@ -61,12 +56,12 @@ const passwordForm = reactive({
 });
 
 const summaryCards = computed(() => [
-  { key: "users", label: "系统用户", value: users.value.length, note: "当前数据库中的用户账号数量" },
+  { key: "users", label: "系统用户", value: userStats.value.totalUsers, note: "当前数据库中的用户账号数量" },
   { key: "roles", label: "角色类型", value: roles.value.length, note: "当前系统已配置的角色种类" },
   {
     key: "active",
     label: "启用账号",
-    value: users.value.filter((item) => item.status === "ACTIVE").length,
+    value: userStats.value.activeUsers,
     note: "当前可登录并参与业务流程的账号数量"
   }
 ]);
@@ -165,21 +160,58 @@ function buildUserPayload() {
   };
 }
 
+async function loadMeta() {
+  metaLoading.value = true;
+
+  try {
+    const [roleList, warehouseList, stats] = await Promise.all([
+      fetchRoleOptions(),
+      fetchWarehouses(),
+      fetchUserStats()
+    ]);
+    roles.value = roleList;
+    warehouses.value = warehouseList;
+    userStats.value = stats;
+  } catch (error) {
+    ElMessage.error(error?.message || "用户基础数据加载失败");
+  } finally {
+    metaLoading.value = false;
+  }
+}
+
 async function loadUsersPage() {
   loading.value = true;
 
   try {
-    const [userList, roleList, warehouseList] = await Promise.all([
-      fetchUsers(),
-      fetchRoleOptions(),
-      fetchWarehouses()
-    ]);
-    users.value = userList;
-    roles.value = roleList;
-    warehouses.value = warehouseList;
+    const page = await fetchUsersPage({
+      keyword: userTableKeyword.value.trim() || undefined,
+      pageNum: userPageState.pageNum,
+      pageSize: userPageState.pageSize
+    });
+    users.value = page.list;
+    userPageState.pageNum = page.pageNum;
+    userPageState.pageSize = page.pageSize;
+    userPageState.total = page.total;
+  } catch (error) {
+    ElMessage.error(error?.message || "用户列表加载失败");
   } finally {
     loading.value = false;
   }
+}
+
+async function refreshUsersAndStats() {
+  await Promise.all([loadUsersPage(), loadMeta()]);
+}
+
+async function handleUserPageChange(pageNum) {
+  userPageState.pageNum = pageNum;
+  await loadUsersPage();
+}
+
+async function handleUserPageSizeChange(pageSize) {
+  userPageState.pageSize = pageSize;
+  userPageState.pageNum = 1;
+  await loadUsersPage();
 }
 
 async function submitUser() {
@@ -189,17 +221,21 @@ async function submitUser() {
 
   const payload = buildUserPayload();
 
-  if (editingUserId.value == null) {
-    await createUser(payload);
-    ElMessage.success("用户已写入数据库");
-  } else {
-    await updateUser(editingUserId.value, payload);
-    ElMessage.success("用户已更新");
-  }
+  try {
+    if (editingUserId.value == null) {
+      await createUser(payload);
+      ElMessage.success("用户已写入数据库");
+    } else {
+      await updateUser(editingUserId.value, payload);
+      ElMessage.success("用户已更新");
+    }
 
-  dialogVisible.value = false;
-  resetUserForm();
-  await loadUsersPage();
+    dialogVisible.value = false;
+    resetUserForm();
+    await refreshUsersAndStats();
+  } catch (error) {
+    ElMessage.error(error?.message || "用户保存失败");
+  }
 }
 
 async function submitPasswordReset() {
@@ -208,10 +244,14 @@ async function submitPasswordReset() {
     return;
   }
 
-  await resetUserPassword(passwordTarget.value.id, passwordForm.newPassword.trim());
-  ElMessage.success("密码已重置");
-  passwordDialogVisible.value = false;
-  resetPasswordForm();
+  try {
+    await resetUserPassword(passwordTarget.value.id, passwordForm.newPassword.trim());
+    ElMessage.success("密码已重置");
+    passwordDialogVisible.value = false;
+    resetPasswordForm();
+  } catch (error) {
+    ElMessage.error(error?.message || "密码重置失败");
+  }
 }
 
 async function handleDelete(row) {
@@ -219,16 +259,22 @@ async function handleDelete(row) {
     await ElMessageBox.confirm(`确定删除用户“${row.displayName}”吗？`, "确认删除", {
       type: "warning"
     });
-  } catch (error) {
+  } catch {
     return;
   }
 
-  await deleteUser(row.id);
-  ElMessage.success("用户已删除");
-  await loadUsersPage();
+  try {
+    await deleteUser(row.id);
+    ElMessage.success("用户已删除");
+    await refreshUsersAndStats();
+  } catch (error) {
+    ElMessage.error(error?.message || "用户删除失败");
+  }
 }
 
-onMounted(loadUsersPage);
+onMounted(async () => {
+  await Promise.all([loadMeta(), loadUsersPage()]);
+});
 </script>
 
 <template>
@@ -266,7 +312,7 @@ onMounted(loadUsersPage);
             />
           </div>
 
-          <el-table :data="userPagination.pagedItems" stripe v-loading="loading">
+          <el-table :data="users" stripe v-loading="loading">
             <el-table-column prop="username" label="用户名" min-width="120" />
             <el-table-column prop="displayName" label="姓名" min-width="120" />
             <el-table-column prop="phone" label="手机号" min-width="140" />
@@ -297,12 +343,12 @@ onMounted(loadUsersPage);
             <el-pagination
               background
               layout="total, sizes, prev, pager, next"
-              :current-page="userPagination.currentPage"
-              :page-size="userPagination.pageSize"
-              :page-sizes="userPagination.pageSizes"
-              :total="userPagination.total"
-              @current-change="userPagination.handleCurrentChange"
-              @size-change="userPagination.handleSizeChange"
+              :current-page="userPageState.pageNum"
+              :page-size="userPageState.pageSize"
+              :page-sizes="[10, 20, 50]"
+              :total="userPageState.total"
+              @current-change="handleUserPageChange"
+              @size-change="handleUserPageSizeChange"
             />
           </div>
         </el-card>
@@ -326,7 +372,7 @@ onMounted(loadUsersPage);
             />
           </div>
 
-          <el-table :data="filteredRoles" stripe border v-loading="loading">
+          <el-table :data="filteredRoles" stripe border v-loading="metaLoading">
             <el-table-column prop="roleName" label="角色名称" min-width="110" />
             <el-table-column label="角色编码" min-width="120">
               <template #default="{ row }">

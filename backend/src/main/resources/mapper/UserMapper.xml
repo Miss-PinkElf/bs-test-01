@@ -59,13 +59,91 @@
                coalesce(group_concat(distinct r.role_name order by r.id separator ','), '') as role_names,
                w.warehouse_name,
                u.status,
-               u.last_login_at
+               date_format(u.last_login_at, '%Y-%m-%d %H:%i:%s') as last_login_at
         from sys_user u
                  left join sys_user_role ur on u.id = ur.user_id
                  left join sys_role r on ur.role_id = r.id
                  left join warehouse w on u.warehouse_id = w.id
         group by u.id, u.username, u.display_name, u.phone, u.warehouse_id, w.warehouse_name, u.status, u.last_login_at
         order by u.id asc
+    </select>
+
+    <select id="countUserPage" resultType="long">
+        select count(*)
+        from (
+            select u.id,
+                   u.username,
+                   u.display_name,
+                   u.phone,
+                   coalesce(group_concat(distinct r.role_code order by r.id separator ','), '') as role_codes,
+                   coalesce(group_concat(distinct r.role_name order by r.id separator ','), '') as role_names,
+                   w.warehouse_name,
+                   u.status,
+                   u.last_login_at
+            from sys_user u
+                     left join sys_user_role ur on u.id = ur.user_id
+                     left join sys_role r on ur.role_id = r.id
+                     left join warehouse w on u.warehouse_id = w.id
+            group by u.id, u.username, u.display_name, u.phone, w.warehouse_name, u.status, u.last_login_at
+        ) data
+        <if test="keyword != null and keyword != ''">
+            where data.username like concat('%', #{keyword}, '%')
+               or data.display_name like concat('%', #{keyword}, '%')
+               or ifnull(data.phone, '') like concat('%', #{keyword}, '%')
+               or ifnull(data.role_codes, '') like concat('%', #{keyword}, '%')
+               or ifnull(data.role_names, '') like concat('%', #{keyword}, '%')
+               or ifnull(data.warehouse_name, '') like concat('%', #{keyword}, '%')
+               or ifnull(data.status, '') like concat('%', #{keyword}, '%')
+               or ifnull(date_format(data.last_login_at, '%Y-%m-%d %H:%i:%s'), '') like concat('%', #{keyword}, '%')
+        </if>
+    </select>
+
+    <select id="selectUserPage" resultType="com.grain.platform.dto.user.UserListItemResponse">
+        select data.id,
+               data.username,
+               data.display_name as displayName,
+               data.phone,
+               data.warehouse_id as warehouseId,
+               data.role_codes as roleCodes,
+               data.role_names as roleNames,
+               data.warehouse_name as warehouseName,
+               data.status,
+               date_format(data.last_login_at, '%Y-%m-%d %H:%i:%s') as lastLoginAt
+        from (
+            select u.id,
+                   u.username,
+                   u.display_name,
+                   u.phone,
+                   u.warehouse_id,
+                   coalesce(group_concat(distinct r.role_code order by r.id separator ','), '') as role_codes,
+                   coalesce(group_concat(distinct r.role_name order by r.id separator ','), '') as role_names,
+                   w.warehouse_name,
+                   u.status,
+                   u.last_login_at
+            from sys_user u
+                     left join sys_user_role ur on u.id = ur.user_id
+                     left join sys_role r on ur.role_id = r.id
+                     left join warehouse w on u.warehouse_id = w.id
+            group by u.id, u.username, u.display_name, u.phone, u.warehouse_id, w.warehouse_name, u.status, u.last_login_at
+        ) data
+        <if test="keyword != null and keyword != ''">
+            where data.username like concat('%', #{keyword}, '%')
+               or data.display_name like concat('%', #{keyword}, '%')
+               or ifnull(data.phone, '') like concat('%', #{keyword}, '%')
+               or ifnull(data.role_codes, '') like concat('%', #{keyword}, '%')
+               or ifnull(data.role_names, '') like concat('%', #{keyword}, '%')
+               or ifnull(data.warehouse_name, '') like concat('%', #{keyword}, '%')
+               or ifnull(data.status, '') like concat('%', #{keyword}, '%')
+               or ifnull(date_format(data.last_login_at, '%Y-%m-%d %H:%i:%s'), '') like concat('%', #{keyword}, '%')
+        </if>
+        order by data.id asc
+        limit #{offset}, #{pageSize}
+    </select>
+
+    <select id="selectUserStats" resultType="com.grain.platform.dto.user.UserListStatsResponse">
+        select count(*) as totalUsers,
+               sum(case when status = 'ACTIVE' then 1 else 0 end) as activeUsers
+        from sys_user
     </select>
 
     <insert id="insert" parameterType="com.grain.platform.entity.SysUser" useGeneratedKeys="true" keyProperty="id">

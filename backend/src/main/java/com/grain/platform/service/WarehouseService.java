@@ -1,11 +1,14 @@
 package com.grain.platform.service;
 
+import com.grain.platform.common.PageResult;
 import com.grain.platform.dto.warehouse.WarehouseDto;
+import com.grain.platform.dto.warehouse.WarehouseStatsResponse;
 import com.grain.platform.entity.Warehouse;
 import com.grain.platform.mapper.WarehouseMapper;
 import com.grain.platform.vo.common.IdVO;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.stereotype.Service;
+import org.springframework.util.StringUtils;
 
 import java.math.BigDecimal;
 import java.util.List;
@@ -21,6 +24,27 @@ public class WarehouseService {
 
     public List<WarehouseDto> list() {
         return warehouseMapper.selectAll().stream().map(this::toDto).toList();
+    }
+
+    public PageResult<WarehouseDto> listPage(String keyword, Integer pageNum, Integer pageSize) {
+        String kw = StringUtils.hasText(keyword) ? keyword.trim() : null;
+        int finalPageNum = pageNum == null || pageNum < 1 ? 1 : pageNum;
+        int finalPageSize = pageSize == null || pageSize < 1 ? 10 : pageSize;
+        long total = warehouseMapper.countPage(kw);
+        int maxPage = total == 0 ? 1 : (int) Math.ceil((double) total / finalPageSize);
+        finalPageNum = Math.min(finalPageNum, maxPage);
+        int offset = (finalPageNum - 1) * finalPageSize;
+        List<WarehouseDto> list = warehouseMapper.selectPage(kw, offset, finalPageSize).stream()
+                .map(this::toDto)
+                .toList();
+        return new PageResult<>(list, finalPageNum, finalPageSize, total);
+    }
+
+    public WarehouseStatsResponse stats() {
+        long totalCount = warehouseMapper.countPage(null);
+        long activeCount = warehouseMapper.countActive();
+        long nonActiveCount = warehouseMapper.countNonActive();
+        return new WarehouseStatsResponse(totalCount, activeCount, nonActiveCount);
     }
 
     public List<WarehouseDto> options() {

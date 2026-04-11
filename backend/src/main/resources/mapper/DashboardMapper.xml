@@ -595,4 +595,356 @@
         order by pt.requested_at desc, pt.id desc
         limit 5
     </select>
+
+    <select id="countAlertPage" resultType="long">
+        select count(*)
+        from (
+            select *
+            from (
+                select concat(w.warehouse_name, ' 实时粮温预警') as title,
+                       s.warning_level as level,
+                       'REAL' as sourceType,
+                       w.warehouse_name as warehouseName,
+                       date_format(s.collected_at, '%Y-%m-%d %H:%i:%s') as eventTime,
+                       coalesce(
+                               s.warning_message,
+                               concat('整仓均温 ', s.avg_temp, '°C，最高温 ', s.max_temp, '°C')
+                       ) as description
+                from grain_temp_summary s
+                         join warehouse w on s.warehouse_id = w.id
+                         join (
+                    select warehouse_id, max(collected_at) as latest_collected_at
+                    from grain_temp_summary
+                    group by warehouse_id
+                ) latest_summary
+                              on latest_summary.warehouse_id = s.warehouse_id
+                                  and latest_summary.latest_collected_at = s.collected_at
+                where s.warning_flag = 1
+
+                union all
+
+                select concat(w.warehouse_name, ' 预测高温预警') as title,
+                       pr.warning_level as level,
+                       'PREDICTION' as sourceType,
+                       w.warehouse_name as warehouseName,
+                       date_format(pr.result_time, '%Y-%m-%d %H:%i:%s') as eventTime,
+                       coalesce(
+                               pr.warning_message,
+                               concat('预测值 ', pr.predicted_value, '°C')
+                       ) as description
+                from prediction_result pr
+                         join prediction_task pt on pt.id = pr.task_id
+                         join warehouse w on pt.warehouse_id = w.id
+                         join (
+                    select warehouse_id, max(id) as latest_task_id
+                    from prediction_task
+                    group by warehouse_id
+                ) latest_task on latest_task.latest_task_id = pt.id
+                where pr.phase_type = 'FUTURE'
+                  and pr.warning_flag = 1
+            ) alert_data
+            <if test="keyword != null and keyword != ''">
+                where alert_data.title like concat('%', #{keyword}, '%')
+                   or alert_data.level like concat('%', #{keyword}, '%')
+                   or alert_data.sourceType like concat('%', #{keyword}, '%')
+                   or alert_data.warehouseName like concat('%', #{keyword}, '%')
+                   or alert_data.eventTime like concat('%', #{keyword}, '%')
+                   or alert_data.description like concat('%', #{keyword}, '%')
+            </if>
+        ) filtered
+    </select>
+
+    <select id="selectAlertPage" resultType="com.grain.platform.dto.dashboard.DashboardAlertItemResponse">
+        select *
+        from (
+            select concat(w.warehouse_name, ' 实时粮温预警') as title,
+                   s.warning_level as level,
+                   'REAL' as sourceType,
+                   w.warehouse_name as warehouseName,
+                   date_format(s.collected_at, '%Y-%m-%d %H:%i:%s') as eventTime,
+                   coalesce(
+                           s.warning_message,
+                           concat('整仓均温 ', s.avg_temp, '°C，最高温 ', s.max_temp, '°C')
+                   ) as description
+            from grain_temp_summary s
+                     join warehouse w on s.warehouse_id = w.id
+                     join (
+                select warehouse_id, max(collected_at) as latest_collected_at
+                from grain_temp_summary
+                group by warehouse_id
+            ) latest_summary
+                          on latest_summary.warehouse_id = s.warehouse_id
+                              and latest_summary.latest_collected_at = s.collected_at
+            where s.warning_flag = 1
+
+            union all
+
+            select concat(w.warehouse_name, ' 预测高温预警') as title,
+                   pr.warning_level as level,
+                   'PREDICTION' as sourceType,
+                   w.warehouse_name as warehouseName,
+                   date_format(pr.result_time, '%Y-%m-%d %H:%i:%s') as eventTime,
+                   coalesce(
+                           pr.warning_message,
+                           concat('预测值 ', pr.predicted_value, '°C')
+                   ) as description
+            from prediction_result pr
+                     join prediction_task pt on pt.id = pr.task_id
+                     join warehouse w on pt.warehouse_id = w.id
+                     join (
+                select warehouse_id, max(id) as latest_task_id
+                from prediction_task
+                group by warehouse_id
+            ) latest_task on latest_task.latest_task_id = pt.id
+            where pr.phase_type = 'FUTURE'
+              and pr.warning_flag = 1
+        ) alert_data
+        <if test="keyword != null and keyword != ''">
+            where alert_data.title like concat('%', #{keyword}, '%')
+               or alert_data.level like concat('%', #{keyword}, '%')
+               or alert_data.sourceType like concat('%', #{keyword}, '%')
+               or alert_data.warehouseName like concat('%', #{keyword}, '%')
+               or alert_data.eventTime like concat('%', #{keyword}, '%')
+               or alert_data.description like concat('%', #{keyword}, '%')
+        </if>
+        order by alert_data.eventTime desc, alert_data.warehouseName asc
+        limit #{offset}, #{pageSize}
+    </select>
+
+    <select id="countWarehouseHealthPage" resultType="long">
+        select count(*)
+        from (
+            select *
+            from (
+                select w.id as warehouseId,
+                       w.warehouse_name as warehouseName,
+                       case
+                           when w.status = 'MAINTENANCE' then 72
+                           when greatest(ifnull(real_warning.level_score, 1), ifnull(prediction_warning.level_score, 1)) = 3 then 68
+                           when greatest(ifnull(real_warning.level_score, 1), ifnull(prediction_warning.level_score, 1)) = 2 then 84
+                           else 96
+                           end as healthScore,
+                       case
+                           when w.status = 'MAINTENANCE' then 'MAINTENANCE'
+                           when greatest(ifnull(real_warning.level_score, 1), ifnull(prediction_warning.level_score, 1)) = 3 then 'WARNING'
+                           when greatest(ifnull(real_warning.level_score, 1), ifnull(prediction_warning.level_score, 1)) = 2 then 'ATTENTION'
+                           else 'NORMAL'
+                           end as riskLevel,
+                       case ifnull(real_warning.level_score, 1)
+                           when 3 then 'WARNING'
+                           when 2 then 'ATTENTION'
+                           else 'NORMAL'
+                           end as realWarningLevel,
+                       case ifnull(prediction_warning.level_score, 1)
+                           when 3 then 'WARNING'
+                           when 2 then 'ATTENTION'
+                           else 'NORMAL'
+                           end as predictionWarningLevel,
+                       real_warning.latest_avg_temp as latestAvgTemp,
+                       prediction_warning.latest_forecast_value as latestForecastValue
+                from warehouse w
+                         left join (
+                    select s.warehouse_id,
+                           case s.warning_level
+                               when 'WARNING' then 3
+                               when 'ATTENTION' then 2
+                               else 1
+                               end as level_score,
+                           s.avg_temp as latest_avg_temp
+                    from grain_temp_summary s
+                             join (
+                        select warehouse_id, max(collected_at) as latest_collected_at
+                        from grain_temp_summary
+                        group by warehouse_id
+                    ) latest_summary
+                                  on latest_summary.warehouse_id = s.warehouse_id
+                                      and latest_summary.latest_collected_at = s.collected_at
+                ) real_warning on real_warning.warehouse_id = w.id
+                         left join (
+                    select pt.warehouse_id,
+                           max(case pr.warning_level
+                                   when 'WARNING' then 3
+                                   when 'ATTENTION' then 2
+                                   else 1
+                               end) as level_score,
+                           max(pr.predicted_value) as latest_forecast_value
+                    from prediction_task pt
+                             join (
+                        select warehouse_id, max(id) as latest_task_id
+                        from prediction_task
+                        group by warehouse_id
+                    ) latest_task on latest_task.latest_task_id = pt.id
+                             left join prediction_result pr
+                                       on pr.task_id = pt.id
+                                           and pr.phase_type = 'FUTURE'
+                    group by pt.warehouse_id
+                ) prediction_warning on prediction_warning.warehouse_id = w.id
+                where w.status != 'DISABLED'
+            ) health_data
+            <if test="keyword != null and keyword != ''">
+                where health_data.warehouseName like concat('%', #{keyword}, '%')
+                   or cast(health_data.healthScore as char) like concat('%', #{keyword}, '%')
+                   or health_data.riskLevel like concat('%', #{keyword}, '%')
+                   or health_data.realWarningLevel like concat('%', #{keyword}, '%')
+                   or health_data.predictionWarningLevel like concat('%', #{keyword}, '%')
+                   or ifnull(cast(health_data.latestAvgTemp as char), '') like concat('%', #{keyword}, '%')
+                   or ifnull(cast(health_data.latestForecastValue as char), '') like concat('%', #{keyword}, '%')
+            </if>
+        ) filtered
+    </select>
+
+    <select id="selectWarehouseHealthPage" resultType="com.grain.platform.dto.dashboard.DashboardWarehouseHealthResponse">
+        select *
+        from (
+            select w.id as warehouseId,
+                   w.warehouse_name as warehouseName,
+                   case
+                       when w.status = 'MAINTENANCE' then 72
+                       when greatest(ifnull(real_warning.level_score, 1), ifnull(prediction_warning.level_score, 1)) = 3 then 68
+                       when greatest(ifnull(real_warning.level_score, 1), ifnull(prediction_warning.level_score, 1)) = 2 then 84
+                       else 96
+                       end as healthScore,
+                   case
+                       when w.status = 'MAINTENANCE' then 'MAINTENANCE'
+                       when greatest(ifnull(real_warning.level_score, 1), ifnull(prediction_warning.level_score, 1)) = 3 then 'WARNING'
+                       when greatest(ifnull(real_warning.level_score, 1), ifnull(prediction_warning.level_score, 1)) = 2 then 'ATTENTION'
+                       else 'NORMAL'
+                       end as riskLevel,
+                   case ifnull(real_warning.level_score, 1)
+                       when 3 then 'WARNING'
+                       when 2 then 'ATTENTION'
+                       else 'NORMAL'
+                       end as realWarningLevel,
+                   case ifnull(prediction_warning.level_score, 1)
+                       when 3 then 'WARNING'
+                       when 2 then 'ATTENTION'
+                       else 'NORMAL'
+                       end as predictionWarningLevel,
+                   real_warning.latest_avg_temp as latestAvgTemp,
+                   prediction_warning.latest_forecast_value as latestForecastValue
+            from warehouse w
+                     left join (
+                select s.warehouse_id,
+                       case s.warning_level
+                           when 'WARNING' then 3
+                           when 'ATTENTION' then 2
+                           else 1
+                           end as level_score,
+                       s.avg_temp as latest_avg_temp
+                from grain_temp_summary s
+                         join (
+                    select warehouse_id, max(collected_at) as latest_collected_at
+                    from grain_temp_summary
+                    group by warehouse_id
+                ) latest_summary
+                              on latest_summary.warehouse_id = s.warehouse_id
+                                  and latest_summary.latest_collected_at = s.collected_at
+            ) real_warning on real_warning.warehouse_id = w.id
+                     left join (
+                select pt.warehouse_id,
+                       max(case pr.warning_level
+                               when 'WARNING' then 3
+                               when 'ATTENTION' then 2
+                               else 1
+                           end) as level_score,
+                       max(pr.predicted_value) as latest_forecast_value
+                from prediction_task pt
+                         join (
+                    select warehouse_id, max(id) as latest_task_id
+                    from prediction_task
+                    group by warehouse_id
+                ) latest_task on latest_task.latest_task_id = pt.id
+                         left join prediction_result pr
+                                   on pr.task_id = pt.id
+                                       and pr.phase_type = 'FUTURE'
+                group by pt.warehouse_id
+            ) prediction_warning on prediction_warning.warehouse_id = w.id
+            where w.status != 'DISABLED'
+        ) health_data
+        <if test="keyword != null and keyword != ''">
+            where health_data.warehouseName like concat('%', #{keyword}, '%')
+               or cast(health_data.healthScore as char) like concat('%', #{keyword}, '%')
+               or health_data.riskLevel like concat('%', #{keyword}, '%')
+               or health_data.realWarningLevel like concat('%', #{keyword}, '%')
+               or health_data.predictionWarningLevel like concat('%', #{keyword}, '%')
+               or ifnull(cast(health_data.latestAvgTemp as char), '') like concat('%', #{keyword}, '%')
+               or ifnull(cast(health_data.latestForecastValue as char), '') like concat('%', #{keyword}, '%')
+        </if>
+        order by health_data.healthScore asc, health_data.warehouseId asc
+        limit #{offset}, #{pageSize}
+    </select>
+
+    <select id="countGrainSummaryPage" resultType="long">
+        select count(*)
+        from (
+            select *
+            from (
+                select s.id as id,
+                       s.warehouse_id as warehouseId,
+                       w.warehouse_name as warehouseName,
+                       s.avg_temp as avgTemp,
+                       s.max_temp as maxTemp,
+                       s.min_temp as minTemp,
+                       date_format(s.collected_at, '%Y-%m-%d %H:%i:%s') as collectedAt,
+                       s.warning_level as warningLevel,
+                       s.warning_flag as warningFlag,
+                       s.warning_message as warningMessage
+                from grain_temp_summary s
+                         join warehouse w on s.warehouse_id = w.id
+                         join (
+                    select warehouse_id, max(collected_at) as latest_collected_at
+                    from grain_temp_summary
+                    group by warehouse_id
+                ) latest_summary
+                              on latest_summary.warehouse_id = s.warehouse_id
+                                  and latest_summary.latest_collected_at = s.collected_at
+            ) summary_data
+            <if test="keyword != null and keyword != ''">
+                where summary_data.warehouseName like concat('%', #{keyword}, '%')
+                   or summary_data.warningLevel like concat('%', #{keyword}, '%')
+                   or ifnull(cast(summary_data.avgTemp as char), '') like concat('%', #{keyword}, '%')
+                   or ifnull(cast(summary_data.maxTemp as char), '') like concat('%', #{keyword}, '%')
+                   or ifnull(cast(summary_data.minTemp as char), '') like concat('%', #{keyword}, '%')
+                   or summary_data.collectedAt like concat('%', #{keyword}, '%')
+                   or ifnull(summary_data.warningMessage, '') like concat('%', #{keyword}, '%')
+            </if>
+        ) filtered
+    </select>
+
+    <select id="selectGrainSummaryPage" resultType="com.grain.platform.dto.dashboard.DashboardLatestSummaryResponse">
+        select *
+        from (
+            select s.id as id,
+                   s.warehouse_id as warehouseId,
+                   w.warehouse_name as warehouseName,
+                   s.avg_temp as avgTemp,
+                   s.max_temp as maxTemp,
+                   s.min_temp as minTemp,
+                   date_format(s.collected_at, '%Y-%m-%d %H:%i:%s') as collectedAt,
+                   s.warning_level as warningLevel,
+                   s.warning_flag as warningFlag,
+                   s.warning_message as warningMessage
+            from grain_temp_summary s
+                     join warehouse w on s.warehouse_id = w.id
+                     join (
+                select warehouse_id, max(collected_at) as latest_collected_at
+                from grain_temp_summary
+                group by warehouse_id
+            ) latest_summary
+                          on latest_summary.warehouse_id = s.warehouse_id
+                              and latest_summary.latest_collected_at = s.collected_at
+        ) summary_data
+        <if test="keyword != null and keyword != ''">
+            where summary_data.warehouseName like concat('%', #{keyword}, '%')
+               or summary_data.warningLevel like concat('%', #{keyword}, '%')
+               or ifnull(cast(summary_data.avgTemp as char), '') like concat('%', #{keyword}, '%')
+               or ifnull(cast(summary_data.maxTemp as char), '') like concat('%', #{keyword}, '%')
+               or ifnull(cast(summary_data.minTemp as char), '') like concat('%', #{keyword}, '%')
+               or summary_data.collectedAt like concat('%', #{keyword}, '%')
+               or ifnull(summary_data.warningMessage, '') like concat('%', #{keyword}, '%')
+        </if>
+        order by summary_data.warningFlag desc, summary_data.collectedAt desc, summary_data.maxTemp desc
+        limit #{offset}, #{pageSize}
+    </select>
 </mapper>
+

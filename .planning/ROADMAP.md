@@ -15,7 +15,7 @@
 | 6 | 预测页 overflow-x 收口 | 恢复正常横向滚动；摘要局部收口；不回退高风险滚动模型 | OVERFLOW-06-01 — OVERFLOW-06-03 | **已落地**（待 UAT） |
 | 7 | 环境数据页 / 粮温汇总优化 | 1/1 | Complete   | 2026-04-10 |
 | 8 | 展示大屏优化 | `/screen` 稳定打开并升级为答辩展示大屏 | SCREEN-08-01 — SCREEN-08-03 | **已完成**（2026-04-11） |
-| 9 | 管理端列表去 mock 并收口服务端分页查询 | 清理残留 mock；把剩余列表页分页/查询收口到后端 | TBD | 待规划 |
+| 9 | 管理端列表去 mock 并收口服务端分页查询 | 移除残留 mock，并把 Users/Warehouse/Prediction/Dashboard 收口到后端分页与 keyword 查询 | MOCK-09-01 — MOCK-09-04 | **已完成**（2026-04-11） |
 
 ## Phase 1: 粮温 Excel 模板与导入一致化（已完成）
 
@@ -171,19 +171,33 @@ Plans:
 - [x] `08-01-PLAN.md` — 大屏真实数据聚合接口与前端 API 封装（Wave 1）
 - [x] `08-02-PLAN.md` — `/screen` 三段式重构、图表稳定渲染与底部明细区（Wave 2）
 
-### Phase 9: 管理端列表去 mock 并收口服务端分页查询
+### Phase 9: 管理端列表去 mock 并收口服务端分页查询（已完成）
 
-**Goal:** [To be planned]
-**Requirements**: TBD
+**阶段目录：** `.planning/phases/09-mock/`（`09-CONTEXT.md`、`09-RESEARCH.md`、`09-UI-SPEC.md`、`09-01-PLAN.md`、`09-02-PLAN.md`、`09-VERIFICATION.md`）
+
+**Delivered（2026-04-11）：** Users / Warehouse / Prediction 补齐后端分页与统计接口；Dashboard 拆为 `overview + alerts + warehouse-health + grain-summaries` 独立分页接口；四个目标页面切到服务端分页；`frontend/src/mock/platform.js` 已删除；人工验收通过。
+
+**Goal:** 移除管理端剩余前端 mock 痕迹，并把 `UsersView`、`WarehouseView`、`PredictionView`、`DashboardView` 从前端内存分页/本地过滤收口到后端驱动的 `keyword + pageNum + pageSize` 模式，同时保持现有页面语义与布局不变。
+**Requirements**: MOCK-09-01 — MOCK-09-04
 **Depends on:** Phase 8
-**Plans:** 0 plans
+**Success criteria:**
+
+1. `UsersView`、`WarehouseView`、`PredictionView`、`DashboardView` 不再以后端全量数组作为分页主链，切页和 keyword 都会回源。
+2. `PredictionView` 分页接口仍返回完整任务详情与 `resultList`，不拆成轻量列表 + 详情接口。
+3. `DashboardView` 运行方式改为 `overview + 近期预警分页 + 仓库健康度分页 + 最新粮温汇总分页`，而不是 `overview` 大包数组本地切片。
+4. `frontend/src/mock/platform.js` 被删除，`DataView.vue` 与 `/screen` 不被本阶段回归。
+
+**Plans:** 2/2 plans complete
 
 Plans:
-- [ ] TBD (run /gsd-plan-phase 9 to break down)
+- [x] `09-01-PLAN.md` — 后端补齐用户、仓库、预测任务分页与统计接口（Wave 1）
+- [x] `09-02-PLAN.md` — Dashboard 拆分分页接口、四页前端迁移与 mock 清理（Wave 2）
 
 ---
 
 *Roadmap updated: 2026-04-11（新增 Phase 9：管理端列表去 mock 并收口服务端分页查询；Phase 8：展示大屏优化；Phase 7：环境数据页 / 粮温汇总优化；Phase 6：overflow-x 收口；Phase 5：预测记录删除；Phase 4 单表打磨；Phase 2/3 归档见 zzz-docs/归档）*
+
+
 
 
 

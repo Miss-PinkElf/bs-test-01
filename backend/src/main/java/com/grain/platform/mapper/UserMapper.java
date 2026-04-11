@@ -1,6 +1,7 @@
 package com.grain.platform.mapper;
 
 import com.grain.platform.dto.user.UserListItemResponse;
+import com.grain.platform.dto.user.UserListStatsResponse;
 import com.grain.platform.entity.SysUser;
 import org.apache.ibatis.annotations.Mapper;
 import org.apache.ibatis.annotations.Param;
@@ -14,6 +15,14 @@ public interface UserMapper {
     SysUser selectById(@Param("id") Long id);
 
     List<UserListItemResponse> selectAllUsers();
+
+    long countUserPage(@Param("keyword") String keyword);
+
+    List<UserListItemResponse> selectUserPage(@Param("keyword") String keyword,
+                                              @Param("offset") int offset,
+                                              @Param("pageSize") int pageSize);
+
+    UserListStatsResponse selectUserStats();
 
     void insert(SysUser user);
 
