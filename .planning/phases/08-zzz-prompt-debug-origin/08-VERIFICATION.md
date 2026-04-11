@@ -1,10 +1,12 @@
 ---
-status: pending
+status: human_needed
 phase: 08-zzz-prompt-debug-origin
-verified: null
+verified: 2026-04-11
 source:
   - .planning/phases/08-zzz-prompt-debug-origin/08-01-PLAN.md
   - .planning/phases/08-zzz-prompt-debug-origin/08-02-PLAN.md
+  - .planning/phases/08-zzz-prompt-debug-origin/08-01-SUMMARY.md
+  - .planning/phases/08-zzz-prompt-debug-origin/08-02-SUMMARY.md
   - .planning/phases/08-zzz-prompt-debug-origin/08-CONTEXT.md
   - .planning/phases/08-zzz-prompt-debug-origin/08-UI-SPEC.md
 ---
@@ -17,19 +19,20 @@ source:
 
 ## must_haves.truths（对照 PLAN）
 
-| 条目 | 证据（实现后填写） |
-|------|-------------------|
-| `/api/dashboard/screen` 存在，且支持 `warehouseId`、`startTime`、`endTime` | `DashboardController` / `DashboardService` / `DashboardMapper.xml` |
+| 条目 | 证据 |
+|------|------|
+| `/api/dashboard/screen` 存在，且支持 `warehouseId`、`startTime`、`endTime` | `backend/src/main/java/com/grain/platform/controller/DashboardController.java`、`backend/src/main/java/com/grain/platform/service/DashboardService.java`、`backend/src/main/resources/mapper/DashboardMapper.xml` |
 | 前端存在 `fetchScreenDashboard`，并规范化 `grainTrend`、`alertTrend`、`predictionTrend`、`warehouseComparison`、`latestPredictionTasks` | `frontend/src/api/grain.js` |
 | `BigScreenView.vue` 不再依赖 `mockScreenMetrics` / `mockScreenAlerts`，首屏先渲染骨架和 CTA | `frontend/src/views/BigScreenView.vue` |
 | 中部图表区存在 `粮温趋势 / 预警趋势 / 预测趋势 / 仓库对比` 四块真实信息位 | `frontend/src/views/BigScreenView.vue` |
-| 底部明细区存在 `最新预警 / 最近预测任务 / 重点仓库 / 说明`，且说明块不再占主视觉 | `frontend/src/views/BigScreenView.vue` / `frontend/src/styles.css` |
+| 底部明细区存在 `最新预警 / 最近预测任务 / 重点仓库 / 说明`，且说明块不再占主视觉 | `frontend/src/views/BigScreenView.vue`、`frontend/src/styles.css` |
 | 图表生命周期安全：容器稳定后初始化、卸载时 dispose、模块失败不导致整页白屏 | `frontend/src/views/BigScreenView.vue` |
 
 ## 自动化
 
-- （执行后）`cd backend && mvn -q -DskipTests compile`
-- （执行后）`cd frontend && npm run build`
+- `cd backend && mvn -q -DskipTests compile`：通过（2026-04-11）
+- `cd frontend && npm run build`：通过（2026-04-11）
+- 结构性命中检查：`BigScreenView.vue` 已命中 `fetchScreenDashboard`、四个图表标题、四个明细标题、`echarts.init`、`dispose()`、`requestAnimationFrame`
 
 ## 需求追溯
 
@@ -37,13 +40,19 @@ source:
 - `SCREEN-08-02`
 - `SCREEN-08-03`
 
-## 手工（建议）
+## Human Verification
 
-- 打开 `/screen`，确认先看到大屏壳层与操作按钮，而不是白屏
-- 切换仓库与时间范围，确认四块图表和底部最近预测任务响应共享查询条件
-- 断开某个模块数据或制造空数据，确认只出现局部空状态 / 错误提示，页面其余部分仍可见
-- 在桌面宽屏和小屏下各验证一次布局，不回退为旧的“展示说明 + 预警表”结构
+1. 打开 `/screen`
+   expected: 首屏先看到标题、按钮、共享筛选与模块骨架，而不是白屏。
+2. 切换仓库与时间范围后点击“刷新大屏”
+   expected: 顶部指标、四块图表和“最近预测任务”按共享条件刷新。
+3. 检查中部图表区
+   expected: 存在“粮温趋势、预警趋势、预测趋势、仓库对比”四块稳定信息位，粮温趋势为主图。
+4. 检查底部明细区
+   expected: 存在“最新预警、最近预测任务、重点仓库、说明”，说明区只占次要位置。
+5. 在较窄窗口下查看 `/screen`
+   expected: 图表与明细纵向堆叠，不出现整体溢出或白屏。
 
 ## Gaps
 
-执行前留空；完成后更新 `status`、`verified` 与具体验证证据。
+- 自动化与代码审查层面已完成；最终验收仍需要人工打开 `/screen` 进行 UI/UAT 确认。
