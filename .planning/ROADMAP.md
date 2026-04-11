@@ -17,6 +17,7 @@
 | 8 | 展示大屏优化 | `/screen` 稳定打开并升级为答辩展示大屏 | SCREEN-08-01 — SCREEN-08-03 | **已完成**（2026-04-11） |
 | 9 | 管理端列表去 mock 并收口服务端分页查询 | 移除残留 mock，并把 Users/Warehouse/Prediction/Dashboard 收口到后端分页与 keyword 查询 | MOCK-09-01 — MOCK-09-04 | **已完成**（2026-04-11） |
 | 10 | 前后端补充简单注释提升可读性 | 在关键逻辑处补简单注释，降低阅读与接手成本 | COMMENT-10-01 — COMMENT-10-03 | **已完成**（2026-04-11） |
+| 11 | 河南环境数据 1-4 月 mock 与脏数据清理 | 补河南 1-4 月环境模拟数据、清理现有脏数据；Windows 一键运行 / 免安装依赖方案延期到后续 phase | TBD | 待规划 |
 
 ## Phase 1: 粮温 Excel 模板与导入一致化（已完成）
 
@@ -215,9 +216,20 @@ Plans:
 - [x] `10-01-PLAN.md` — 前端归一化、分页状态与任务切换注释收口（Wave 1）
 - [x] `10-02-PLAN.md` — 后端预测编排、导入校验与统计边界注释收口（Wave 1）
 
+### Phase 11: 河南环境数据 1-4 月 mock、脏数据清理与 Windows 一键运行
+
+**Goal:** 把 demo 库收口为可重建的标准演示库：为 2 到 3 个重点仓库固化 1 月 1 日到 4 月 30 日的河南场景温度 / 湿度 / co2 连续 mock 数据，清理与之冲突的旧脏数据，并以 `schema.sql + reset-demo-db.ps1` 作为唯一重置入口；Windows 一键运行已延期到后续 phase。
+**Requirements**: Context decisions D-01 — D-09 (`.planning/phases/11-1-4-mock-windows/11-CONTEXT.md`)
+**Depends on:** Phase 10
+**Plans:** 2 plans
+
+Plans:
+- [ ] `11-01-PLAN.md` — 重写标准演示库种子并收口 reset-demo-db 校验（Wave 1）
+- [ ] `11-02-PLAN.md` — 接入 Phase 11 baseline smoke 校验并同步 Phase 文档（Wave 2）
+
 ---
 
-*Roadmap updated: 2026-04-11（新增 Phase 10：前后端补充简单注释提升可读性；Phase 9：管理端列表去 mock 并收口服务端分页查询；Phase 8：展示大屏优化；Phase 7：环境数据页 / 粮温汇总优化；Phase 6：overflow-x 收口；Phase 5：预测记录删除；Phase 4 单表打磨；Phase 2/3 归档见 zzz-docs/归档）*
+*Roadmap updated: 2026-04-11（新增 Phase 11：河南环境数据 1-4 月 mock、脏数据清理与 Windows 一键运行；Phase 10：前后端补充简单注释提升可读性；Phase 9：管理端列表去 mock 并收口服务端分页查询；Phase 8：展示大屏优化；Phase 7：环境数据页 / 粮温汇总优化；Phase 6：overflow-x 收口；Phase 5：预测记录删除；Phase 4 单表打磨；Phase 2/3 归档见 zzz-docs/归档）*
 
 
 
