@@ -2,7 +2,7 @@
 gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
-status: Awaiting human verification for Phase 08
+status: Phase 08 complete
 last_updated: "2026-04-11T04:19:57.566Z"
 last_activity: 2026-04-11
 progress:
@@ -20,7 +20,7 @@ progress:
 See: `.planning/PROJECT.md`（updated 2026-04-11）
 
 **Core value:** 粮温与环境数据可导入、可查、可汇总，预测结果可追溯展示。  
-**Current focus:** Phase 08 — 展示大屏优化（待人工验证）
+**Current focus:** Phase 05 — 预测记录删除（待执行）
 
 ## Implementation Truth Source
 
@@ -57,6 +57,7 @@ See: `.planning/PROJECT.md`（updated 2026-04-11）
 - 2026-04-11：**Phase 8 已规划** — 已落盘 `08-01-PLAN.md`、`08-02-PLAN.md`、`08-VERIFICATION.md`；规划方向为新增 `/api/dashboard/screen` 真实聚合接口与 `/screen` 三段式稳定重构，保留公开路由并优先解决白屏/卡顿；`REQUIREMENTS.md` 已新增 `SCREEN-08-*`，下一步执行 `/gsd-execute-phase 8`。
 - 2026-04-11：**Phase 8 / Wave 1 完成** — `08-01-SUMMARY.md` 已落盘；后端新增 `/api/dashboard/screen` 聚合接口、screen 专属 DTO 与 DashboardMapper 统计查询，前端 `grain.js` 已补 `fetchScreenDashboard()`；`mvn -q -DskipTests compile` 与 `npm run build` 已通过，下一步执行 `08-02-PLAN.md` 重构 `BigScreenView.vue`。
 - 2026-04-11：**Phase 8 / Wave 2 完成** — `08-02-SUMMARY.md` 已落盘；`BigScreenView.vue` 已重构为“上总览 / 中图表 / 下明细”三段式大屏，移除 mock 大屏数据，接入 `fetchScreenDashboard()`，并补齐四个图表位、四个底部明细位与图表生命周期安全初始化；当前等待你人工打开 `/screen` 做最终 UAT。
+- 2026-04-11：**Phase 8 已完成** — 用户已确认 /screen 效果可接受，文字对比度问题已修复；8-VERIFICATION.md 标记为 passed，8-HUMAN-UAT.md 标记为 resolved，Roadmap / Requirements / State 已同步收口。
 - 2026-04-11：**Phase 7 执行完成** — 粮温汇总结果已改为后端分页（`/api/grain-temp/summaries/page`）；DataView 的粮温汇总图表与汇总表查询态已拆分；图表支持共享仓库/时间范围与 `整仓均温 / 一层 / 二层 / 三层 / 四层` 切换，并固定保留“最高温”参考线；`07-VERIFICATION.md` 与 `07-01-SUMMARY.md` 已落盘。注意：当前 `gsd-tools` 与本仓库 `STATE.md` 格式存在部分不兼容，故本次状态由人工同步。
 - 2026-04-10：**Phase 5** — discuss 已落盘 `05-CONTEXT.md`（含多选、批量删、二次确认条数）；`05-DISCUSSION-LOG.md` 已同步；plan 工件：`05-UI-SPEC.md`、`05-01-PLAN.md`、`05-VERIFICATION.md`；`REQUIREMENTS` DEL-05-*、`ROADMAP` Phase 5 已更新。下一步：`/gsd-execute-phase 5` 或按 `05-01-PLAN.md` 实现。
 - 2026-04-10：**Phase 6** — overflow-x 收口文档已补齐：`06-CONTEXT.md`、`06-UI-SPEC.md`、`06-01-PLAN.md`、`06-VERIFICATION.md`；`REQUIREMENTS` 增补 `OVERFLOW-06-*`；`ROADMAP` Phase 6 已由 TBD 更新为已落地（待 UAT）。实现口径：主内容恢复正常 `overflow-x: auto`，预测页任务摘要局部收口，且不回退主内容 `el-scrollbar`。
@@ -73,6 +74,8 @@ See: `.planning/PROJECT.md`（updated 2026-04-11）
 - 2026-04-10：codebase map 已写入 `.planning/codebase/`。
 - 2026-04-10：`GrainTempImportService` 固定模板版式升级（合并单元格、分区标题、双语标签）；解析兼容旧模板；`DataView.vue` 说明更新；`PROJECT.md` / `REQUIREMENTS.md` / `ROADMAP.md` 已同步。
 - 下一步（可选）：扩展 `run-acceptance-smoke.ps1`；联调下模板下载 → 导入自测。
+
+
 
 
 

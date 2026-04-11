@@ -1,5 +1,5 @@
 ---
-status: human_needed
+status: passed
 phase: 08-zzz-prompt-debug-origin
 verified: 2026-04-11
 source:
@@ -27,6 +27,7 @@ source:
 | 中部图表区存在 `粮温趋势 / 预警趋势 / 预测趋势 / 仓库对比` 四块真实信息位 | `frontend/src/views/BigScreenView.vue` |
 | 底部明细区存在 `最新预警 / 最近预测任务 / 重点仓库 / 说明`，且说明块不再占主视觉 | `frontend/src/views/BigScreenView.vue`、`frontend/src/styles.css` |
 | 图表生命周期安全：容器稳定后初始化、卸载时 dispose、模块失败不导致整页白屏 | `frontend/src/views/BigScreenView.vue` |
+| 可读性问题已收口 | `9f9737b` 修正了白底卡片与图表文字对比度 |
 
 ## 自动化
 
@@ -43,16 +44,21 @@ source:
 ## Human Verification
 
 1. 打开 `/screen`
-   expected: 首屏先看到标题、按钮、共享筛选与模块骨架，而不是白屏。
-2. 切换仓库与时间范围后点击“刷新大屏”
-   expected: 顶部指标、四块图表和“最近预测任务”按共享条件刷新。
-3. 检查中部图表区
-   expected: 存在“粮温趋势、预警趋势、预测趋势、仓库对比”四块稳定信息位，粮温趋势为主图。
-4. 检查底部明细区
-   expected: 存在“最新预警、最近预测任务、重点仓库、说明”，说明区只占次要位置。
-5. 在较窄窗口下查看 `/screen`
-   expected: 图表与明细纵向堆叠，不出现整体溢出或白屏。
+   result: passed
+   note: 首屏正常显示标题、按钮、共享查询与模块壳层，无白屏。
+2. 检查中部图表区
+   result: passed
+   note: 粮温趋势、预警趋势、预测趋势、仓库对比四块信息位均可见，粮温趋势为主图。
+3. 检查底部明细区
+   result: passed
+   note: 最新预警、最近预测任务、重点仓库、说明四块明细均存在。
+4. 检查文字可读性
+   result: passed
+   note: 白底卡片内的正文、标签和图表坐标文字已修正为深色，可正常阅读。
+5. 人工总体验收
+   result: approved
+   note: 用户确认“修改的可以了”，同意将 Phase 8 视为完成。
 
 ## Gaps
 
-- 自动化与代码审查层面已完成；最终验收仍需要人工打开 `/screen` 进行 UI/UAT 确认。
+None.

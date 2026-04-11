@@ -14,7 +14,7 @@
 | 5 | 预测记录表支持删除 | 多选 + 批量删 + 单删；二次确认；DEL-05-* | 已规划（待执行） |
 | 6 | 预测页 overflow-x 收口 | 恢复正常横向滚动；摘要局部收口；不回退高风险滚动模型 | OVERFLOW-06-01 — OVERFLOW-06-03 | **已落地**（待 UAT） |
 | 7 | 环境数据页 / 粮温汇总优化 | 1/1 | Complete   | 2026-04-10 |
-| 8 | 展示大屏优化 | `/screen` 稳定打开并升级为答辩展示大屏 | SCREEN-08-01 — SCREEN-08-03 | 已实现（待人工验证） |
+| 8 | 展示大屏优化 | `/screen` 稳定打开并升级为答辩展示大屏 | SCREEN-08-01 — SCREEN-08-03 | **已完成**（2026-04-11） |
 
 ## Phase 1: 粮温 Excel 模板与导入一致化（已完成）
 
@@ -147,7 +147,7 @@ Plans:
 
 1/1 plans complete
 
-### Phase 8: zzz-prompt-debug\origin\展示大屏优化
+### Phase 8: zzz-prompt-debug\origin\展示大屏优化（已完成）
 
 **阶段目录：** `.planning/phases/08-zzz-prompt-debug-origin/`（`08-CONTEXT.md`、`08-UI-SPEC.md`、`08-01-PLAN.md`、`08-02-PLAN.md`、`08-VERIFICATION.md`）
 
@@ -162,7 +162,7 @@ Plans:
 2. 页面稳定落为 **上总览 / 中图表 / 下明细** 三段式，且中部存在 **粮温趋势、预警趋势、预测趋势、仓库对比** 4 个真实信息位。
 3. 顶部指标、重点仓库、最新预警、最近预测任务与主图表优先来自真实接口，并支持共享 **仓库 + 时间范围** 查询。
 
-**Plans:** 2/2 plans complete
+**Delivered（2026-04-11）：** `/api/dashboard/screen` 聚合接口、`fetchScreenDashboard()`、`/screen` 三段式大屏、四块图表位、四块底部明细位、文字对比度收口。`r`n`r`n**Plans:** 2/2 plans complete
 
 Plans:
 - [x] `08-01-PLAN.md` — 大屏真实数据聚合接口与前端 API 封装（Wave 1）
@@ -171,6 +171,7 @@ Plans:
 ---
 
 *Roadmap updated: 2026-04-11（Phase 8：展示大屏优化；Phase 7：环境数据页 / 粮温汇总优化；Phase 6：overflow-x 收口；Phase 5：预测记录删除；Phase 4 单表打磨；Phase 2/3 归档见 zzz-docs/归档）*
+
 
 
 
