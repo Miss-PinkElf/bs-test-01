@@ -46,7 +46,10 @@ if ($Password -ne "") {
     $mysqlArgs += "--password=$Password"
 }
 
-$schemaContent | & $mysql.Source @mysqlArgs
+$schemaPathForMysql = ($schemaPath -replace '\\', '/')
+$mysqlArgs += "--execute=source $schemaPathForMysql"
+
+& $mysql.Source @mysqlArgs
 
 if ($LASTEXITCODE -ne 0) {
     throw "mysql exited with code $LASTEXITCODE"

@@ -1,4 +1,4 @@
-﻿$ErrorActionPreference = "Stop"
+$ErrorActionPreference = "Stop"
 
 function Clear-Port {
     param(
@@ -34,7 +34,7 @@ $backendPath = Join-Path $PSScriptRoot "..\backend"
 Set-Location $backendPath
 
 Write-Host "默认启动当前不会自动重建演示库。" -ForegroundColor Cyan
-Write-Host "如果你需要重置演示数据，请先执行 .\scripts\reset-demo-db.ps1" -ForegroundColor Yellow
+Write-Host "如果你需要重置演示数据，请先执行 npm run reset-demo-db" -ForegroundColor Yellow
 
 $projectMavenSettings = Join-Path $backendPath ".mvn\settings.xml"
 $userMavenRepo = Join-Path $env:USERPROFILE ".m2\repository"
@@ -69,3 +69,4 @@ if ($null -ne $mvn) {
 Write-Host "mvn or mvnw.cmd was not found, cannot start backend directly." -ForegroundColor Yellow
 Write-Host "Please install Maven or run GrainPlatformApplication in IDEA." -ForegroundColor Yellow
 exit 1
+

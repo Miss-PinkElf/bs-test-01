@@ -27,6 +27,7 @@ clear_port 8081
 cd "${BACKEND_DIR}"
 
 echo "默认启动当前不会自动重建演示库。"
-echo "如果你需要重置演示数据，请先执行 ./scripts/reset-demo-db.ps1"
+echo "如果你需要重置演示数据，请先执行 npm run reset-demo-db"
 echo "准备启动后端，端口固定为 8081..."
 mvn spring-boot:run -Dspring-boot.run.arguments=--server.port=8081
+

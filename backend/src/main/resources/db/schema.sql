@@ -313,7 +313,7 @@ FROM (
     FROM (
         SELECT
             seq.n AS day_offset,
-            DATE_ADD('2025-01-01 08:00:00', INTERVAL seq.n DAY) AS collected_at_sensor
+            DATE_ADD('2026-01-01 08:00:00', INTERVAL seq.n DAY) AS collected_at_sensor
         FROM (
             SELECT ones.n + tens.n * 10 + hundreds.n * 100 AS n
             FROM (
@@ -446,7 +446,7 @@ SELECT
 FROM (
     SELECT
         seq.n AS day_offset,
-        DATE_ADD('2025-01-01 08:40:00', INTERVAL seq.n DAY) AS collected_at_grain
+        DATE_ADD('2026-01-01 08:40:00', INTERVAL seq.n DAY) AS collected_at_grain
     FROM (
         SELECT ones.n + tens.n * 10 + hundreds.n * 100 AS n
         FROM (
@@ -494,22 +494,22 @@ SELECT
     ROUND(AVG(CASE WHEN point.layer_no = 4 THEN record.temperature_value END), 2) AS layer_4_avg,
     CASE
         WHEN record.warehouse_id = 2 AND MAX(record.temperature_value) >= 26.70 THEN 'ATTENTION'
-        WHEN record.warehouse_id = 6 AND record.collected_at >= '2025-04-20 08:40:00' AND MAX(record.temperature_value) >= 23.80 THEN 'ATTENTION'
+        WHEN record.warehouse_id = 6 AND record.collected_at >= '2026-04-20 08:40:00' AND MAX(record.temperature_value) >= 23.80 THEN 'ATTENTION'
         ELSE 'NORMAL'
     END AS warning_level,
     CASE
         WHEN record.warehouse_id = 2 AND MAX(record.temperature_value) >= 26.70 THEN 1
-        WHEN record.warehouse_id = 6 AND record.collected_at >= '2025-04-20 08:40:00' AND MAX(record.temperature_value) >= 23.80 THEN 1
+        WHEN record.warehouse_id = 6 AND record.collected_at >= '2026-04-20 08:40:00' AND MAX(record.temperature_value) >= 23.80 THEN 1
         ELSE 0
     END AS warning_flag,
     CASE
         WHEN record.warehouse_id = 2 AND MAX(record.temperature_value) >= 26.70 THEN '四月末仓温逼近阈值，建议答辩时强调提前通风与重点巡检。'
-        WHEN record.warehouse_id = 6 AND record.collected_at >= '2025-04-20 08:40:00' AND MAX(record.temperature_value) >= 23.80 THEN '对比仓出现轻微抬升，可用于说明波动仓与风险仓的差异。'
+        WHEN record.warehouse_id = 6 AND record.collected_at >= '2026-04-20 08:40:00' AND MAX(record.temperature_value) >= 23.80 THEN '对比仓出现轻微抬升，可用于说明波动仓与风险仓的差异。'
         ELSE NULL
     END AS warning_message,
     CASE
         WHEN record.warehouse_id = 2 AND MAX(record.temperature_value) >= 26.70 THEN '粮温关注'
-        WHEN record.warehouse_id = 6 AND record.collected_at >= '2025-04-20 08:40:00' AND MAX(record.temperature_value) >= 23.80 THEN '轻微波动'
+        WHEN record.warehouse_id = 6 AND record.collected_at >= '2026-04-20 08:40:00' AND MAX(record.temperature_value) >= 23.80 THEN '轻微波动'
         ELSE '粮温正常'
     END AS analysis_result,
     CASE record.warehouse_id
@@ -560,11 +560,11 @@ VALUES
         'AVG_TEMP',
         'WEIGHTED_MOVING_AVERAGE',
         '加权移动平均',
-        '2025-01-01 00:00:00',
-        '2025-04-30 23:59:59',
-        '2025-05-01 00:00:00',
-        '2025-05-31 23:59:59',
-        '2025-04-30 23:59:59',
+        '2026-01-01 00:00:00',
+        '2026-04-30 23:59:59',
+        '2026-05-01 00:00:00',
+        '2026-05-31 23:59:59',
+        '2026-04-30 23:59:59',
         31,
         120,
         'INITIAL',
@@ -572,8 +572,8 @@ VALUES
         'SUCCESS',
         'ATTENTION',
         4,
-        '2025-04-30 10:15:00',
-        '2025-04-30 10:15:12',
+        '2026-04-30 10:15:00',
+        '2026-04-30 10:15:12',
         '基于河南 1-4 月整仓平均温度预测风险仓 5 月走势',
         'Phase 11 风险仓演示基线'
     ),
@@ -587,11 +587,11 @@ VALUES
         'AVG_TEMP',
         'LINEAR_REGRESSION',
         '线性回归',
-        '2025-01-01 00:00:00',
-        '2025-04-30 23:59:59',
-        '2025-05-01 00:00:00',
-        '2025-05-15 23:59:59',
-        '2025-04-30 23:59:59',
+        '2026-01-01 00:00:00',
+        '2026-04-30 23:59:59',
+        '2026-05-01 00:00:00',
+        '2026-05-15 23:59:59',
+        '2026-04-30 23:59:59',
         15,
         120,
         'INITIAL',
@@ -599,8 +599,8 @@ VALUES
         'SUCCESS',
         'NORMAL',
         2,
-        '2025-04-30 09:40:00',
-        '2025-04-30 09:40:08',
+        '2026-04-30 09:40:00',
+        '2026-04-30 09:40:08',
         '稳定仓 5 月预测保持低风险，用于答辩时对照展示',
         'Phase 11 稳定仓演示基线'
     ),
@@ -614,11 +614,11 @@ VALUES
         'AVG_TEMP',
         'LINEAR_REGRESSION',
         '线性回归',
-        '2025-01-01 00:00:00',
-        '2025-04-30 23:59:59',
-        '2025-05-01 00:00:00',
-        '2025-05-21 23:59:59',
-        '2025-04-30 23:59:59',
+        '2026-01-01 00:00:00',
+        '2026-04-30 23:59:59',
+        '2026-05-01 00:00:00',
+        '2026-05-21 23:59:59',
+        '2026-04-30 23:59:59',
         21,
         120,
         'INITIAL',
@@ -626,8 +626,8 @@ VALUES
         'SUCCESS',
         'ATTENTION',
         6,
-        '2025-04-30 11:05:00',
-        '2025-04-30 11:05:10',
+        '2026-04-30 11:05:00',
+        '2026-04-30 11:05:10',
         '对比仓 5 月预测保留一定波动，用于展示与风险仓不同的升温节奏',
         'Phase 11 对比仓演示基线'
     );
@@ -663,27 +663,28 @@ SELECT
     seed.remark
 FROM prediction_task task
 JOIN (
-    SELECT 'TASK-PHASE11-RISK-001' AS task_no, 'FUTURE' AS phase_type, 1 AS step_index, '2025-05-01 00:00:00' AS result_time, NULL AS actual_value, 26.55 AS predicted_value, NULL AS error_value, NULL AS error_rate, 'ATTENTION' AS warning_level, 1 AS warning_flag, '5 月初风险仓继续缓慢抬升，仍需重点巡检。' AS warning_message, 0 AS is_corrected, 'Phase 11 风险仓未来预测点' AS remark
+    SELECT 'TASK-PHASE11-RISK-001' AS task_no, 'FUTURE' AS phase_type, 1 AS step_index, '2026-05-01 00:00:00' AS result_time, NULL AS actual_value, 26.55 AS predicted_value, NULL AS error_value, NULL AS error_rate, 'ATTENTION' AS warning_level, 1 AS warning_flag, '5 月初风险仓继续缓慢抬升，仍需重点巡检。' AS warning_message, 0 AS is_corrected, 'Phase 11 风险仓未来预测点' AS remark
     UNION ALL
-    SELECT 'TASK-PHASE11-RISK-001', 'FUTURE', 8, '2025-05-08 00:00:00', NULL, 26.72, NULL, NULL, 'ATTENTION', 1, '进入 5 月第二周后接近阈值，建议预留通风窗口。', 0, 'Phase 11 风险仓未来预测点'
+    SELECT 'TASK-PHASE11-RISK-001', 'FUTURE', 8, '2026-05-08 00:00:00', NULL, 26.72, NULL, NULL, 'ATTENTION', 1, '进入 5 月第二周后接近阈值，建议预留通风窗口。', 0, 'Phase 11 风险仓未来预测点'
     UNION ALL
-    SELECT 'TASK-PHASE11-RISK-001', 'FUTURE', 15, '2025-05-15 00:00:00', NULL, 26.88, NULL, NULL, 'ATTENTION', 1, '月中仍维持高位，是答辩里的重点风险样本。', 0, 'Phase 11 风险仓未来预测点'
+    SELECT 'TASK-PHASE11-RISK-001', 'FUTURE', 15, '2026-05-15 00:00:00', NULL, 26.88, NULL, NULL, 'ATTENTION', 1, '月中仍维持高位，是答辩里的重点风险样本。', 0, 'Phase 11 风险仓未来预测点'
     UNION ALL
-    SELECT 'TASK-PHASE11-RISK-001', 'FUTURE', 22, '2025-05-22 00:00:00', NULL, 27.02, NULL, NULL, 'ATTENTION', 1, '5 月下旬预计逼近高温阈值，需持续关注。', 0, 'Phase 11 风险仓未来预测点'
+    SELECT 'TASK-PHASE11-RISK-001', 'FUTURE', 22, '2026-05-22 00:00:00', NULL, 27.02, NULL, NULL, 'ATTENTION', 1, '5 月下旬预计逼近高温阈值，需持续关注。', 0, 'Phase 11 风险仓未来预测点'
     UNION ALL
-    SELECT 'TASK-PHASE11-RISK-001', 'FUTURE', 31, '2025-05-31 00:00:00', NULL, 27.16, NULL, NULL, 'ATTENTION', 1, '月底仍处高位，延续风险仓升温叙事。', 0, 'Phase 11 风险仓未来预测点'
+    SELECT 'TASK-PHASE11-RISK-001', 'FUTURE', 31, '2026-05-31 00:00:00', NULL, 27.16, NULL, NULL, 'ATTENTION', 1, '月底仍处高位，延续风险仓升温叙事。', 0, 'Phase 11 风险仓未来预测点'
     UNION ALL
-    SELECT 'TASK-PHASE11-STABLE-001', 'FUTURE', 1, '2025-05-01 00:00:00', NULL, 20.36, NULL, NULL, 'NORMAL', 0, NULL, 0, 'Phase 11 稳定仓未来预测点'
+    SELECT 'TASK-PHASE11-STABLE-001', 'FUTURE', 1, '2026-05-01 00:00:00', NULL, 20.36, NULL, NULL, 'NORMAL', 0, NULL, 0, 'Phase 11 稳定仓未来预测点'
     UNION ALL
-    SELECT 'TASK-PHASE11-STABLE-001', 'FUTURE', 7, '2025-05-07 00:00:00', NULL, 20.44, NULL, NULL, 'NORMAL', 0, NULL, 0, 'Phase 11 稳定仓未来预测点'
+    SELECT 'TASK-PHASE11-STABLE-001', 'FUTURE', 7, '2026-05-07 00:00:00', NULL, 20.44, NULL, NULL, 'NORMAL', 0, NULL, 0, 'Phase 11 稳定仓未来预测点'
     UNION ALL
-    SELECT 'TASK-PHASE11-STABLE-001', 'FUTURE', 15, '2025-05-15 00:00:00', NULL, 20.55, NULL, NULL, 'NORMAL', 0, NULL, 0, 'Phase 11 稳定仓未来预测点'
+    SELECT 'TASK-PHASE11-STABLE-001', 'FUTURE', 15, '2026-05-15 00:00:00', NULL, 20.55, NULL, NULL, 'NORMAL', 0, NULL, 0, 'Phase 11 稳定仓未来预测点'
     UNION ALL
-    SELECT 'TASK-PHASE11-CONTRAST-001', 'FUTURE', 1, '2025-05-01 00:00:00', NULL, 23.22, NULL, NULL, 'NORMAL', 0, NULL, 0, 'Phase 11 对比仓未来预测点'
+    SELECT 'TASK-PHASE11-CONTRAST-001', 'FUTURE', 1, '2026-05-01 00:00:00', NULL, 23.22, NULL, NULL, 'NORMAL', 0, NULL, 0, 'Phase 11 对比仓未来预测点'
     UNION ALL
-    SELECT 'TASK-PHASE11-CONTRAST-001', 'FUTURE', 7, '2025-05-07 00:00:00', NULL, 23.38, NULL, NULL, 'NORMAL', 0, NULL, 0, 'Phase 11 对比仓未来预测点'
+    SELECT 'TASK-PHASE11-CONTRAST-001', 'FUTURE', 7, '2026-05-07 00:00:00', NULL, 23.38, NULL, NULL, 'NORMAL', 0, NULL, 0, 'Phase 11 对比仓未来预测点'
     UNION ALL
-    SELECT 'TASK-PHASE11-CONTRAST-001', 'FUTURE', 14, '2025-05-14 00:00:00', NULL, 23.51, NULL, NULL, 'ATTENTION', 1, '对比仓保持轻微波动，可与风险仓形成对照。', 0, 'Phase 11 对比仓未来预测点'
+    SELECT 'TASK-PHASE11-CONTRAST-001', 'FUTURE', 14, '2026-05-14 00:00:00', NULL, 23.51, NULL, NULL, 'ATTENTION', 1, '对比仓保持轻微波动，可与风险仓形成对照。', 0, 'Phase 11 对比仓未来预测点'
     UNION ALL
-    SELECT 'TASK-PHASE11-CONTRAST-001', 'FUTURE', 21, '2025-05-21 00:00:00', NULL, 23.66, NULL, NULL, 'ATTENTION', 1, '5 月下旬仍有轻微抬升，但整体弱于风险仓。', 0, 'Phase 11 对比仓未来预测点'
+    SELECT 'TASK-PHASE11-CONTRAST-001', 'FUTURE', 21, '2026-05-21 00:00:00', NULL, 23.66, NULL, NULL, 'ATTENTION', 1, '5 月下旬仍有轻微抬升，但整体弱于风险仓。', 0, 'Phase 11 对比仓未来预测点'
 ) seed ON seed.task_no = task.task_no;
+

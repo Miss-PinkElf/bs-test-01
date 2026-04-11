@@ -323,11 +323,12 @@ try {
 
     if (-not $SkipReset) {
         Write-Step "Resetting demo database"
-        $shellPath = Get-ShellPath
-        Invoke-ExternalCommand -Command $shellPath -Arguments @("-ExecutionPolicy", "Bypass", "-File", $resetScript) -WorkingDirectory $repoRoot -Label "demo database reset"
+        $npm = Get-Command npm -ErrorAction Stop
+        Invoke-ExternalCommand -Command $npm.Source -Arguments @("run", "reset-demo-db") -WorkingDirectory $repoRoot -Label "demo database reset"
         Write-Pass "Demo database reset passed"
 
         Write-Step "Verifying Phase 11 baseline"
+        $shellPath = Get-ShellPath
         Invoke-ExternalCommand -Command $shellPath -Arguments @("-ExecutionPolicy", "Bypass", "-File", $verifyBaselineScript) -WorkingDirectory $repoRoot -Label "Phase 11 baseline verification"
         Write-Pass "Phase 11 baseline verification passed"
     }
@@ -346,29 +347,29 @@ try {
     Write-Step "Checking Phase 11 baseline APIs"
     $sensorHumidityPage = Assert-ApiSuccess (Invoke-ApiRequest -Method "GET" -Path "/api/sensor-data?warehouseId=2&metricCode=humidity&pageNum=1&pageSize=150") "sensor humidity baseline"
     Assert-True ($sensorHumidityPage.total -eq 120) "Sensor humidity baseline should expose 120 Jan-Apr rows for warehouse 2."
-    Assert-True (@($sensorHumidityPage.list | Where-Object { (Convert-ToDateText $_.collectedAt) -like '2025-09*' }).Count -eq 0) "Sensor humidity baseline still contains September rows."
-    Assert-True (@($sensorHumidityPage.list | Where-Object { (Convert-ToDateText $_.collectedAt) -like '2025-04*' }).Count -ge 1) "Sensor humidity baseline does not surface April rows."
+    Assert-True (@($sensorHumidityPage.list | Where-Object { (Convert-ToDateText $_.collectedAt) -like '2026-09*' }).Count -eq 0) "Sensor humidity baseline still contains September rows."
+    Assert-True (@($sensorHumidityPage.list | Where-Object { (Convert-ToDateText $_.collectedAt) -like '2026-04*' }).Count -ge 1) "Sensor humidity baseline does not surface April rows."
 
     $sensorTrend = Assert-ApiSuccess (Invoke-ApiRequest -Method "GET" -Path "/api/sensor-data/trend?warehouseId=6&metricCode=co2") "sensor co2 trend baseline"
     Assert-True (@($sensorTrend.points).Count -eq 120) "Sensor trend baseline should expose 120 Jan-Apr points for warehouse 6 co2."
-    Assert-True (@($sensorTrend.points | Where-Object { (Convert-ToDateText $_.time) -like '2025-09*' }).Count -eq 0) "Sensor trend baseline still contains September points."
+    Assert-True (@($sensorTrend.points | Where-Object { (Convert-ToDateText $_.time) -like '2026-09*' }).Count -eq 0) "Sensor trend baseline still contains September points."
 
     $grainSummaries = Assert-ApiSuccess (Invoke-ApiRequest -Method "GET" -Path "/api/grain-temp/summaries?warehouseId=2") "grain summary baseline"
     Assert-True (@($grainSummaries).Count -eq 120) "Grain summary baseline should expose 120 Jan-Apr rows for warehouse 2."
-    Assert-True (@($grainSummaries | Where-Object { (Convert-ToDateText $_.collectedAt) -like '2025-09*' }).Count -eq 0) "Grain summary baseline still contains September rows."
+    Assert-True (@($grainSummaries | Where-Object { (Convert-ToDateText $_.collectedAt) -like '2026-09*' }).Count -eq 0) "Grain summary baseline still contains September rows."
     Assert-True (@($grainSummaries | Where-Object { $_.warningFlag -eq $true }).Count -ge 1) "Risk warehouse grain summaries should contain alert rows near April end."
 
     $phase11Tasks = Assert-ApiSuccess (Invoke-ApiRequest -Method "GET" -Path "/api/predictions/tasks") "Phase 11 prediction task list"
     Assert-True (@($phase11Tasks).Count -eq 3) "Prediction task archive should contain exactly three Phase 11 tasks after reset."
     Assert-True (@($phase11Tasks | Where-Object { $_.taskNo -like 'TASK-ROLLING-*' }).Count -eq 0) "Legacy rolling prediction tasks are still present after reset."
-    Assert-True (@($phase11Tasks | Where-Object { (Convert-ToDateText $_.forecastStartTime) -notlike '2025-05*' }).Count -eq 0) "Prediction tasks are not anchored to post-Apr baseline forecast windows."
+    Assert-True (@($phase11Tasks | Where-Object { (Convert-ToDateText $_.forecastStartTime) -notlike '2026-05*' }).Count -eq 0) "Prediction tasks are not anchored to post-Apr baseline forecast windows."
     $riskTask = @($phase11Tasks | Where-Object { $_.warehouseId -eq 2 })[0]
     Assert-True ($null -ne $riskTask) "Phase 11 prediction archive is missing the warehouse 2 risk task."
     $riskTaskDetail = Assert-ApiSuccess (Invoke-ApiRequest -Method "GET" -Path "/api/predictions/tasks/$($riskTask.taskId)") "Phase 11 risk task detail"
-    Assert-True ((Convert-ToDateText $riskTaskDetail.trainEndTime) -like '2025-04-30*') "Risk task is not trained against the Jan-Apr baseline."
+    Assert-True ((Convert-ToDateText $riskTaskDetail.trainEndTime) -like '2026-04-30*') "Risk task is not trained against the Jan-Apr baseline."
     $futureRiskPoints = @($riskTaskDetail.resultList | Where-Object { $_.phaseType -eq 'FUTURE' })
     Assert-True ($futureRiskPoints.Count -ge 5) "Risk task detail should retain May future prediction points."
-    Assert-True (@($futureRiskPoints | Where-Object { (Convert-ToDateText $_.resultTime) -notlike '2025-05*' }).Count -eq 0) "Risk task future predictions still contain non-May results."
+    Assert-True (@($futureRiskPoints | Where-Object { (Convert-ToDateText $_.resultTime) -notlike '2026-05*' }).Count -eq 0) "Risk task future predictions still contain non-May results."
     Write-Pass "Phase 11 baseline API checks passed"
 
     Write-Step "Checking dashboard overview"
@@ -487,3 +488,5 @@ finally {
         Stop-Backend
     }
 }
+
+
