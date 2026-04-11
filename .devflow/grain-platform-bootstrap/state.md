@@ -1,7 +1,7 @@
 # 当前状态
 
 ## 当前阶段
-- Pause-ready：handoff **022**（2026-04-10）— 管理端布局 + 粮温多条件筛选已交付并提交 `16cabbc`；恢复以022 + `NEXT-SESSION-PROMPT-DEVFLOW.md` 为准
+- Pause-ready：handoff **023**（2026-04-11）— GSD / devflow / 论文文档同步已完成；恢复以 023 + `NEXT-SESSION-PROMPT-DEVFLOW.md` 为准
 
 ## 已确认的事实
 - 用户要求使用 `devflow` 记录过程。
@@ -131,6 +131,11 @@
   - **前端**：`DataView.vue`（粮温模式下工具栏）、`frontend/src/api/grain.js`（`fetchGrainTempRecordFilterOptions`、`fetchGrainTempRecords` 参数）；`styles.css`（`.grain-record-filter-form` 等）。
   - **验证**：`backend/` `mvn -q -DskipTests compile`、`frontend/` `npm run build` 已通过；全量 `run-acceptance-smoke.ps1` 未因本项改写，答辩前可按需手工跑一遍。
 - 已优化粮温固定 XLSX 模板版式（2026-04-10，模板 v2）：`GrainTempImportService.getExcelTemplate` 增加合并单元格与中文分区说明；矩阵块标签为「区域编码（zoneCode）」「缆号/探头编码（probeCode）」等；`parseFixedTemplate` 通过 `cellMatchesKey` 兼容旧版纯英文标签与新版双语标签；`DataView.vue` 导入说明已同步。GSD 侧 `.planning/PROJECT.md` / `REQUIREMENTS.md` 已更新；codebase 地图见 `.planning/codebase/`。
+- 已完成 2026-04-11 文档与过程同步：
+  - 已回看 `.planning` **Phase 1-9** 的需求、Roadmap 与状态，不再只看最新阶段。
+  - 已对照 `backend/src/main/resources/db/schema.sql` 与当前 Controller 接口，确认数据库主结构无新增偏差；本轮差异主要在文档口径滞后，而非代码与数据库结构不一致。
+  - 已更新 `zzz-docs/设计文档/` 下的 PRD、数据库设计、后端接口设计，使其覆盖固定模板 v2、预测页 Phase 2-6、环境数据页 Phase 7、大屏 Phase 8、去 mock 与服务端分页 Phase 9。
+  - 已明确：`prediction_task` / `prediction_result` 中的修正链字段继续作为**扩展预留**，不重新定义为当前必做业务入口。
 
 ## 工作假设
 - 以毕业设计 MVP 为目标，先做可演示的软件平台，不接入真实硬件。
@@ -150,12 +155,13 @@
 - 旧版 PRD、数据库定稿、旧接口设计已归档；历史 handoff/checkpoint 中仍保留旧文件名，属于历史上下文，不应作为当前真相源。
 
 ## 下一步
-- 休息/恢复：下轮先读 handoff **022** 与根目录 `NEXT-SESSION-PROMPT-DEVFLOW.md`。
-- 答辩前可再扫一遍 `zzz-docs/设计文档/` 中非归档文档，按需补「数据库优先 MVP」文首提示或真相源引用。
+- 休息/恢复：下轮先读 handoff **023** 与根目录 `NEXT-SESSION-PROMPT-DEVFLOW.md`。
+- 如继续写论文，可直接以已更新的 PRD、数据库设计、接口设计文档为材料基线，再补章节化描述或截图。
 - 可选：扩展验收脚本与回归清单（粮温筛选）；按需 `git push`；初始化 GSD 时保持与 devflow 分工。
 - 如需在沙箱环境里重复跑脚本，可优先使用 `-SkipStaticChecks`，静态命令单独执行。
 
 ## 当前参考计划
+- `.devflow/grain-platform-bootstrap/plans/2026-04-11-gsd-devflow-prd-database-doc-sync.md`
 - `.devflow/grain-platform-bootstrap/plans/active-plan-links.md`
 - `.devflow/grain-platform-bootstrap/plans/2026-04-10-console-layout-scroll-and-scrollbar.md`
 - `.devflow/grain-platform-bootstrap/plans/2026-04-10-grain-temp-records-filter-toolbar.md`
@@ -168,12 +174,12 @@
 - `.devflow/grain-platform-bootstrap/plans/2026-04-10-usersview-and-screen-display-unification.md`
 
 ## 最新 handoff
-- `.devflow/grain-platform-bootstrap/handoffs/2026-04-10-022-pause-ready-after-layout-grain-filter-handoff-commit.md`
+- `.devflow/grain-platform-bootstrap/handoffs/2026-04-11-023-doc-sync-and-thesis-materials-ready.md`
 
 ## 最小活跃上下文摘要
 - **Git**：`16cabbc` 已提交（布局 + 粮温筛选 + devflow 文档）。需同步远端时本地 `git push`。
-- **恢复**：`state.md` + handoff **022** + 根目录 `NEXT-SESSION-PROMPT-DEVFLOW.md`。计划条目见 `plans/2026-04-10-console-layout-scroll-and-scrollbar.md` 与 `plans/2026-04-10-grain-temp-records-filter-toolbar.md`。
-- **开放**：验收脚本扩展断言、回归清单补粮温筛选步骤、GSD 初始化、设计文档扫荡等见 `state.md`「待解决的问题」与 022 handoff。
+- **恢复**：`state.md` + handoff **023** + 根目录 `NEXT-SESSION-PROMPT-DEVFLOW.md`。本轮文档同步计划见 `plans/2026-04-11-gsd-devflow-prd-database-doc-sync.md`。
+- **开放**：验收脚本扩展断言、回归清单补粮温筛选步骤、论文正文章节化展开与截图整理，可在 023 handoff 基础上继续。
 - 新需求默认先对齐再编码（`project-zh.mdc` §3）；沙箱跑验收可 `-SkipStaticChecks`。
 
 
