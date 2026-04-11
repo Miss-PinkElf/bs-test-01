@@ -59,6 +59,14 @@
 - [x] **ENV-07-01**: `DataView.vue` 的 **粮温汇总结果** 改为服务端分页，不再使用前端 `useClientPagination(filteredGrainSummaries)`；后端提供分页接口，支持 `warehouseId`、时间范围、关键词、预警等级、整仓均温范围、`pageNum/pageSize`（2026-04-11：`/api/grain-temp/summaries/page` + `PageResult`）
 - [x] **ENV-07-02**: **粮温汇总趋势图** 支持共享的 **仓库 + 时间范围** 查询，并支持 **层级目标** 切换：`整仓均温 / 一层均温 / 二层均温 / 三层均温 / 四层均温`；图表固定保留 **最高温** 参考线（2026-04-11：`DataView.vue` 图例与 series 改造）
 - [x] **ENV-07-03**: 图表与汇总表 **共享仓库 + 时间范围**，但汇总表的 **关键词 / 预警等级 / 温度范围** 只影响表格，不反向影响图表；普通环境模式与粮温原始测点记录链路不回归（2026-04-11：summary series / summary page / record page 状态拆分）
+
+## Phase 8 Requirements（展示大屏优化）
+
+### Big screen / defense board
+
+- [ ] **SCREEN-08-01**: `/screen` 继续沿用现有公开路由与 `BigScreenView.vue`，但首屏必须先渲染标题、操作区与模块骨架；任一图表或明细模块失败时不得整页白屏；页面不再以 `mockScreenMetrics` / `mockScreenAlerts` 作为常态展示源，图表初始化必须在容器可用后执行
+- [ ] **SCREEN-08-02**: 页面结构固定为 **上总览 / 中图表 / 下明细**；中部至少有 **粮温趋势、预警趋势、预测趋势、仓库对比** 4 个稳定信息位，且粮温趋势为主图；底部必须展示 **最新预警、最近预测任务、重点仓库、说明**
+- [ ] **SCREEN-08-03**: 大屏遵循“能真实就真实”：顶部指标、重点仓库、最新预警、最近预测任务与图表序列优先来自真实接口；新增或扩展的大屏统计接口需支持共享 **仓库 + 时间范围** 查询，并保持“后台面板增强版”信息风格而不是回退为说明页
 ## v2 Requirements
 
 - [ ] **DATA-05**: 验收脚本 `run-acceptance-smoke.ps1` 增加针对新版模板版式或关键标签的断言（可选）
@@ -94,6 +102,9 @@
 | ENV-07-01 | Phase 7 | Done |
 | ENV-07-02 | Phase 7 | Done |
 | ENV-07-03 | Phase 7 | Done |
+| SCREEN-08-01 | Phase 8 | Planned |
+| SCREEN-08-02 | Phase 8 | Planned |
+| SCREEN-08-03 | Phase 8 | Planned |
 
 **Coverage:**
 
@@ -104,9 +115,10 @@
 - Phase 5 / 预测记录删除：2 条（DEL-05-*）
 - Phase 6 / overflow-x 收口：3 条（OVERFLOW-06-*）
 - Phase 7 / 粮温汇总优化：3 条（ENV-07-*）
-- Mapped to phases: 20
+- Phase 8 / 展示大屏优化：3 条（SCREEN-08-*）
+- Mapped to phases: 23
 - Unmapped: 0
 
 ---
-*Last updated: 2026-04-11 Phase 7 增加 ENV-07-*（粮温汇总服务端分页、共享时间范围、层级目标切换与图表/表格查询态拆分）*
+*Last updated: 2026-04-11 Phase 8 增加 SCREEN-08-*（展示大屏稳定首屏、三段式图表布局、真实数据优先）*
 
