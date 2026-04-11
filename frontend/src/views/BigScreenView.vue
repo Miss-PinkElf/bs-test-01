@@ -211,7 +211,7 @@ function getChartInstance(key, element) {
 function getCommonChartStyle() {
   return {
     textStyle: {
-      color: "rgba(238, 248, 243, 0.88)",
+      color: "#1f2f2b",
       fontFamily: '"Source Han Sans SC", "PingFang SC", "Microsoft YaHei", sans-serif'
     },
     grid: {
@@ -231,7 +231,7 @@ function getCommonChartStyle() {
     },
     legend: {
       textStyle: {
-        color: "rgba(238, 248, 243, 0.76)"
+        color: "#6b7c78"
       }
     }
   };
@@ -251,16 +251,16 @@ function buildGrainTrendOption() {
       type: "category",
       boundaryGap: false,
       data: rows.map((item) => item.timeLabel),
-      axisLabel: { color: "rgba(238, 248, 243, 0.72)" },
-      axisLine: { lineStyle: { color: "rgba(255,255,255,0.18)" } }
+      axisLabel: { color: "#6b7c78" },
+      axisLine: { lineStyle: { color: "rgba(18, 63, 55, 0.16)" } }
     },
     yAxis: {
       type: "value",
       axisLabel: {
-        color: "rgba(238, 248, 243, 0.72)",
+        color: "#6b7c78",
         formatter: (value) => `${value}°C`
       },
-      splitLine: { lineStyle: { color: "rgba(255,255,255,0.08)" } }
+      splitLine: { lineStyle: { color: "rgba(18, 63, 55, 0.08)" } }
     },
     series: [
       {
@@ -297,13 +297,13 @@ function buildAlertTrendOption() {
     xAxis: {
       type: "category",
       data: rows.map((item) => item.timeLabel),
-      axisLabel: { color: "rgba(238, 248, 243, 0.72)" },
-      axisLine: { lineStyle: { color: "rgba(255,255,255,0.18)" } }
+      axisLabel: { color: "#6b7c78" },
+      axisLine: { lineStyle: { color: "rgba(18, 63, 55, 0.16)" } }
     },
     yAxis: {
       type: "value",
-      axisLabel: { color: "rgba(238, 248, 243, 0.72)" },
-      splitLine: { lineStyle: { color: "rgba(255,255,255,0.08)" } }
+      axisLabel: { color: "#6b7c78" },
+      splitLine: { lineStyle: { color: "rgba(18, 63, 55, 0.08)" } }
     },
     series: [
       {
@@ -338,13 +338,13 @@ function buildPredictionTrendOption() {
     xAxis: {
       type: "category",
       data: rows.map((item) => item.timeLabel),
-      axisLabel: { color: "rgba(238, 248, 243, 0.72)" },
-      axisLine: { lineStyle: { color: "rgba(255,255,255,0.18)" } }
+      axisLabel: { color: "#6b7c78" },
+      axisLine: { lineStyle: { color: "rgba(18, 63, 55, 0.16)" } }
     },
     yAxis: {
       type: "value",
-      axisLabel: { color: "rgba(238, 248, 243, 0.72)" },
-      splitLine: { lineStyle: { color: "rgba(255,255,255,0.08)" } }
+      axisLabel: { color: "#6b7c78" },
+      splitLine: { lineStyle: { color: "rgba(18, 63, 55, 0.08)" } }
     },
     series: [
       {
@@ -380,24 +380,24 @@ function buildWarehouseComparisonOption() {
       type: "category",
       data: rows.map((item) => item.warehouseName),
       axisLabel: {
-        color: "rgba(238, 248, 243, 0.72)",
+        color: "#6b7c78",
         interval: 0,
         rotate: rows.length > 4 ? 18 : 0
       },
-      axisLine: { lineStyle: { color: "rgba(255,255,255,0.18)" } }
+      axisLine: { lineStyle: { color: "rgba(18, 63, 55, 0.16)" } }
     },
     yAxis: [
       {
         type: "value",
         name: "健康分",
-        axisLabel: { color: "rgba(238, 248, 243, 0.72)" },
-        splitLine: { lineStyle: { color: "rgba(255,255,255,0.08)" } }
+        axisLabel: { color: "#6b7c78" },
+        splitLine: { lineStyle: { color: "rgba(18, 63, 55, 0.08)" } }
       },
       {
         type: "value",
         name: "温度",
         axisLabel: {
-          color: "rgba(238, 248, 243, 0.72)",
+          color: "#6b7c78",
           formatter: (value) => `${value}°C`
         },
         splitLine: { show: false }
@@ -692,3 +692,4 @@ onUnmounted(() => {
     </div>
   </div>
 </template>
+
