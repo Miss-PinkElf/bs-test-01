@@ -2,11 +2,11 @@
 gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
-status: Phase 11 archived
-last_updated: "2026-04-11T12:30:00.000Z"
+status: Phase 12 context gathered
+last_updated: "2026-04-11T14:28:00.000Z"
 last_activity: 2026-04-11
 progress:
-  total_phases: 11
+  total_phases: 12
   completed_phases: 7
   total_plans: 12
   completed_plans: 12
@@ -20,7 +20,7 @@ progress:
 See: `.planning/PROJECT.md`（updated 2026-04-11）
 
 **Core value:** 粮温与环境数据可导入、可查、可汇总，预测结果可追溯展示。  
-**Current focus:** Phase 11 已归档；如需继续推进，建议新开 phase 处理后续 Windows 一键运行或其他增量需求
+**Current focus:** Phase 12 context 已收集，待 /gsd-plan-phase 12 拆解 Windows 免依赖运行封装与 README 双运行说明
 
 ## Implementation Truth Source
 
@@ -37,6 +37,7 @@ See: `.planning/PROJECT.md`（updated 2026-04-11）
 | --- | --- | --- | --- | --- |
 | 260410-jw9 | 粮温固定 XLSX 模板 v2：合并单元格与双语标签，解析兼容旧版，DataView 与 GSD/devflow 文档同步 | 2026-04-10 | `05b6c71` | [260410-jw9-xlsx-v2-dataview-gsd](./quick/260410-jw9-xlsx-v2-dataview-gsd/) |
 | 260410-k32 | Vue 管理端主内容横向无限变宽：`el-scrollbar` 与 ECharts ResizeObserver 反馈；主内容改原生滚动并收紧 flex / 预测页显式 resize | 2026-04-10 | `53ba2df` | [260410-k32-vue-scrollbar-echarts-layout-fix](./quick/260410-k32-vue-scrollbar-echarts-layout-fix/) |
+| 260411-tr6 | 补写论文讲解版数据库设计文档：整合 `zzz-docs/设计文档` 与 `zzz-docs/写论文用` 的数据库内容，补充 ER 图、字段设计、主外键与设计原因分析 | 2026-04-11 | `未提交` | [260411-tr6-zzz-docs-zzz-docs-er](./quick/260411-tr6-zzz-docs-zzz-docs-er/) |
 
 **Last activity:** 2026-04-11
 
@@ -44,6 +45,7 @@ See: `.planning/PROJECT.md`（updated 2026-04-11）
 
 ### Roadmap Evolution
 
+- Phase 12 已添加：Windows 免依赖运行封装与根目录 README 双运行说明（手动运行 / 免安装运行）；目录 `.planning/phases/12-windows-readme/`
 - Phase 11 已完成：河南环境数据 1-4 月 mock、脏数据清理与 baseline 验收链路收口；目录 `.planning/phases/11-1-4-mock-windows/`
 - Phase 10 已完成：前后端补充简单注释提升可读性；目录 `.planning/phases/10-code-comment-readability/`
 - Phase 9 已完成：管理端列表去 mock 并收口服务端分页查询；目录 `.planning/phases/09-mock/`
@@ -57,6 +59,8 @@ See: `.planning/PROJECT.md`（updated 2026-04-11）
 
 ## Session Notes
 
+- 2026-04-11：**Phase 12 已完成 discuss/context** — 已写入 `.planning/phases/12-windows-readme/12-CONTEXT.md` 与 `12-DISCUSSION-LOG.md`；已锁定 portable 发布目录方案、真实 MySQL 便携版、JRE 随包、单主启动脚本、README 双运行方式，以及“发布目录不进仓库、通过 `.gitignore` 忽略后自行压缩分发”的边界。注意：`gsd-tools state record-session` 仍与当前 `STATE.md` 结构不兼容，故本次状态继续人工同步。
+- 2026-04-11：**Quick 260411-tr6 已完成** — 新增 `zzz-docs/写论文用/数据库设计讲解-论文版.md`，将两套设计文档与论文目录中的数据库内容整理为一份面向论文写作的讲解文档；文档补充了 ER 图、11 张核心表字段说明、主外键设计、索引思路与设计原因分析，并明确以 `backend/src/main/resources/db/schema.sql` 作为当前结构真相源。
 - 2026-04-11：**Phase 11 已归档** — `11-01-SUMMARY.md`、`11-02-SUMMARY.md`、`11-VERIFICATION.md`、`11-HUMAN-UAT.md` 与归档说明已补齐；用户接受当前结果并要求直接归档，Phase 11 已从待人工确认收口为完成状态。
 - 2026-04-11：**Phase 11 已完成 discuss/context** — 已写入 `.planning/phases/11-1-4-mock-windows/11-CONTEXT.md` 与 `11-DISCUSSION-LOG.md`；本阶段范围明确收口为“河南 1-4 月环境 mock 数据 + 脏数据清理”，并已将“Windows 一键运行 / 类 docker 免安装依赖环境”拆出为后续单独 phase；已确认数据直接固化到 `backend/src/main/resources/db/schema.sql`，demo 库以 `scripts/reset-demo-db.ps1` 重置为标准演示库。
 - 2026-04-11：**Phase 10 已执行完成** — `10-01-SUMMARY.md`、`10-02-SUMMARY.md`、`10-VERIFICATION.md` 已落盘；前后端仅补复杂逻辑前的短中文注释，无行为改动；`cd frontend && npm run build` 与 `cd backend && mvn -q -DskipTests compile` 已通过；Phase 10 requirement IDs `COMMENT-10-01` ~ `COMMENT-10-03` 已收口完成。
