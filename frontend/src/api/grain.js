@@ -137,7 +137,58 @@ function normalizeDashboardWarehouseHealth(item) {
     latestForecastValue: item.latestForecastValue ?? null
   };
 }
+function normalizeOverview(raw) {
+  return {
+    warehouseCount: raw?.warehouseCount || 0,
+    grainSummaryCount: raw?.grainSummaryCount || 0,
+    realAlertCount: raw?.realAlertCount || 0,
+    predictionAlertCount: raw?.predictionAlertCount || 0,
+    archivedPredictionCount: raw?.archivedPredictionCount || 0,
+    latestAlerts: Array.isArray(raw?.latestAlerts)
+      ? raw.latestAlerts.filter((item) => item != null).map(normalizeAlert)
+      : [],
+    latestGrainSummaries: Array.isArray(raw?.latestGrainSummaries)
+      ? raw.latestGrainSummaries.map(normalizeDashboardSummary)
+      : [],
+    warehouseHealthList: Array.isArray(raw?.warehouseHealthList)
+      ? raw.warehouseHealthList.map(normalizeDashboardWarehouseHealth)
+      : []
+  };
+}
 
+function normalizeScreenTrendPoint(item) {
+  return {
+    timeLabel: item?.timeLabel || "",
+    primaryValue: item?.primaryValue ?? null,
+    secondaryValue: item?.secondaryValue ?? null,
+    realAlertCount: item?.realAlertCount ?? null,
+    predictionAlertCount: item?.predictionAlertCount ?? null
+  };
+}
+
+function normalizeScreenWarehouseCompare(item) {
+  return {
+    warehouseId: item?.warehouseId ?? null,
+    warehouseName: item?.warehouseName || "-",
+    healthScore: item?.healthScore ?? 0,
+    avgTemp: item?.avgTemp ?? null,
+    latestForecastValue: item?.latestForecastValue ?? null,
+    riskLevel: item?.riskLevel || "NORMAL"
+  };
+}
+
+function normalizeScreenPredictionTask(item) {
+  return {
+    taskId: item?.taskId ?? null,
+    taskNo: item?.taskNo || "-",
+    warehouseId: item?.warehouseId ?? null,
+    warehouseName: item?.warehouseName || "-",
+    riskLevel: item?.riskLevel || "NORMAL",
+    requestedAt: item?.requestedAt || "",
+    forecastDays: item?.forecastDays ?? 0,
+    summary: item?.summary || ""
+  };
+}
 function normalizeGrainSummary(item) {
   return {
     id: item.id,
@@ -212,20 +263,30 @@ export async function fetchOverview() {
     method: "get"
   });
 
+  return normalizeOverview(raw);
+}
+
+export async function fetchScreenDashboard(params = {}) {
+  const raw = await request({
+    url: "/api/dashboard/screen",
+    method: "get",
+    params: {
+      warehouseId: params.warehouseId || undefined,
+      startTime: params.startTime || undefined,
+      endTime: params.endTime || undefined
+    }
+  });
+
   return {
-    warehouseCount: raw.warehouseCount || 0,
-    grainSummaryCount: raw.grainSummaryCount || 0,
-    realAlertCount: raw.realAlertCount || 0,
-    predictionAlertCount: raw.predictionAlertCount || 0,
-    archivedPredictionCount: raw.archivedPredictionCount || 0,
-    latestAlerts: Array.isArray(raw.latestAlerts)
-      ? raw.latestAlerts.filter((item) => item != null).map(normalizeAlert)
+    overview: normalizeOverview(raw?.overview || {}),
+    grainTrend: Array.isArray(raw?.grainTrend) ? raw.grainTrend.map(normalizeScreenTrendPoint) : [],
+    alertTrend: Array.isArray(raw?.alertTrend) ? raw.alertTrend.map(normalizeScreenTrendPoint) : [],
+    predictionTrend: Array.isArray(raw?.predictionTrend) ? raw.predictionTrend.map(normalizeScreenTrendPoint) : [],
+    warehouseComparison: Array.isArray(raw?.warehouseComparison)
+      ? raw.warehouseComparison.map(normalizeScreenWarehouseCompare)
       : [],
-    latestGrainSummaries: Array.isArray(raw.latestGrainSummaries)
-      ? raw.latestGrainSummaries.map(normalizeDashboardSummary)
-      : [],
-    warehouseHealthList: Array.isArray(raw.warehouseHealthList)
-      ? raw.warehouseHealthList.map(normalizeDashboardWarehouseHealth)
+    latestPredictionTasks: Array.isArray(raw?.latestPredictionTasks)
+      ? raw.latestPredictionTasks.map(normalizeScreenPredictionTask)
       : []
   };
 }
@@ -700,4 +761,6 @@ export async function fetchMetricOptions() {
 
   return Array.isArray(raw) ? raw.map(normalizeMetricOption) : [];
 }
+
+
 
