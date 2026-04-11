@@ -9,6 +9,7 @@ const metricNameMap = {
 
 const DEFAULT_METRIC_CODE = "temperature";
 
+// 统一兼容后端可能返回的角色字段，避免页面各自判断 role / roleCodes。
 function normalizeRoleCodes(raw) {
   if (Array.isArray(raw?.roleCodes)) {
     return raw.roleCodes;
@@ -99,6 +100,7 @@ function normalizeGrainRecord(item) {
   };
 }
 
+// 把后端分页结果收口成页面统一结构，列表页只消费 list / pageNum / pageSize / total。
 function normalizePageResult(raw, itemNormalizer) {
   const list = Array.isArray(raw?.list) ? raw.list.map(itemNormalizer) : [];
 
@@ -137,6 +139,8 @@ function normalizeDashboardWarehouseHealth(item) {
     latestForecastValue: item.latestForecastValue ?? null
   };
 }
+
+// Dashboard overview 兼容旧接口缺省字段，首页各模块统一从这里补齐安全兜底。
 function normalizeOverview(raw) {
   return {
     warehouseCount: raw?.warehouseCount || 0,
@@ -271,6 +275,7 @@ export async function fetchDashboardAlertsPage(params = {}) {
     url: "/api/dashboard/alerts",
     method: "get",
     params: {
+      // 分页查询统一裁掉空关键词，并给 pageNum/pageSize 补默认值，避免后端收到空串。
       keyword: params.keyword || undefined,
       pageNum: params.pageNum || 1,
       pageSize: params.pageSize || 5
@@ -285,6 +290,7 @@ export async function fetchDashboardWarehouseHealthPage(params = {}) {
     url: "/api/dashboard/warehouse-health",
     method: "get",
     params: {
+      // 分页查询统一裁掉空关键词，并给 pageNum/pageSize 补默认值，避免后端收到空串。
       keyword: params.keyword || undefined,
       pageNum: params.pageNum || 1,
       pageSize: params.pageSize || 5
@@ -299,6 +305,7 @@ export async function fetchDashboardGrainSummariesPage(params = {}) {
     url: "/api/dashboard/grain-summaries",
     method: "get",
     params: {
+      // 分页查询统一裁掉空关键词，并给 pageNum/pageSize 补默认值，避免后端收到空串。
       keyword: params.keyword || undefined,
       pageNum: params.pageNum || 1,
       pageSize: params.pageSize || 5
@@ -627,6 +634,7 @@ export function downloadGrainTempTemplate() {
   window.open(`${API_BASE_URL}/api/grain-temp/import/template`, "_blank");
 }
 
+// 导入接口统一按 ApiResponse.data 解包，异常时沿用后端 message 直接提示页面。
 function unwrapImportResult(payload) {
   if (payload?.code === 200) {
     return payload.data;
@@ -635,6 +643,7 @@ function unwrapImportResult(payload) {
   throw new Error(payload?.message || "导入失败");
 }
 
+// 预测任务列表在前端补齐 resultList 与风险字段兜底，保证历史记录和当前详情共用一套渲染结构。
 function normalizePredictionTask(item) {
   const resultList = Array.isArray(item?.resultList)
     ? item.resultList.map(normalizePredictionPoint)
