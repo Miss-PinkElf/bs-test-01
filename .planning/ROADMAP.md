@@ -17,7 +17,7 @@
 | 8 | 展示大屏优化 | `/screen` 稳定打开并升级为答辩展示大屏 | SCREEN-08-01 — SCREEN-08-03 | **已完成**（2026-04-11） |
 | 9 | 管理端列表去 mock 并收口服务端分页查询 | 移除残留 mock，并把 Users/Warehouse/Prediction/Dashboard 收口到后端分页与 keyword 查询 | MOCK-09-01 — MOCK-09-04 | **已完成**（2026-04-11） |
 | 10 | 前后端补充简单注释提升可读性 | 在关键逻辑处补简单注释，降低阅读与接手成本 | COMMENT-10-01 — COMMENT-10-03 | **已完成**（2026-04-11） |
-| 11 | 河南环境数据 1-4 月 mock 与脏数据清理 | 补齐 Jan-Apr 河南 baseline、清理旧脏数据，并明确 Windows 一键运行延期 | Context decisions D-01 — D-09 | **已落地**（待 UAT） |
+| 11 | 河南环境数据 1-4 月 mock 与脏数据清理 | 补齐 Jan-Apr 河南 baseline、清理旧脏数据，并明确 Windows 一键运行延期 | Context decisions D-01 — D-09 | **已完成**（2026-04-11） |
 
 ## Phase 1: 粮温 Excel 模板与导入一致化（已完成）
 
@@ -221,7 +221,7 @@ Plans:
 **Goal:** 把 demo 库收口为可重建的标准演示库：为 2 到 3 个重点仓库固化 1 月 1 日到 4 月 30 日的河南场景温度 / 湿度 / co2 连续 mock 数据，清理与之冲突的旧脏数据，并以 `schema.sql + reset-demo-db.ps1` 作为唯一重置入口；Windows 一键运行已延期到后续 phase。
 **Requirements**: Context decisions D-01 — D-09 (`.planning/phases/11-1-4-mock-windows/11-CONTEXT.md`)
 **Depends on:** Phase 10
-**Delivered（2026-04-11）：** `schema.sql + reset-demo-db.ps1 + verify-demo-baseline.ps1` 已收口 Jan-Apr 河南 baseline；`run-acceptance-smoke.ps1` 已串起 reset / baseline verifier / API / dashboard / grain import 验收；固定模板粮温导入误判也已随 smoke 修复。`11-HUMAN-UAT.md` 已生成，等待人工确认页面展示。
+**Delivered（2026-04-11）：** `schema.sql + reset-demo-db.ps1 + verify-demo-baseline.ps1` 已收口 Jan-Apr 河南 baseline；`run-acceptance-smoke.ps1` 已串起 reset / baseline verifier / API / dashboard / grain import 验收；固定模板粮温导入误判也已随 smoke 修复。用户已确认可直接归档，Phase 11 完成。
 
 **Plans:** 2/2 plans complete
 
