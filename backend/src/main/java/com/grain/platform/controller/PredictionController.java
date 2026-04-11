@@ -51,6 +51,7 @@ public class PredictionController {
         return ApiResponse.success(response);
     }
 
+    // 保留全量列表接口给旧调用兼容，管理端新表格统一走下面的分页接口。
     @GetMapping("/tasks/page")
     public ApiResponse<PageResult<PredictionTaskResponse>> listTaskPage(
             @RequestParam(required = false) String keyword,

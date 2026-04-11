@@ -58,6 +58,7 @@ public class PredictionService {
     public PredictionTaskResponse predict(PredictionRequest request) {
         SensorMetric metric = metricService.getMetric(request.metricCode());
         Warehouse warehouse = requireWarehouse(request.warehouseId());
+        // 温度指标需要先把目标类型收口成预测主线，环境指标则固定走传感器时序。
         String targetType = normalizeTargetType(request.targetType(), request.metricCode());
         String dataSourceType = "temperature".equals(request.metricCode()) ? "GRAIN_TEMP_SUMMARY" : "SENSOR_DATA";
         List<PredictionPointDto> actualSeries = loadActualSeries(request, targetType);
@@ -125,6 +126,7 @@ public class PredictionService {
         int maxPage = total == 0 ? 1 : (int) Math.ceil((double) total / finalPageSize);
         finalPageNum = Math.min(finalPageNum, maxPage);
         int offset = (finalPageNum - 1) * finalPageSize;
+        // 预测分页只裁 task 主表，但返回仍组装完整任务详情，前端才能直接切换摘要和图表。
         List<PredictionTaskResponse> list = predictionTaskMapper.selectPage(kw, offset, finalPageSize).stream()
                 .map(task -> toResponse(
                         task,
@@ -167,6 +169,7 @@ public class PredictionService {
             throw new IllegalArgumentException("请选择要删除的预测任务");
         }
         LinkedHashSet<Long> distinct = new LinkedHashSet<>(taskIds);
+        // 批量删除先做一轮全集校验，避免删到一半才发现脏 id 导致结果不一致。
         for (Long id : distinct) {
             PredictionTask task = predictionTaskMapper.selectById(id);
             if (task == null) {
@@ -245,6 +248,7 @@ public class PredictionService {
                                               List<PredictionResult> forecastResults) {
         List<PredictionResultItemDto> merged = new ArrayList<>();
         int actualStep = 0;
+        // 把真实序列和未来预测结果拼成同一条时间线，前端可以直接按 resultList 渲染折线与摘要。
         for (PredictionPointDto item : actualSeries) {
             merged.add(new PredictionResultItemDto(
                     null,
