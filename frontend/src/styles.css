@@ -832,3 +832,255 @@ body {
     flex-wrap: wrap;
   }
 }
+
+.screen-page {
+  min-height: 100vh;
+  padding: 24px;
+  color: #eef8f3;
+  background:
+    radial-gradient(circle at top left, rgba(217, 119, 6, 0.14), transparent 24%),
+    radial-gradient(circle at bottom right, rgba(11, 122, 117, 0.16), transparent 30%),
+    #09211d;
+}
+
+.screen-topbar {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 24px;
+  margin-bottom: 24px;
+}
+
+.screen-topbar-main {
+  min-width: 0;
+}
+
+.screen-title {
+  font-size: 28px;
+  font-weight: 600;
+  line-height: 1.2;
+}
+
+.screen-subtitle {
+  margin-top: 8px;
+  font-size: 14px;
+  line-height: 1.5;
+  color: rgba(238, 248, 243, 0.72);
+}
+
+.screen-last-updated {
+  margin-top: 8px;
+  font-size: 14px;
+  line-height: 1.5;
+  color: rgba(238, 248, 243, 0.62);
+}
+
+.screen-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+}
+
+.screen-filter-bar {
+  margin-bottom: 24px;
+}
+
+.screen-filter-content {
+  display: grid;
+  gap: 16px;
+}
+
+.screen-filter-title {
+  font-size: 20px;
+  font-weight: 600;
+}
+
+.screen-filter-select {
+  width: 220px;
+  max-width: 100%;
+}
+
+.screen-filter-range {
+  width: 360px;
+  max-width: 100%;
+}
+
+.screen-page-error {
+  margin-top: 16px;
+}
+
+.screen-metrics {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 16px;
+  margin-bottom: 24px;
+}
+
+.screen-metric-card {
+  padding: 24px;
+  border: 1px solid rgba(223, 243, 239, 0.12);
+  border-radius: 22px;
+  background: rgba(255, 255, 255, 0.04);
+  backdrop-filter: blur(8px);
+}
+
+.screen-metric-label {
+  font-size: 14px;
+  line-height: 1.5;
+  color: rgba(238, 248, 243, 0.72);
+}
+
+.screen-metric-value {
+  margin-top: 12px;
+  font-size: 28px;
+  font-weight: 600;
+  line-height: 1.2;
+}
+
+.screen-metric-note {
+  margin-top: 12px;
+  font-size: 14px;
+  line-height: 1.5;
+  color: rgba(238, 248, 243, 0.62);
+}
+
+.screen-main-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1.65fr) minmax(0, 1fr);
+  gap: 16px;
+  margin-bottom: 24px;
+}
+
+.screen-chart-panel {
+  min-width: 0;
+}
+
+.screen-chart-primary {
+  grid-row: span 3;
+}
+
+.screen-chart-box {
+  width: 100%;
+  height: 320px;
+}
+
+.screen-chart-primary .screen-chart-box {
+  height: 420px;
+}
+
+.screen-detail-grid {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 16px;
+}
+
+.screen-detail-list {
+  display: grid;
+  gap: 12px;
+}
+
+.screen-list-item {
+  padding: 16px;
+  border: 1px solid rgba(223, 243, 239, 0.08);
+  border-radius: 16px;
+  background: rgba(255, 255, 255, 0.04);
+}
+
+.screen-list-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 12px;
+}
+
+.screen-list-meta {
+  margin-top: 8px;
+  font-size: 14px;
+  line-height: 1.5;
+  color: rgba(238, 248, 243, 0.62);
+}
+
+.screen-list-summary {
+  margin-top: 8px;
+  font-size: 16px;
+  line-height: 1.5;
+  color: rgba(238, 248, 243, 0.9);
+}
+
+.screen-warehouse-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 16px;
+}
+
+.screen-warehouse-side {
+  display: grid;
+  justify-items: end;
+  gap: 8px;
+}
+
+.screen-warehouse-score {
+  min-width: 54px;
+  padding: 10px 12px;
+  border-radius: 999px;
+  text-align: center;
+  font-size: 16px;
+  font-weight: 600;
+  color: #fff;
+  background: linear-gradient(135deg, #0b7a75, #123f37);
+}
+
+.screen-note-card .compact-lines {
+  font-size: 16px;
+  line-height: 1.5;
+  color: rgba(238, 248, 243, 0.88);
+}
+
+.screen-module-state {
+  display: grid;
+  min-height: 180px;
+  place-items: center;
+  padding: 24px;
+  border: 1px dashed rgba(223, 243, 239, 0.18);
+  border-radius: 16px;
+  font-size: 16px;
+  line-height: 1.5;
+  color: rgba(238, 248, 243, 0.68);
+  text-align: center;
+}
+
+@media (max-width: 1439px) {
+  .screen-main-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .screen-chart-primary {
+    grid-row: auto;
+  }
+
+  .screen-detail-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 1100px) {
+  .screen-page {
+    padding: 24px 18px;
+  }
+
+  .screen-metrics,
+  .screen-main-grid,
+  .screen-detail-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .screen-chart-primary {
+    grid-row: auto;
+  }
+
+  .screen-chart-primary .screen-chart-box,
+  .screen-chart-box {
+    height: 320px;
+  }
+}
