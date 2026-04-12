@@ -1,5 +1,6 @@
 import axios from "axios";
-import { API_BASE_URL, request } from "./http";
+import { getSession } from "../utils/session";
+import { API_BASE_URL, DEMO_USERNAME_HEADER, request } from "./http";
 
 const metricNameMap = {
   temperature: "温度",
@@ -8,6 +9,19 @@ const metricNameMap = {
 };
 
 const DEFAULT_METRIC_CODE = "temperature";
+
+function createDemoUsernameHeaders(baseHeaders = {}) {
+  const session = getSession();
+
+  if (!session?.username) {
+    return baseHeaders;
+  }
+
+  return {
+    ...baseHeaders,
+    [DEMO_USERNAME_HEADER]: session.username
+  };
+}
 
 // 统一兼容后端可能返回的角色字段，避免页面各自判断 role / roleCodes。
 function normalizeRoleCodes(raw) {
@@ -481,9 +495,9 @@ export async function importSensorData(file) {
   formData.append("file", file);
 
   const response = await axios.post(`${API_BASE_URL}/api/sensor-data/import`, formData, {
-    headers: {
+    headers: createDemoUsernameHeaders({
       "Content-Type": "multipart/form-data"
-    }
+    })
   });
 
   return unwrapImportResult(response.data);
@@ -622,9 +636,9 @@ export async function importGrainTemp(file) {
   formData.append("file", file);
 
   const response = await axios.post(`${API_BASE_URL}/api/grain-temp/import`, formData, {
-    headers: {
+    headers: createDemoUsernameHeaders({
       "Content-Type": "multipart/form-data"
-    }
+    })
   });
 
   return unwrapImportResult(response.data);
