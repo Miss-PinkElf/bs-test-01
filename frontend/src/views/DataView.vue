@@ -32,6 +32,9 @@ const GRAIN_SUMMARY_TARGET_OPTIONS = [
   { value: "LAYER_4_AVG", label: "四层均温" }
 ];
 const GRAIN_WARNING_LEVEL_OPTIONS = ["NORMAL", "ATTENTION", "WARNING"];
+const DAY_IN_MS = 24 * 60 * 60 * 1000;
+const DEFAULT_GRAIN_SUMMARY_DAYS = 30;
+const MAX_CHART_AXIS_LABELS = 8;
 
 const chartRef = ref();
 const chartLoading = ref(false);
@@ -49,6 +52,7 @@ const editingId = ref(null);
 const envTrendRows = ref([]);
 const grainSummaryRange = ref(null);
 const grainSummaryTarget = ref("AVG_TEMP");
+const grainSummaryDefaultInitialized = ref(false);
 const grainRecordKeyword = ref("");
 const envRecordKeyword = ref("");
 const grainFilterOptions = ref({ zoneCodes: [], layerNos: [], pointNos: [] });
@@ -79,6 +83,35 @@ const currentRecordPageState = computed(() => (mode.value === "grain" ? grainRec
 function formatDateTime(value) { return value ? String(value).replace("T", " ") : "-"; }
 function formatTemperatureValue(value) { return value == null || value === "" ? "-" : Number(value).toFixed(2); }
 function getInitialEnvMetricCode() { return envMetricOptions.value[0]?.value || "humidity"; }
+function formatDatePart(value) { return String(value).padStart(2, "0"); }
+function formatDateTimeForPicker(date) {
+  return `${date.getFullYear()}-${formatDatePart(date.getMonth() + 1)}-${formatDatePart(date.getDate())} ${formatDatePart(date.getHours())}:${formatDatePart(date.getMinutes())}:${formatDatePart(date.getSeconds())}`;
+}
+function createRecentDateRange(days) {
+  const end = new Date();
+  const start = new Date(end.getTime() - days * DAY_IN_MS);
+  return [formatDateTimeForPicker(start), formatDateTimeForPicker(end)];
+}
+function getChartAxisLabelInterval(pointCount) {
+  if (pointCount <= MAX_CHART_AXIS_LABELS) {
+    return 0;
+  }
+  return Math.max(0, Math.ceil(pointCount / MAX_CHART_AXIS_LABELS) - 1);
+}
+function formatChartAxisLabel(value) {
+  const normalized = formatDateTime(value);
+  return normalized === "-" ? "" : normalized.slice(5, 16);
+}
+function ensureDefaultGrainSummaryRange() {
+  if (mode.value !== "grain" || grainSummaryDefaultInitialized.value) {
+    return;
+  }
+  grainSummaryDefaultInitialized.value = true;
+  if (Array.isArray(grainSummaryRange.value) && grainSummaryRange.value.length === 2) {
+    return;
+  }
+  grainSummaryRange.value = createRecentDateRange(DEFAULT_GRAIN_SUMMARY_DAYS);
+}
 function resolveDateRange(rangeValue) {
   return Array.isArray(rangeValue) && rangeValue.length === 2
     ? { startTime: rangeValue[0], endTime: rangeValue[1] }
@@ -300,6 +333,7 @@ async function handleModeChange() {
     return;
   }
   resetGrainForm();
+  ensureDefaultGrainSummaryRange();
   grainRecordPageState.pageNum = 1;
   grainSummaryPageState.pageNum = 1;
   await loadGrainRecordFilterOptions();
@@ -320,17 +354,41 @@ function renderChart() {
   if (!chartRef.value) return;
   if (!chart) chart = echarts.init(chartRef.value);
   if (mode.value === "grain") {
+    const grainChartRows = grainSummarySeriesRows.value;
+    const grainXAxisData = grainChartRows.map((item) => formatDateTime(item.collectedAt));
+    const denseAxis = grainXAxisData.length > MAX_CHART_AXIS_LABELS;
     chart.setOption({
       tooltip: { trigger: "axis" },
       legend: { data: [grainSummaryTargetLabel.value, "最高温"] },
-      grid: { left: 32, right: 18, top: 30, bottom: 28 },
-      xAxis: { type: "category", data: grainSummarySeriesRows.value.map((item) => formatDateTime(item.collectedAt)) },
+      grid: { left: 40, right: 24, top: 36, bottom: denseAxis ? 88 : 56 },
+      xAxis: {
+        type: "category",
+        boundaryGap: false,
+        data: grainXAxisData,
+        axisTick: { alignWithLabel: true },
+        axisLabel: {
+          interval: getChartAxisLabelInterval(grainXAxisData.length),
+          rotate: denseAxis ? 32 : 0,
+          hideOverlap: true,
+          formatter: (value) => formatChartAxisLabel(value)
+        }
+      },
       yAxis: { type: "value" },
+      dataZoom: [
+        { type: "inside", filterMode: "none" },
+        {
+          type: "slider",
+          filterMode: "none",
+          height: 18,
+          bottom: 16,
+          show: denseAxis
+        }
+      ],
       series: [
-        { name: grainSummaryTargetLabel.value, type: "line", smooth: true, data: grainSummarySeriesRows.value.map((item) => getGrainSummaryValue(item, grainSummaryTarget.value)), lineStyle: { color: "#0b7a75" }, itemStyle: { color: "#0b7a75" } },
-        { name: "最高温", type: "line", smooth: true, data: grainSummarySeriesRows.value.map((item) => item.maxTemp), lineStyle: { color: "#ea580c" }, itemStyle: { color: "#ea580c" } }
+        { name: grainSummaryTargetLabel.value, type: "line", smooth: true, data: grainChartRows.map((item) => getGrainSummaryValue(item, grainSummaryTarget.value)), lineStyle: { color: "#0b7a75" }, itemStyle: { color: "#0b7a75" } },
+        { name: "最高温", type: "line", smooth: true, data: grainChartRows.map((item) => item.maxTemp), lineStyle: { color: "#ea580c" }, itemStyle: { color: "#ea580c" } }
       ]
-    });
+    }, true);
     return;
   }
   chart.setOption({
@@ -341,7 +399,15 @@ function renderChart() {
     series: [{ name: "环境值", type: "line", smooth: true, data: envTrendRows.value.map((item) => item.value), lineStyle: { color: "#0b7a75" }, itemStyle: { color: "#0b7a75" }, areaStyle: { color: "rgba(11, 122, 117, 0.12)" } }]
   });
 }
-onMounted(async () => { await loadMetricOptions(); await loadWarehouses(); resetGrainForm(); resetEnvForm(); await loadGrainRecordFilterOptions(); await Promise.all([loadGrainSummarySeries(), loadGrainSummaryTable(), loadGrainRecords()]); });
+onMounted(async () => {
+  await loadMetricOptions();
+  await loadWarehouses();
+  resetGrainForm();
+  resetEnvForm();
+  ensureDefaultGrainSummaryRange();
+  await loadGrainRecordFilterOptions();
+  await Promise.all([loadGrainSummarySeries(), loadGrainSummaryTable(), loadGrainRecords()]);
+});
 onBeforeUnmount(() => { clearTimeout(recordKeywordTimer); if (chart) chart.dispose(); });
 </script>
 <template>
@@ -429,7 +495,7 @@ onBeforeUnmount(() => { clearTimeout(recordKeywordTimer); if (chart) chart.dispo
         <div class="panel-header">
           <div>
             <div class="panel-title">{{ mode === "grain" ? "粮温汇总趋势图" : "环境趋势图" }}</div>
-            <div v-if="mode === 'grain'" class="panel-subtitle">共享查询条件为仓库与时间范围；图表固定保留“最高温”参考线。</div>
+            <div v-if="mode === 'grain'" class="panel-subtitle">共享查询条件为仓库与时间范围；首次进入默认最近 30 天，图表固定保留“最高温”参考线。</div>
           </div>
           <div v-if="mode === 'grain'" class="toolbar-row">
             <el-select v-model="grainSummaryTarget" class="prediction-select-md">
