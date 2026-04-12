@@ -19,6 +19,7 @@
 | 10 | 前后端补充简单注释提升可读性 | 在关键逻辑处补简单注释，降低阅读与接手成本 | COMMENT-10-01 — COMMENT-10-03 | **已完成**（2026-04-11） |
 | 11 | 河南环境数据 1-4 月 mock 与脏数据清理 | 补齐 Jan-Apr 河南 baseline、清理旧脏数据，并明确 Windows 一键运行延期 | Context decisions D-01 — D-09 | **已完成**（2026-04-11） |
 | 12 | 图表时间范围与长 x 轴收口 | 保留 DataView 粮温汇总趋势图、PredictionView 双线图与 BigScreen 粮温趋势主图，同时为三张图补默认窗口或共享时间范围下的长 x 轴可读性方案 | CHART-12-01 — CHART-12-04 | **已完成**（2026-04-12） |
+| 13 | 角色菜单与权限区分 | 按角色收口后台菜单、路由、仓库范围与后端接口权限 | AUTHZ-13-01 — AUTHZ-13-04 | 前后端角色/仓库范围一致；越权显式 403；UAT 覆盖 admin / manager / viewer |
 
 ## Phase 1: 粮温 Excel 模板与导入一致化（已完成）
 
@@ -251,6 +252,26 @@ Plans:
 Plans:
 - [x] `12-01-PLAN.md` — DataView / PredictionView / BigScreen 粮温趋势图时间范围与 x 轴收口、Phase 文档同步（Wave 1）
 
+### Phase 13: 角色菜单与权限区分（前端菜单 + 后端权限）
+
+**Goal:** 按角色区分前端可见菜单与后端接口权限，避免不同角色进入系统后看到相同菜单、拥有相同操作权限。
+**Requirements**: AUTHZ-13-01 — AUTHZ-13-04
+**Depends on:** Phase 12
+**Success criteria:**
+
+1. `ADMIN / WAREHOUSE_MANAGER / VIEWER` 登录后看到不同的后台菜单、默认落点和可操作入口。
+2. 仓库管理员在前后端都只能围绕自己的 `warehouseId` 读写；查看者保持跨仓查看能力但不再拥有任何写操作入口或写接口权限。
+3. 用户管理、仓库管理、粮温、环境、预测、仪表盘后台接口全部接入当前用户上下文，越权明确返回 `403`。
+4. `REQUIREMENTS / ROADMAP / STATE / SUMMARY / VERIFICATION / HUMAN-UAT` 已同步，不再停留在 `TBD` 或缺失状态。
+
+**Plans:** 4/4 plans complete
+
+Plans:
+- [x] `13-01-PLAN.md` — 权限基础设施：`X-Demo-Username`、CurrentUserContext、403 语义（Wave 1）
+- [x] `13-02-PLAN.md` — 前端菜单、路由与页面级角色收口（Wave 2）
+- [x] `13-03-PLAN.md` — 后端平台管理、业务数据与仪表盘权限收口（Wave 2）
+- [x] `13-04-PLAN.md` — Phase 13 需求追溯、验证与 UAT 文档收口（Wave 3）
+
 ---
 
-*Roadmap updated: 2026-04-12（Phase 12：图表时间范围与长 x 轴收口已完成并归档；Phase 11：河南环境数据 1-4 月 mock、脏数据清理与 Windows 一键运行；Phase 10：前后端补充简单注释提升可读性；Phase 9：管理端列表去 mock 并收口服务端分页查询；Phase 8：展示大屏优化；Phase 7：环境数据页 / 粮温汇总优化；Phase 6：overflow-x 收口；Phase 5：预测记录删除；Phase 4 单表打磨；Phase 2/3 归档见 zzz-docs/归档）*
+*Roadmap updated: 2026-04-12（Phase 13：角色菜单与权限区分已完成代码与文档链，待人工验收；Phase 12：图表时间范围与长 x 轴收口已完成并归档；Phase 11：河南环境数据 1-4 月 mock、脏数据清理与 Windows 一键运行；Phase 10：前后端补充简单注释提升可读性；Phase 9：管理端列表去 mock 并收口服务端分页查询；Phase 8：展示大屏优化；Phase 7：环境数据页 / 粮温汇总优化；Phase 6：overflow-x 收口；Phase 5：预测记录删除；Phase 4 单表打磨；Phase 2/3 归档见 zzz-docs/归档）*

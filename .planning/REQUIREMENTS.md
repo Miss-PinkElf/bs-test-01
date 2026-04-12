@@ -93,6 +93,15 @@
 - [x] **CHART-12-02**: `frontend/src/views/PredictionView.vue` 的实际值 / 预测值双线图支持图表级时间范围，只影响图表显示，不回写任务摘要与历史任务记录语义；默认展示最近 7 天窗口，清空后恢复完整时间线（2026-04-12：前端实现与 `npm run build` 已通过，待人工验收）
 - [x] **CHART-12-03**: `frontend/src/views/BigScreenView.vue` 的粮温趋势主图继续复用页面现有 `screenFilters.timeRange` 共享查询，不新增第二套图表时间范围状态；当共享时间窗口较长时，图表仍可通过 `axisLabel` 压缩、适度 `rotate` 与 `dataZoom` 保持可读（2026-04-12：前端实现与 `npm run build` 已通过，待人工验收）
 - [x] **CHART-12-04**: 三张目标图都采用“时间范围优先、图表交互兜底”的收口方式，而不是只靠完整时间标签硬撑全部历史窗口；当时间线较长时，用户仍可通过缩放 / 滑动继续查看（2026-04-12：DataView / PredictionView / BigScreen 粮温主图已同步收口，待人工验收）
+
+## Phase 13 Requirements（角色菜单与权限区分）
+
+### Role menu / authorization
+
+- [x] **AUTHZ-13-01**: 后台菜单、路由守卫、登录默认落点按 `ADMIN / WAREHOUSE_MANAGER / VIEWER` 区分；前端统一从单一角色能力模型推导 `allowedRoles`、`defaultRoute` 与可见菜单，不再让不同层各自猜角色（2026-04-12：`auth.js`、`router/index.js`、`ConsoleLayout.vue`、`LoginView.vue` 已收口）
+- [x] **AUTHZ-13-02**: `WAREHOUSE_MANAGER` 在前后端都被限制为“只操作所属仓库”；`VIEWER` 可查看 `Dashboard / Environment / Prediction`，但新增、编辑、删除、导入、执行预测等写入口与写接口全部收口为只读（2026-04-12：`DataView.vue`、`PredictionView.vue` 与对应后端控制器/service 已收口）
+- [x] **AUTHZ-13-03**: 后端越权访问明确返回 `403`，并对用户管理、仓库管理、粮温、环境、预测、仪表盘接口全部接入当前用户上下文与角色/仓库范围门禁；`createdBy / requestedBy` 不再写死 `1L`（2026-04-12：`AccessControlService` + 各控制器/service 已接入）
+- [x] **AUTHZ-13-04**: Phase 13 的 `ROADMAP / STATE / SUMMARY / VERIFICATION / HUMAN-UAT` 文档链不再停留在 `TBD` 或缺失状态；自动化验证与按账号人工验收脚本已落盘，可直接用于交接与后续 `/gsd-verify-work`（2026-04-12：文档链已补齐）
 ## v2 Requirements
 
 - [ ] **DATA-05**: 验收脚本 `run-acceptance-smoke.ps1` 增加针对新版模板版式或关键标签的断言（可选）
@@ -142,6 +151,10 @@
 | CHART-12-02 | Phase 12 | Done |
 | CHART-12-03 | Phase 12 | Done |
 | CHART-12-04 | Phase 12 | Done |
+| AUTHZ-13-01 | Phase 13 | Done（待 UAT） |
+| AUTHZ-13-02 | Phase 13 | Done（待 UAT） |
+| AUTHZ-13-03 | Phase 13 | Done（待 UAT） |
+| AUTHZ-13-04 | Phase 13 | Done（待 UAT） |
 
 **Coverage:**
 
@@ -156,11 +169,12 @@
 - Phase 9 / 管理端列表去 mock：4 条（MOCK-09-*）
 - Phase 10 / 前后端简单注释可读性：3 条（COMMENT-10-*）
 - Phase 12 / 图表时间范围与长 x 轴收口：4 条（CHART-12-*）
-- Mapped to phases: 34
+- Phase 13 / 角色菜单与权限区分：4 条（AUTHZ-13-*）
+- Mapped to phases: 38
 - Unmapped: 0
 
 ---
-*Last updated: 2026-04-12 Phase 12 CHART-12-* 已完成并归档；Phase 10 COMMENT-10-* 已完成；Phase 9 MOCK-09-* 已完成，Phase 5 DEL-05-* 与 Phase 8 SCREEN-08-* 已完成*
+*Last updated: 2026-04-12 Phase 13 AUTHZ-13-* 已落盘待人工验收；Phase 12 CHART-12-* 已完成并归档；Phase 10 COMMENT-10-* 已完成；Phase 9 MOCK-09-* 已完成，Phase 5 DEL-05-* 与 Phase 8 SCREEN-08-* 已完成*
 
 
 
