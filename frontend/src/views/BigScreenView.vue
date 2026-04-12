@@ -5,6 +5,7 @@ import { useRouter } from "vue-router";
 import { fetchScreenDashboard, fetchWarehouses } from "../api/grain";
 
 const DEFAULT_RANGE_DAYS = 7;
+const MAX_CHART_AXIS_LABELS = 8;
 const SCREEN_NOTE_LINES = [
   "当前大屏优先展示粮温趋势、预警变化、预测任务与仓库对比。",
   "顶部指标、最新预警、重点仓库和最近预测任务均来自真实接口聚合结果。",
@@ -237,12 +238,31 @@ function getCommonChartStyle() {
   };
 }
 
+function formatScreenChartAxisLabel(value) {
+  const normalized = String(value || "");
+  return normalized.length > 11 ? normalized.slice(0, 11) : normalized;
+}
+
+function getChartAxisLabelInterval(pointCount) {
+  if (pointCount <= MAX_CHART_AXIS_LABELS) {
+    return 0;
+  }
+
+  return Math.max(0, Math.ceil(pointCount / MAX_CHART_AXIS_LABELS) - 1);
+}
+
 function buildGrainTrendOption() {
   const rows = screenData.grainTrend;
   const common = getCommonChartStyle();
+  const xAxisData = rows.map((item) => item.timeLabel);
+  const denseAxis = xAxisData.length > MAX_CHART_AXIS_LABELS;
 
   return {
     ...common,
+    grid: {
+      ...common.grid,
+      bottom: denseAxis ? 88 : 56
+    },
     legend: {
       ...common.legend,
       data: ["粮温趋势", "最高温"]
@@ -250,8 +270,15 @@ function buildGrainTrendOption() {
     xAxis: {
       type: "category",
       boundaryGap: false,
-      data: rows.map((item) => item.timeLabel),
-      axisLabel: { color: "#6b7c78" },
+      data: xAxisData,
+      axisTick: { alignWithLabel: true },
+      axisLabel: {
+        color: "#6b7c78",
+        interval: getChartAxisLabelInterval(xAxisData.length),
+        rotate: denseAxis ? 32 : 0,
+        hideOverlap: true,
+        formatter: (value) => formatScreenChartAxisLabel(value)
+      },
       axisLine: { lineStyle: { color: "rgba(18, 63, 55, 0.16)" } }
     },
     yAxis: {
@@ -262,6 +289,16 @@ function buildGrainTrendOption() {
       },
       splitLine: { lineStyle: { color: "rgba(18, 63, 55, 0.08)" } }
     },
+    dataZoom: [
+      { type: "inside", filterMode: "none" },
+      {
+        type: "slider",
+        filterMode: "none",
+        height: 18,
+        bottom: 16,
+        show: denseAxis
+      }
+    ],
     series: [
       {
         name: "粮温趋势",
@@ -556,7 +593,7 @@ onUnmounted(() => {
           <div class="panel-header">
             <div>
               <div class="panel-title">粮温趋势</div>
-              <div class="panel-subtitle">主图位，展示当前筛选窗口内的粮温主线与最高温参考线。</div>
+              <div class="panel-subtitle">主图位，展示当前筛选窗口内的粮温主线与最高温参考线；长时间轴可继续缩放或滑动查看。</div>
             </div>
           </div>
         </template>
