@@ -2,15 +2,15 @@
 gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
-status: Phase 11 archived
-last_updated: "2026-04-12T00:00:00.000Z"
-last_activity: 2026-04-11
+status: Ready to execute
+last_updated: "2026-04-12T12:53:48.279Z"
+last_activity: 2026-04-12
 progress:
-  total_phases: 11
+  total_phases: 12
   completed_phases: 7
-  total_plans: 12
-  completed_plans: 12
-  percent: 100
+  total_plans: 13
+  completed_plans: 11
+  percent: 85
 ---
 
 # STATE
@@ -20,7 +20,7 @@ progress:
 See: `.planning/PROJECT.md`（updated 2026-04-11）
 
 **Core value:** 粮温与环境数据可导入、可查、可汇总，预测结果可追溯展示。  
-**Current focus:** Phase 11 已归档；当前无新增 active phase
+**Current focus:** Phase 12 已添加，准备收口图表 x 轴过长与时间范围筛选问题
 
 ## Implementation Truth Source
 
@@ -39,12 +39,13 @@ See: `.planning/PROJECT.md`（updated 2026-04-11）
 | 260410-k32 | Vue 管理端主内容横向无限变宽：`el-scrollbar` 与 ECharts ResizeObserver 反馈；主内容改原生滚动并收紧 flex / 预测页显式 resize | 2026-04-10 | `53ba2df` | [260410-k32-vue-scrollbar-echarts-layout-fix](./quick/260410-k32-vue-scrollbar-echarts-layout-fix/) |
 | 260411-tr6 | 补写论文讲解版数据库设计文档：整合 `zzz-docs/设计文档` 与 `zzz-docs/写论文用` 的数据库内容，补充 ER 图、字段设计、主外键与设计原因分析 | 2026-04-11 | `未提交` | [260411-tr6-zzz-docs-zzz-docs-er](./quick/260411-tr6-zzz-docs-zzz-docs-er/) |
 
-**Last activity:** 2026-04-11
+**Last activity:** 2026-04-12
 
 ## Accumulated Context
 
 ### Roadmap Evolution
 
+- Phase 12 已添加：zzz-prompt-debug/origin/优化图表/prompt.md；目录 `.planning/phases/12-zzz-prompt-debug-origin-prompt-md/`
 - Phase 11 已完成：河南环境数据 1-4 月 mock、脏数据清理与 baseline 验收链路收口；目录 `.planning/phases/11-1-4-mock-windows/`
 - Phase 10 已完成：前后端补充简单注释提升可读性；目录 `.planning/phases/10-code-comment-readability/`
 - Phase 9 已完成：管理端列表去 mock 并收口服务端分页查询；目录 `.planning/phases/09-mock/`
@@ -57,6 +58,7 @@ See: `.planning/PROJECT.md`（updated 2026-04-11）
 - Phase 6 已添加：预测页过宽：任务摘要横向滚动与主内容区 overflow-x 裁切问题；目录 `.planning/phases/06-overflow-x/`
 
 ## Session Notes
+
 - 2026-04-11：**Quick 260411-tr6 已完成** — 新增 `zzz-docs/写论文用/数据库设计讲解-论文版.md`，将两套设计文档与论文目录中的数据库内容整理为一份面向论文写作的讲解文档；文档补充了 ER 图、11 张核心表字段说明、主外键设计、索引思路与设计原因分析，并明确以 `backend/src/main/resources/db/schema.sql` 作为当前结构真相源。
 - 2026-04-11：**Phase 11 已归档** — `11-01-SUMMARY.md`、`11-02-SUMMARY.md`、`11-VERIFICATION.md`、`11-HUMAN-UAT.md` 与归档说明已补齐；用户接受当前结果并要求直接归档，Phase 11 已从待人工确认收口为完成状态。
 - 2026-04-11：**Phase 11 已完成 discuss/context** — 已写入 `.planning/phases/11-1-4-mock-windows/11-CONTEXT.md` 与 `11-DISCUSSION-LOG.md`；本阶段范围明确收口为“河南 1-4 月环境 mock 数据 + 脏数据清理”，并已将“Windows 一键运行 / 类 docker 免安装依赖环境”拆出为后续单独 phase；已确认数据直接固化到 `backend/src/main/resources/db/schema.sql`，demo 库以 `scripts/reset-demo-db.ps1` 重置为标准演示库。
