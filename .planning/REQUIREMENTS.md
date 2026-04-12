@@ -138,10 +138,10 @@
 | COMMENT-10-01 | Phase 10 | Done |
 | COMMENT-10-02 | Phase 10 | Done |
 | COMMENT-10-03 | Phase 10 | Done |
-| CHART-12-01 | Phase 12 | Done（待 UAT） |
-| CHART-12-02 | Phase 12 | Done（待 UAT） |
-| CHART-12-03 | Phase 12 | Done（待 UAT） |
-| CHART-12-04 | Phase 12 | Done（待 UAT） |
+| CHART-12-01 | Phase 12 | Done |
+| CHART-12-02 | Phase 12 | Done |
+| CHART-12-03 | Phase 12 | Done |
+| CHART-12-04 | Phase 12 | Done |
 
 **Coverage:**
 
@@ -160,7 +160,7 @@
 - Unmapped: 0
 
 ---
-*Last updated: 2026-04-12 Phase 12 CHART-12-* 已扩到大屏粮温趋势并落地待 UAT；Phase 10 COMMENT-10-* 已完成；Phase 9 MOCK-09-* 已完成，Phase 5 DEL-05-* 与 Phase 8 SCREEN-08-* 已完成*
+*Last updated: 2026-04-12 Phase 12 CHART-12-* 已完成并归档；Phase 10 COMMENT-10-* 已完成；Phase 9 MOCK-09-* 已完成，Phase 5 DEL-05-* 与 Phase 8 SCREEN-08-* 已完成*
 
 
 

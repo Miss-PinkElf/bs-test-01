@@ -80,5 +80,5 @@ completed: 2026-04-12
 
 ## Notes
 
-- 用户已确认 `DataView` 与 `PredictionView` 当前方案可接受，现阶段只剩 `BigScreenView` 的粮温趋势主图还需要补一轮人工确认。
+- 用户已确认 `DataView`、`PredictionView` 与 `BigScreenView` 的目标图当前方案均可接受，Phase 12 已完成并归档。
 - `vite build` 仍输出现有的大包体积 warning，本次未扩展到前端分包治理。

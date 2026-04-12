@@ -18,7 +18,7 @@
 | 9 | 管理端列表去 mock 并收口服务端分页查询 | 移除残留 mock，并把 Users/Warehouse/Prediction/Dashboard 收口到后端分页与 keyword 查询 | MOCK-09-01 — MOCK-09-04 | **已完成**（2026-04-11） |
 | 10 | 前后端补充简单注释提升可读性 | 在关键逻辑处补简单注释，降低阅读与接手成本 | COMMENT-10-01 — COMMENT-10-03 | **已完成**（2026-04-11） |
 | 11 | 河南环境数据 1-4 月 mock 与脏数据清理 | 补齐 Jan-Apr 河南 baseline、清理旧脏数据，并明确 Windows 一键运行延期 | Context decisions D-01 — D-09 | **已完成**（2026-04-11） |
-| 12 | 图表时间范围与长 x 轴收口 | 保留 DataView 粮温汇总趋势图、PredictionView 双线图与 BigScreen 粮温趋势主图，同时为三张图补默认窗口或共享时间范围下的长 x 轴可读性方案 | CHART-12-01 — CHART-12-04 | **已落地**（2026-04-12，待 UAT） |
+| 12 | 图表时间范围与长 x 轴收口 | 保留 DataView 粮温汇总趋势图、PredictionView 双线图与 BigScreen 粮温趋势主图，同时为三张图补默认窗口或共享时间范围下的长 x 轴可读性方案 | CHART-12-01 — CHART-12-04 | **已完成**（2026-04-12） |
 
 ## Phase 1: 粮温 Excel 模板与导入一致化（已完成）
 
@@ -234,7 +234,7 @@ Plans:
 
 **阶段目录：** `.planning/phases/12-zzz-prompt-debug-origin-prompt-md/`（`12-CONTEXT.md`、`12-01-PLAN.md`、`12-VERIFICATION.md`、`12-HUMAN-UAT.md`）
 
-**Delivered（2026-04-12）：** `DataView.vue` 粮温汇总趋势图首次进入默认收口到最近 30 天，并补齐 `axisLabel + rotate + dataZoom`；`PredictionView.vue` 双线图新增图表级时间范围控件，默认显示最近 7 天、清空恢复完整时间线；`BigScreenView.vue` 的粮温趋势主图继续复用大屏共享时间范围，并同步补齐 `axisLabel + rotate + dataZoom`；`frontend` `npm run build` 通过，人工验收待执行。
+**Delivered（2026-04-12）：** `DataView.vue` 粮温汇总趋势图首次进入默认收口到最近 30 天，并补齐 `axisLabel + rotate + dataZoom`；`PredictionView.vue` 双线图新增图表级时间范围控件，默认显示最近 7 天、清空恢复完整时间线；`BigScreenView.vue` 的粮温趋势主图继续复用大屏共享时间范围，并同步补齐 `axisLabel + rotate + dataZoom`；`frontend` `npm run build` 通过，用户已确认三张图效果可接受。
 
 **Goal:** 保留并增强 `DataView.vue` 的粮温汇总趋势图、`PredictionView.vue` 的实际值 / 预测值双线图，以及 `BigScreenView.vue` 的粮温趋势主图，让三张图都建立在可控时间范围上，并通过默认时间窗口或共享时间范围与 ECharts 交互兜底解决“时间轴过长、展示不全”的问题。
 **Requirements**: CHART-12-01 — CHART-12-04
@@ -253,4 +253,4 @@ Plans:
 
 ---
 
-*Roadmap updated: 2026-04-12（Phase 12：图表时间范围与长 x 轴收口已扩到大屏粮温趋势并待 UAT；Phase 11：河南环境数据 1-4 月 mock、脏数据清理与 Windows 一键运行；Phase 10：前后端补充简单注释提升可读性；Phase 9：管理端列表去 mock 并收口服务端分页查询；Phase 8：展示大屏优化；Phase 7：环境数据页 / 粮温汇总优化；Phase 6：overflow-x 收口；Phase 5：预测记录删除；Phase 4 单表打磨；Phase 2/3 归档见 zzz-docs/归档）*
+*Roadmap updated: 2026-04-12（Phase 12：图表时间范围与长 x 轴收口已完成并归档；Phase 11：河南环境数据 1-4 月 mock、脏数据清理与 Windows 一键运行；Phase 10：前后端补充简单注释提升可读性；Phase 9：管理端列表去 mock 并收口服务端分页查询；Phase 8：展示大屏优化；Phase 7：环境数据页 / 粮温汇总优化；Phase 6：overflow-x 收口；Phase 5：预测记录删除；Phase 4 单表打磨；Phase 2/3 归档见 zzz-docs/归档）*

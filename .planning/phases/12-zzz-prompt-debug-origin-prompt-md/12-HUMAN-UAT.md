@@ -1,15 +1,15 @@
 ---
-status: partial
+status: resolved
 phase: 12-zzz-prompt-debug-origin-prompt-md
 source:
   - 12-VERIFICATION.md
 started: 2026-04-12T21:02:51+08:00
-updated: 2026-04-12T21:02:51+08:00
+updated: 2026-04-12T21:18:00+08:00
 ---
 
 ## Current Test
 
-BigScreen 粮温趋势主图待补充人工测试
+completed
 
 ## Tests
 
@@ -35,14 +35,15 @@ note: 用户已确认当前方案“可以了”，按通过记录。
 
 ### 5. BigScreen 粮温趋势主图长 x 轴可读性
 expected: 进入 `/screen` 后，把共享时间范围拉长到超过默认窗口时，粮温趋势主图的 x 轴不会再次完整挤爆；可通过缩放或滑动查看更长时间线，且仍保留“粮温趋势 + 最高温”两条线。
-result: pending
+result: passed
+note: 用户已确认当前效果没有问题，可直接收口归档。
 
 ## Summary
 
 total: 5
-passed: 4
+passed: 5
 issues: 0
-pending: 1
+pending: 0
 skipped: 0
 blocked: 0
 
