@@ -2,7 +2,7 @@
 import { Search } from "@element-plus/icons-vue";
 import { ElMessage, ElMessageBox } from "element-plus";
 import * as echarts from "echarts";
-import { nextTick, onBeforeUnmount, onMounted, reactive, ref, watch } from "vue";
+import { computed, nextTick, onBeforeUnmount, onMounted, reactive, ref, watch } from "vue";
 import {
   batchDeletePredictionTasks,
   deletePredictionTask,
@@ -10,6 +10,10 @@ import {
   fetchWarehouses,
   predictMetric
 } from "../api/grain";
+
+const DAY_IN_MS = 24 * 60 * 60 * 1000;
+const DEFAULT_PREDICTION_CHART_DAYS = 7;
+const MAX_CHART_AXIS_LABELS = 8;
 
 const chartRef = ref();
 const chartAnchorRef = ref();
@@ -26,6 +30,7 @@ const selectedTaskId = ref(null);
 const historyTableKeyword = ref("");
 const historyTableRef = ref();
 const historySelection = ref([]);
+const predictionChartRange = ref(null);
 const historyPageState = reactive({
   pageNum: 1,
   pageSize: 10,
@@ -68,9 +73,59 @@ const form = reactive({
 });
 const trainRange = ref(null);
 const trainCollapse = ref([]);
+const filteredPredictionResultList = computed(() => {
+  const resultList = Array.isArray(prediction.value.resultList) ? prediction.value.resultList : [];
+
+  if (!Array.isArray(predictionChartRange.value) || predictionChartRange.value.length !== 2) {
+    return resultList;
+  }
+
+  const [start, end] = predictionChartRange.value;
+  const startTime = parseDateTimeValue(start);
+  const endTime = parseDateTimeValue(end);
+
+  if (!startTime || !endTime) {
+    return resultList;
+  }
+
+  return resultList.filter((item) => {
+    const resultTime = parseDateTimeValue(item.resultTime);
+    return resultTime && resultTime >= startTime && resultTime <= endTime;
+  });
+});
 
 function formatDateTime(value) {
   return value ? String(value).replace("T", " ") : "-";
+}
+
+function formatDatePart(value) {
+  return String(value).padStart(2, "0");
+}
+
+function formatDateTimeForPicker(date) {
+  return `${date.getFullYear()}-${formatDatePart(date.getMonth() + 1)}-${formatDatePart(date.getDate())} ${formatDatePart(date.getHours())}:${formatDatePart(date.getMinutes())}:${formatDatePart(date.getSeconds())}`;
+}
+
+function parseDateTimeValue(value) {
+  if (!value) {
+    return null;
+  }
+
+  const normalized = String(value).includes("T") ? String(value) : String(value).replace(" ", "T");
+  const date = new Date(normalized);
+  return Number.isNaN(date.getTime()) ? null : date;
+}
+
+function formatChartAxisLabel(value) {
+  const normalized = formatDateTime(value);
+  return normalized === "-" ? "" : normalized.slice(5, 16);
+}
+
+function getChartAxisLabelInterval(pointCount) {
+  if (pointCount <= MAX_CHART_AXIS_LABELS) {
+    return 0;
+  }
+  return Math.max(0, Math.ceil(pointCount / MAX_CHART_AXIS_LABELS) - 1);
 }
 
 function getTargetLabel(value) {
@@ -101,6 +156,7 @@ function createEmptyPrediction() {
 
 function clearPredictionVisual() {
   prediction.value = createEmptyPrediction();
+  predictionChartRange.value = null;
   selectedTaskId.value = null;
   if (chart) {
     chart.dispose();
@@ -134,6 +190,37 @@ function validateTrainRange() {
 
 function clearTrainRange() {
   trainRange.value = null;
+}
+
+function buildDefaultPredictionChartRange(resultList) {
+  const validTimes = resultList
+    .map((item) => parseDateTimeValue(item.resultTime))
+    .filter((item) => item instanceof Date)
+    .sort((left, right) => left.getTime() - right.getTime());
+
+  if (validTimes.length === 0) {
+    return null;
+  }
+
+  const firstTime = validTimes[0];
+  const lastTime = validTimes.at(-1);
+
+  if (!lastTime || lastTime.getTime() - firstTime.getTime() <= DEFAULT_PREDICTION_CHART_DAYS * DAY_IN_MS) {
+    return [formatDateTimeForPicker(firstTime), formatDateTimeForPicker(lastTime || firstTime)];
+  }
+
+  const start = new Date(lastTime.getTime() - DEFAULT_PREDICTION_CHART_DAYS * DAY_IN_MS);
+  return [formatDateTimeForPicker(start), formatDateTimeForPicker(lastTime)];
+}
+
+function syncPredictionChartRange(resultList = prediction.value.resultList) {
+  predictionChartRange.value = Array.isArray(resultList) && resultList.length > 0
+    ? buildDefaultPredictionChartRange(resultList)
+    : null;
+}
+
+function clearPredictionChartRange() {
+  predictionChartRange.value = null;
 }
 
 async function loadWarehouses() {
@@ -200,6 +287,7 @@ async function runPrediction() {
     }
 
     prediction.value = await predictMetric(payload);
+    syncPredictionChartRange(prediction.value.resultList);
     selectedTaskId.value = prediction.value.taskId;
     historyPageState.pageNum = 1;
     await loadPredictionHistoryPage();
@@ -218,6 +306,7 @@ async function runPrediction() {
 async function selectPredictionTask(item) {
   selectedTaskId.value = item.taskId;
   prediction.value = item;
+  syncPredictionChartRange(item.resultList);
   await nextTick();
   renderChart();
   await nextTick();
@@ -318,22 +407,44 @@ function renderChart() {
     chart = echarts.init(chartRef.value);
   }
 
-  // 图表直接消费 resultList 的混合时间线，让真实序列和未来预测共用一套横轴渲染。
+  const chartRows = filteredPredictionResultList.value;
+  const chartXAxisData = chartRows.map((item) => formatDateTime(item.resultTime));
+  const denseAxis = chartXAxisData.length > MAX_CHART_AXIS_LABELS;
+
+  // 图表只消费过滤后的结果时间线，让查看窗口变化不影响任务摘要和历史任务语义。
   chart.setOption({
     tooltip: { trigger: "axis" },
     legend: { data: ["实际值", "预测值"] },
-    grid: { left: 32, right: 18, top: 34, bottom: 28 },
+    grid: { left: 40, right: 24, top: 34, bottom: denseAxis ? 88 : 56 },
     xAxis: {
       type: "category",
-      data: prediction.value.resultList.map((item) => formatDateTime(item.resultTime))
+      boundaryGap: false,
+      data: chartXAxisData,
+      axisTick: { alignWithLabel: true },
+      axisLabel: {
+        interval: getChartAxisLabelInterval(chartXAxisData.length),
+        rotate: denseAxis ? 32 : 0,
+        hideOverlap: true,
+        formatter: (value) => formatChartAxisLabel(value)
+      }
     },
     yAxis: { type: "value" },
+    dataZoom: [
+      { type: "inside", filterMode: "none" },
+      {
+        type: "slider",
+        filterMode: "none",
+        height: 18,
+        bottom: 16,
+        show: denseAxis
+      }
+    ],
     series: [
       {
         name: "实际值",
         type: "line",
         smooth: true,
-        data: prediction.value.resultList.map((item) => item.actualValue),
+        data: chartRows.map((item) => item.actualValue),
         lineStyle: { color: "#a855f7" },
         itemStyle: { color: "#a855f7" }
       },
@@ -341,7 +452,7 @@ function renderChart() {
         name: "预测值",
         type: "line",
         smooth: true,
-        data: prediction.value.resultList.map((item) => item.predictedValue),
+        data: chartRows.map((item) => item.predictedValue),
         lineStyle: { color: "#ea580c" },
         itemStyle: { color: "#ea580c" },
         areaStyle: {
@@ -349,7 +460,7 @@ function renderChart() {
         }
       }
     ]
-  });
+  }, true);
 
   requestAnimationFrame(() => {
     const element = chartRef.value;
@@ -372,6 +483,11 @@ onMounted(async () => {
   if (form.warehouseId) {
     await runPrediction();
   }
+});
+
+watch(predictionChartRange, async () => {
+  await nextTick();
+  renderChart();
 });
 
 onBeforeUnmount(() => {
@@ -498,9 +614,26 @@ onBeforeUnmount(() => {
     <div ref="chartAnchorRef" class="prediction-chart-anchor">
       <el-card class="panel-card" shadow="never">
         <template #header>
-          <div>
-            <div class="panel-title">实际值 / 预测值双线图</div>
-            <div class="panel-subtitle">对应上方「任务摘要」中的当前任务；执行预测后会自动滚到此处</div>
+          <div class="panel-header">
+            <div>
+              <div class="panel-title">实际值 / 预测值双线图</div>
+              <div class="panel-subtitle">对应上方「任务摘要」中的当前任务；默认展示最近 7 天窗口，清空后可回看完整时间线</div>
+            </div>
+            <div class="chart-card-toolbar">
+              <el-date-picker
+                v-model="predictionChartRange"
+                type="datetimerange"
+                range-separator="至"
+                start-placeholder="图表开始"
+                end-placeholder="图表结束"
+                value-format="YYYY-MM-DD HH:mm:ss"
+                class="chart-range-picker"
+                :disabled="prediction.resultList.length === 0"
+              />
+              <el-button text type="primary" :disabled="prediction.resultList.length === 0" @click="clearPredictionChartRange">
+                清空
+              </el-button>
+            </div>
           </div>
         </template>
 

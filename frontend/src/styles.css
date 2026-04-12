@@ -267,6 +267,19 @@ body {
   gap: 12px;
 }
 
+.chart-card-toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 12px;
+}
+
+.chart-range-picker {
+  width: 340px;
+  max-width: 100%;
+}
+
 .toolbar-row {
   display: flex;
   flex-wrap: wrap;
