@@ -1,9 +1,10 @@
 const { spawn } = require("child_process");
 const path = require("path");
+const { buildPowerShellArgs, resolveWindowsPowerShell } = require("./powershell-runtime.cjs");
 
 const repoRoot = path.resolve(__dirname, "..");
 const isWindows = process.platform === "win32";
-const shellExe = isWindows ? "powershell" : "bash";
+const shellExe = isWindows ? resolveWindowsPowerShell() : "bash";
 const childProcesses = [];
 const streamBuffers = new Map();
 let shuttingDown = false;
@@ -75,16 +76,7 @@ function buildProcessArgs(scriptPath) {
     return [scriptPath];
   }
 
-  const escapedScriptPath = scriptPath.replace(/'/g, "''");
-  const command = [
-    "$utf8NoBom = New-Object System.Text.UTF8Encoding($false)",
-    "[Console]::InputEncoding = $utf8NoBom",
-    "[Console]::OutputEncoding = $utf8NoBom",
-    "$OutputEncoding = $utf8NoBom",
-    `& '${escapedScriptPath}'`
-  ].join('; ');
-
-  return ["-NoProfile", "-ExecutionPolicy", "Bypass", "-Command", command];
+  return buildPowerShellArgs(scriptPath);
 }
 
 function startProcess(label, scriptName) {

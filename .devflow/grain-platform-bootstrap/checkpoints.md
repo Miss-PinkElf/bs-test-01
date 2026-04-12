@@ -467,3 +467,25 @@
   - 否则可准备 handoff，进入答辩前稳定期。
 - 可以从活跃上下文移除的内容：
   - 本轮为定位沙箱内静态构建差异而追加的中间排查输出。
+
+## 2026-04-12-021
+- 当前阶段：Apply / Verify completed
+- 本轮完成内容：
+  - 定位 `npm run dev` 后端启动报 `字符串缺少终止符` 的根因并非第 70 行英文 `Write-Host`，而是 Windows PowerShell 5.1 对 UTF-8 无 BOM + 中文提示文本的解析失配。
+  - 新增 `scripts/powershell-runtime.cjs` 与 `scripts/run-powershell-script.cjs`，统一 npm 入口的 PowerShell 启动链路。
+  - 更新 `package.json`、`scripts/dev-inline.cjs`、`scripts/start-backend.ps1`、`scripts/start-frontend.ps1`、`scripts/check-env.ps1`，收口 Windows 启动兼容性。
+  - 运行验证后确认原始 PowerShell 解析错误已消失；当前剩余阻塞已切换为环境级问题：最新验证为 `8081` 端口占用，沙箱内整条 `dev` 链路仍可能命中 Node `spawn EPERM`。
+- 本轮决策与原因：
+  - 不采用“只改 `start-backend.ps1` 一处文本”的局部止血方案，而是统一入口层，避免同类问题在 `frontend` / `check-env` / `reset-demo-db` 再次出现。
+- 本轮沉淀经验：
+  - 当 PowerShell 报错行号与源码表面不一致时，应优先怀疑编码与宿主解析差异，而不是只盯住最后一行字符串本身。
+  - 对会被 npm / Node 直接拉起的 `.ps1`，最好统一入口层，并尽量减少对宿主编码行为敏感的提示文本。
+- 待解决问题：
+  - `npm run backend` 当前新阻塞为 Maven 写 `C:\Users\Mobius\.m2\repository` 失败。
+  - 本沙箱内 `npm run dev` 仍会命中 Node 子进程 `spawn EPERM`，无法代表用户本机最终联调结果。
+- 下一步：
+  - 如需继续联调，优先确认 `8081` 端口占用来源；若仍需在沙箱内复现整条联调链，再单独处理 Node `spawn EPERM`。
+- 可以从活跃上下文移除的内容：
+  - 原始 `start-backend.ps1:70` 行号误导下的首轮猜测过程。
+
+

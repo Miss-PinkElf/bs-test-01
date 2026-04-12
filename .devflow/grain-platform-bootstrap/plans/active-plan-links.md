@@ -6,6 +6,7 @@
 - 恢复时先读 `state.md` 与最新 handoff，再按需读取下列计划。
 
 ## 当前有效计划
+- `.devflow/grain-platform-bootstrap/plans/2026-04-12-windows-powershell-startup-script-compatibility.md`
 - `.devflow/grain-platform-bootstrap/plans/2026-04-11-gsd-devflow-prd-database-doc-sync.md`
 - `.devflow/grain-platform-bootstrap/plans/2026-04-09-init-strategy-closure.md`
 - `.devflow/grain-platform-bootstrap/plans/2026-04-09-warehouse-crud.md`
@@ -20,3 +21,4 @@
 ## 使用约定
 - 若后续进入 devflow 的重型路径，可在 `.devflow/grain-platform-bootstrap/plans/` 下继续新增或拆分计划文件。
 - 若只是继续当前主线，可把本文件当作“外部计划入口索引”。
+

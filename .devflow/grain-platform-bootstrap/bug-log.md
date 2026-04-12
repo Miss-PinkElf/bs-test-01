@@ -61,3 +61,45 @@
 - **代码：** `frontend/src/styles.css`、`frontend/src/views/PredictionView.vue`
 - **上游问题：** `BUG-2026-04-10-001`
 - **验证：** `frontend/` 执行 `npm run build` 通过
+
+---
+
+## BUG-2026-04-12-003：`npm run dev` 通过 Windows PowerShell 启动后端时误报“字符串缺少终止符”
+
+### 问题现象
+
+- 用户在仓库根目录执行 `npm run dev` 后，后端子进程立即失败。
+- 日志显示：`scripts/start-backend.ps1:70` 报 `字符串缺少终止符: "`，看起来像最后两行英文 `Write-Host` 自身写坏了。
+- 直接查看脚本文本时，第 69-70 行语法表面正常，导致首轮现象与源码不一致。
+
+### 复现方式
+
+1. 在 Windows 环境执行 `npm run dev`。
+2. `node ./scripts/dev-inline.cjs` 通过 `powershell` 拉起 `scripts/start-backend.ps1`。
+3. 观察后端输出，PowerShell 在脚本尾部抛出 `TerminatorExpectedAtEndOfString`。
+
+### 根因分析
+
+1. 真正的问题不在第 70 行英文字符串本身，而在脚本前部中文 `Write-Host` 文本与 Windows PowerShell 5.1 对 UTF-8 无 BOM `.ps1` 的解析差异。
+2. npm 入口和 `dev-inline.cjs` 均直接绑定 `powershell`，使脚本稳定落到较脆弱的宿主路径上。
+3. PowerShell 在前面已错误吞掉字符串边界，最终在尾部英文行才报出“缺少终止符”，所以报错行号具有迷惑性。
+
+### 修复动作
+
+1. 新增 `scripts/powershell-runtime.cjs`，集中处理 Windows PowerShell 运行参数。
+2. 新增 `scripts/run-powershell-script.cjs`，让 `package.json` 下的 `backend` / `frontend` / `check-env` / `reset-demo-db` 统一通过 Node 代理拉起脚本。
+3. 更新 `scripts/dev-inline.cjs`，复用共享运行参数构造逻辑，而不是内嵌一套单独的 PowerShell 命令字符串。
+4. 将 `start-backend.ps1`、`start-frontend.ps1`、`check-env.ps1` 中会被 npm 直接拉起的提示文本改为 ASCII，避免再次触发同类编码解析问题。
+
+### 验证结果
+
+- `powershell -NoProfile -ExecutionPolicy Bypass -File scripts/start-backend.ps1`：不再出现 PowerShell 解析错误；脚本继续向下执行，并进入 Maven 启动阶段。
+- `npm run backend`：不再出现 `字符串缺少终止符`；最新验证已跑到 Spring Boot 启动阶段，并因 `8081` 端口被占用而失败。
+- 结论：原始 PowerShell 脚本解析 bug 已收口；后续若仍失败，属于端口占用、Maven 本地环境或沙箱限制等新的独立问题。
+
+### 关联
+
+- **代码：** `package.json`、`scripts/dev-inline.cjs`、`scripts/powershell-runtime.cjs`、`scripts/run-powershell-script.cjs`、`scripts/start-backend.ps1`、`scripts/start-frontend.ps1`、`scripts/check-env.ps1`
+- **计划：** `.devflow/grain-platform-bootstrap/plans/2026-04-12-windows-powershell-startup-script-compatibility.md`
+- **验证：** `powershell -NoProfile -ExecutionPolicy Bypass -File scripts/start-backend.ps1`、`npm run backend`
+

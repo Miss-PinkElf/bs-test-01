@@ -3,9 +3,9 @@
   "private": true,
   "scripts": {
     "dev": "node ./scripts/dev-inline.cjs",
-    "frontend": "powershell -NoProfile -ExecutionPolicy Bypass -File ./scripts/start-frontend.ps1",
-    "backend": "powershell -NoProfile -ExecutionPolicy Bypass -File ./scripts/start-backend.ps1",
-    "check-env": "powershell -NoProfile -ExecutionPolicy Bypass -File ./scripts/check-env.ps1",
-    "reset-demo-db": "powershell -NoProfile -ExecutionPolicy Bypass -File ./scripts/reset-demo-db.ps1"
+    "frontend": "node ./scripts/run-powershell-script.cjs ./scripts/start-frontend.ps1",
+    "backend": "node ./scripts/run-powershell-script.cjs ./scripts/start-backend.ps1",
+    "check-env": "node ./scripts/run-powershell-script.cjs ./scripts/check-env.ps1",
+    "reset-demo-db": "node ./scripts/run-powershell-script.cjs ./scripts/reset-demo-db.ps1"
   }
 }

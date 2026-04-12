@@ -42,7 +42,7 @@
 7. Resume / Continue（从最新 state、plan、handoff 恢复推进）
 
 ## 当前阶段
-- Pause-ready after GSD + devflow + 论文文档同步
+- Apply / Verify completed for Windows PowerShell startup compatibility bug; ready to continue
 
 ## 本轮补充进展
 - 已完成数据库优先 MVP 第一轮落地：
@@ -74,7 +74,13 @@
   - 已按 `.planning` **Phase 1-9 全量** 回看本轮 GSD 增量，不再只按最新阶段零散补文档
   - 已对照 `backend/src/main/resources/db/schema.sql` 与各 Controller，更新论文主文档与接口/数据库文档
   - 已新增 devflow 轻量计划 `2026-04-11-gsd-devflow-prd-database-doc-sync.md`
+- 已完成 Windows PowerShell 启动兼容性修复：
+  - `npm run dev` / `npm run backend` 不再直接依赖 `powershell -File ...` 入口
+  - 已新增共享运行层 `scripts/powershell-runtime.cjs` 与 `scripts/run-powershell-script.cjs`
+  - 已验证原始报错 `字符串缺少终止符` 不再出现，最新链路已推进到 Spring Boot 启动阶段并暴露 `8081` 端口占用
 ## 退出条件
 - 用户可直接查看 `.devflow/grain-platform-bootstrap/` 下的最新真相源、状态记录、计划索引和 handoff 恢复上下文。
 - 用户下次可直接从 `NEXT-SESSION-PROMPT.devflow.md` 或最新 devflow handoff 恢复，而无需重复核对迁移细节。
+
+
 
