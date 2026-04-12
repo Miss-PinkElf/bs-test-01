@@ -16,6 +16,11 @@ public class GlobalExceptionHandler {
         return ApiResponse.error(400, exception.getMessage());
     }
 
+    @ExceptionHandler(ForbiddenException.class)
+    public ApiResponse<Void> handleForbidden(ForbiddenException exception) {
+        return ApiResponse.error(403, exception.getMessage());
+    }
+
     @ExceptionHandler(MethodArgumentNotValidException.class)
     public ApiResponse<Void> handleValidation(MethodArgumentNotValidException exception) {
         String message = exception.getBindingResult().getFieldErrors().stream()
