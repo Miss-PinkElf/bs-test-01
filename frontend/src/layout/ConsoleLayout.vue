@@ -7,13 +7,14 @@ const route = useRoute();
 const router = useRouter();
 const authStore = useAuthStore();
 
-const navItems = [
-  { label: "仪表盘", path: "/dashboard" },
-  { label: "用户管理", path: "/users" },
-  { label: "仓库管理", path: "/warehouses" },
-  { label: "环境数据", path: "/environment" },
-  { label: "温度预测", path: "/prediction" }
-];
+const navItems = computed(() => router.getRoutes()
+  .filter((item) => item.meta?.showInNav)
+  .filter((item) => authStore.canAccessRoute(item.meta?.allowedRoles))
+  .sort((left, right) => (left.meta?.navOrder || 999) - (right.meta?.navOrder || 999))
+  .map((item) => ({
+    label: item.meta?.title || item.name || item.path,
+    path: item.path
+  })));
 
 const pageTitle = computed(() => route.meta.title || "粮仓平台");
 const pageSubtitle = computed(
@@ -77,7 +78,7 @@ function handleLogout() {
           <div class="page-subtitle">{{ pageSubtitle }}</div>
         </div>
 
-        <div class="header-actions">
+          <div class="header-actions">
           <div class="user-panel">
             <span>{{ authStore.user?.displayName || "未登录" }}</span>
             <el-tag type="success">{{ authStore.primaryRole }}</el-tag>

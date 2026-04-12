@@ -22,7 +22,16 @@ async function submit() {
   try {
     const user = await login(form);
     authStore.setUser(user);
-    router.push(route.query.redirect || "/dashboard");
+
+    const redirect = typeof route.query.redirect === "string" ? route.query.redirect : "";
+    const resolvedRedirect = redirect ? router.resolve(redirect) : null;
+    const canUseRedirect = Boolean(
+      resolvedRedirect &&
+      resolvedRedirect.matched.length > 0 &&
+      (resolvedRedirect.meta.public || authStore.canAccessRoute(resolvedRedirect.meta.allowedRoles))
+    );
+
+    router.push(canUseRedirect ? redirect : authStore.defaultRoute);
   } catch (error) {
     errorMessage.value = error.message;
   } finally {
