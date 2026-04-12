@@ -84,6 +84,14 @@
 - [x] **COMMENT-10-01**: `frontend/src/api/grain.js`、`PredictionView.vue`、`DataView.vue`、`DashboardView.vue`、`UsersView.vue`、`WarehouseView.vue` 只在数据归一化、分页状态回源、任务切换、导入刷新、选中态兜底等非显而易见逻辑块前补充简短中文注释；不注释显而易见模板或简单赋值，不改行为
 - [x] **COMMENT-10-02**: `PredictionService.java`、`DashboardService.java`、`GrainTempService.java`、`SensorDataImportService.java`、`UserService.java`、`WarehouseService.java`、`PredictionController.java`、`GrainTempController.java` 只在预测编排、分页归一化、导入校验、汇总重算、统计口径与接口边界等非显而易见逻辑块前补充简短中文注释；不写大段 Javadoc，不改行为
 - [x] **COMMENT-10-03**: Phase 10 验证必须同时包含 `cd frontend && npm run build`、`cd backend && mvn -q -DskipTests compile` 通过，以及 `rg` 证据证明注释确实加在计划指定文件与指定逻辑附近
+
+## Phase 12 Requirements（图表时间范围与长 x 轴收口）
+
+### Chart window / x-axis readability
+
+- [x] **CHART-12-01**: `frontend/src/views/DataView.vue` 的粮温汇总趋势图继续保留在当前页面结构和共享查询链路内，支持用户选择仓库 + 时间范围；首次进入粮温主线时默认落在最近 30 天，并通过 `axisLabel` 压缩、适度 `rotate` 与 `dataZoom` 解决长 x 轴展示不全问题（2026-04-12：前端实现与 `npm run build` 已通过，待人工验收）
+- [x] **CHART-12-02**: `frontend/src/views/PredictionView.vue` 的实际值 / 预测值双线图支持图表级时间范围，只影响图表显示，不回写任务摘要与历史任务记录语义；默认展示最近 7 天窗口，清空后恢复完整时间线（2026-04-12：前端实现与 `npm run build` 已通过，待人工验收）
+- [x] **CHART-12-03**: 两张图都采用“时间范围优先、图表交互兜底”的收口方式，而不是只靠完整时间标签硬撑全部历史窗口；当时间线较长时，用户仍可通过缩放 / 滑动继续查看（2026-04-12：DataView / PredictionView 双图已同步收口，待人工验收）
 ## v2 Requirements
 
 - [ ] **DATA-05**: 验收脚本 `run-acceptance-smoke.ps1` 增加针对新版模板版式或关键标签的断言（可选）
@@ -129,6 +137,9 @@
 | COMMENT-10-01 | Phase 10 | Done |
 | COMMENT-10-02 | Phase 10 | Done |
 | COMMENT-10-03 | Phase 10 | Done |
+| CHART-12-01 | Phase 12 | Done（待 UAT） |
+| CHART-12-02 | Phase 12 | Done（待 UAT） |
+| CHART-12-03 | Phase 12 | Done（待 UAT） |
 
 **Coverage:**
 
@@ -142,11 +153,12 @@
 - Phase 8 / 展示大屏优化：3 条（SCREEN-08-*）
 - Phase 9 / 管理端列表去 mock：4 条（MOCK-09-*）
 - Phase 10 / 前后端简单注释可读性：3 条（COMMENT-10-*）
-- Mapped to phases: 30
+- Phase 12 / 图表时间范围与长 x 轴收口：3 条（CHART-12-*）
+- Mapped to phases: 33
 - Unmapped: 0
 
 ---
-*Last updated: 2026-04-11 Phase 10 COMMENT-10-* 已完成；Phase 9 MOCK-09-* 已完成，Phase 5 DEL-05-* 与 Phase 8 SCREEN-08-* 已完成*
+*Last updated: 2026-04-12 Phase 12 CHART-12-* 已落地待 UAT；Phase 10 COMMENT-10-* 已完成；Phase 9 MOCK-09-* 已完成，Phase 5 DEL-05-* 与 Phase 8 SCREEN-08-* 已完成*
 
 
 
