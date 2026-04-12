@@ -15,6 +15,7 @@ import org.springframework.stereotype.Service;
 import java.time.LocalDateTime;
 import java.util.Comparator;
 import java.util.List;
+import java.util.Locale;
 import java.util.stream.Stream;
 
 @Service
@@ -28,7 +29,20 @@ public class DashboardService {
         this.dashboardMapper = dashboardMapper;
     }
 
-    public DashboardOverviewResponse getOverview() {
+    public DashboardOverviewResponse getOverview(Long warehouseId) {
+        if (warehouseId != null) {
+            return buildOverview(
+                    dashboardMapper.countScreenWarehouses(warehouseId),
+                    dashboardMapper.countScreenGrainSummaryCount(warehouseId, null, null),
+                    dashboardMapper.countScreenRealAlertCount(warehouseId, null, null),
+                    dashboardMapper.countScreenPredictionAlertCount(warehouseId, null, null),
+                    dashboardMapper.countScreenArchivedPredictionCount(warehouseId, null, null),
+                    dashboardMapper.selectScreenLatestRealAlerts(warehouseId, null, null),
+                    dashboardMapper.selectScreenLatestPredictionAlerts(warehouseId, null, null),
+                    dashboardMapper.selectScreenLatestGrainSummaries(warehouseId, null, null),
+                    dashboardMapper.selectScreenWarehouseHealthList(warehouseId, null, null)
+            );
+        }
         // overview 只返回顶部聚合卡片，列表模块各自分页，避免首页初次加载就拉全量列表。
         return new DashboardOverviewResponse(
                 dashboardMapper.countWarehouses(),
@@ -42,7 +56,18 @@ public class DashboardService {
         );
     }
 
-    public PageResult<DashboardAlertItemResponse> getAlertPage(String keyword, Integer pageNum, Integer pageSize) {
+    public PageResult<DashboardAlertItemResponse> getAlertPage(Long warehouseId, String keyword, Integer pageNum, Integer pageSize) {
+        if (warehouseId != null) {
+            List<DashboardAlertItemResponse> alerts = Stream.concat(
+                            dashboardMapper.selectScreenLatestRealAlerts(warehouseId, null, null).stream(),
+                            dashboardMapper.selectScreenLatestPredictionAlerts(warehouseId, null, null).stream()
+                    )
+                    .sorted(Comparator.comparing(DashboardAlertItemResponse::eventTime,
+                            Comparator.nullsLast(Comparator.reverseOrder())))
+                    .filter(item -> matchesAlertKeyword(item, keyword))
+                    .toList();
+            return paginateList(alerts, pageNum, pageSize);
+        }
         String kw = normalizeKeyword(keyword);
         int finalPageNum = normalizePageNum(pageNum);
         int finalPageSize = normalizePageSize(pageSize);
@@ -54,7 +79,13 @@ public class DashboardService {
         return new PageResult<>(list, finalPageNum, finalPageSize, total);
     }
 
-    public PageResult<DashboardWarehouseHealthResponse> getWarehouseHealthPage(String keyword, Integer pageNum, Integer pageSize) {
+    public PageResult<DashboardWarehouseHealthResponse> getWarehouseHealthPage(Long warehouseId, String keyword, Integer pageNum, Integer pageSize) {
+        if (warehouseId != null) {
+            List<DashboardWarehouseHealthResponse> rows = dashboardMapper.selectScreenWarehouseHealthList(warehouseId, null, null).stream()
+                    .filter(item -> matchesWarehouseHealthKeyword(item, keyword))
+                    .toList();
+            return paginateList(rows, pageNum, pageSize);
+        }
         String kw = normalizeKeyword(keyword);
         int finalPageNum = normalizePageNum(pageNum);
         int finalPageSize = normalizePageSize(pageSize);
@@ -66,7 +97,13 @@ public class DashboardService {
         return new PageResult<>(list, finalPageNum, finalPageSize, total);
     }
 
-    public PageResult<DashboardLatestSummaryResponse> getGrainSummaryPage(String keyword, Integer pageNum, Integer pageSize) {
+    public PageResult<DashboardLatestSummaryResponse> getGrainSummaryPage(Long warehouseId, String keyword, Integer pageNum, Integer pageSize) {
+        if (warehouseId != null) {
+            List<DashboardLatestSummaryResponse> rows = dashboardMapper.selectScreenLatestGrainSummaries(warehouseId, null, null).stream()
+                    .filter(item -> matchesGrainSummaryKeyword(item, keyword))
+                    .toList();
+            return paginateList(rows, pageNum, pageSize);
+        }
         String kw = normalizeKeyword(keyword);
         int finalPageNum = normalizePageNum(pageNum);
         int finalPageSize = normalizePageSize(pageSize);
@@ -151,5 +188,62 @@ public class DashboardService {
 
     private int normalizePageSize(Integer pageSize) {
         return pageSize == null || pageSize < 1 ? DEFAULT_PAGE_SIZE : pageSize;
+    }
+
+    private boolean matchesAlertKeyword(DashboardAlertItemResponse item, String keyword) {
+        return matchesKeyword(keyword,
+                item.title(),
+                item.level(),
+                item.sourceType(),
+                item.warehouseName(),
+                item.eventTime(),
+                item.description());
+    }
+
+    private boolean matchesWarehouseHealthKeyword(DashboardWarehouseHealthResponse item, String keyword) {
+        return matchesKeyword(keyword,
+                item.warehouseName(),
+                item.healthScore(),
+                item.riskLevel(),
+                item.realWarningLevel(),
+                item.predictionWarningLevel(),
+                item.latestAvgTemp(),
+                item.latestForecastValue());
+    }
+
+    private boolean matchesGrainSummaryKeyword(DashboardLatestSummaryResponse item, String keyword) {
+        return matchesKeyword(keyword,
+                item.warehouseName(),
+                item.warningLevel(),
+                item.avgTemp(),
+                item.maxTemp(),
+                item.minTemp(),
+                item.collectedAt(),
+                item.warningMessage());
+    }
+
+    private boolean matchesKeyword(String keyword, Object... values) {
+        String normalized = normalizeKeyword(keyword);
+        if (normalized == null) {
+            return true;
+        }
+        String haystack = Stream.of(values)
+                .map(value -> value == null ? "" : String.valueOf(value))
+                .reduce((left, right) -> left + "|" + right)
+                .orElse("")
+                .toLowerCase(Locale.ROOT);
+        return haystack.contains(normalized.toLowerCase(Locale.ROOT));
+    }
+
+    private <T> PageResult<T> paginateList(List<T> source, Integer pageNum, Integer pageSize) {
+        int finalPageNum = normalizePageNum(pageNum);
+        int finalPageSize = normalizePageSize(pageSize);
+        long total = source.size();
+        int maxPage = total == 0 ? 1 : (int) Math.ceil((double) total / finalPageSize);
+        finalPageNum = Math.min(finalPageNum, maxPage);
+        int fromIndex = (finalPageNum - 1) * finalPageSize;
+        int toIndex = Math.min(fromIndex + finalPageSize, source.size());
+        List<T> list = fromIndex >= source.size() ? List.of() : source.subList(fromIndex, toIndex);
+        return new PageResult<>(list, finalPageNum, finalPageSize, total);
     }
 }

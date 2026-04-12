@@ -7,12 +7,15 @@ import com.grain.platform.dto.dashboard.DashboardLatestSummaryResponse;
 import com.grain.platform.dto.dashboard.DashboardOverviewResponse;
 import com.grain.platform.dto.dashboard.DashboardWarehouseHealthResponse;
 import com.grain.platform.dto.dashboard.ScreenDashboardResponse;
+import com.grain.platform.security.AccessControlService;
+import com.grain.platform.security.CurrentUserContext;
 import com.grain.platform.service.DashboardService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestHeader;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
@@ -25,16 +28,23 @@ public class DashboardController {
     private static final Logger log = LoggerFactory.getLogger(DashboardController.class);
 
     private final DashboardService dashboardService;
+    private final AccessControlService accessControlService;
 
-    public DashboardController(DashboardService dashboardService) {
+    public DashboardController(DashboardService dashboardService, AccessControlService accessControlService) {
         this.dashboardService = dashboardService;
+        this.accessControlService = accessControlService;
     }
 
     // 查询仪表盘概览。
     @GetMapping("/overview")
-    public ApiResponse<DashboardOverviewResponse> overview() {
+    public ApiResponse<DashboardOverviewResponse> overview(
+            @RequestHeader(value = "X-Demo-Username", required = false) String username
+    ) {
+        CurrentUserContext currentUser = accessControlService.requireCurrentUser(username);
         log.info("调用仪表盘概览接口");
-        DashboardOverviewResponse response = dashboardService.getOverview();
+        DashboardOverviewResponse response = dashboardService.getOverview(
+                accessControlService.resolveWarehouseScope(currentUser, null)
+        );
         log.info("获取仪表盘概览成功，warehouseCount={}, realAlertCount={}, predictionAlertCount={}",
                 response.warehouseCount(), response.realAlertCount(), response.predictionAlertCount());
         return ApiResponse.success(response);
@@ -42,32 +52,53 @@ public class DashboardController {
 
     @GetMapping("/alerts")
     public ApiResponse<PageResult<DashboardAlertItemResponse>> alerts(
+            @RequestHeader(value = "X-Demo-Username", required = false) String username,
             @RequestParam(required = false) String keyword,
             @RequestParam(required = false) Integer pageNum,
             @RequestParam(required = false) Integer pageSize
     ) {
+        CurrentUserContext currentUser = accessControlService.requireCurrentUser(username);
         log.info("调用仪表盘预警分页接口，keyword={}, pageNum={}, pageSize={}", keyword, pageNum, pageSize);
-        return ApiResponse.success(dashboardService.getAlertPage(keyword, pageNum, pageSize));
+        return ApiResponse.success(dashboardService.getAlertPage(
+                accessControlService.resolveWarehouseScope(currentUser, null),
+                keyword,
+                pageNum,
+                pageSize
+        ));
     }
 
     @GetMapping("/warehouse-health")
     public ApiResponse<PageResult<DashboardWarehouseHealthResponse>> warehouseHealth(
+            @RequestHeader(value = "X-Demo-Username", required = false) String username,
             @RequestParam(required = false) String keyword,
             @RequestParam(required = false) Integer pageNum,
             @RequestParam(required = false) Integer pageSize
     ) {
+        CurrentUserContext currentUser = accessControlService.requireCurrentUser(username);
         log.info("调用仪表盘仓库健康度分页接口，keyword={}, pageNum={}, pageSize={}", keyword, pageNum, pageSize);
-        return ApiResponse.success(dashboardService.getWarehouseHealthPage(keyword, pageNum, pageSize));
+        return ApiResponse.success(dashboardService.getWarehouseHealthPage(
+                accessControlService.resolveWarehouseScope(currentUser, null),
+                keyword,
+                pageNum,
+                pageSize
+        ));
     }
 
     @GetMapping("/grain-summaries")
     public ApiResponse<PageResult<DashboardLatestSummaryResponse>> grainSummaries(
+            @RequestHeader(value = "X-Demo-Username", required = false) String username,
             @RequestParam(required = false) String keyword,
             @RequestParam(required = false) Integer pageNum,
             @RequestParam(required = false) Integer pageSize
     ) {
+        CurrentUserContext currentUser = accessControlService.requireCurrentUser(username);
         log.info("调用仪表盘粮温汇总分页接口，keyword={}, pageNum={}, pageSize={}", keyword, pageNum, pageSize);
-        return ApiResponse.success(dashboardService.getGrainSummaryPage(keyword, pageNum, pageSize));
+        return ApiResponse.success(dashboardService.getGrainSummaryPage(
+                accessControlService.resolveWarehouseScope(currentUser, null),
+                keyword,
+                pageNum,
+                pageSize
+        ));
     }
 
     @GetMapping("/screen")
