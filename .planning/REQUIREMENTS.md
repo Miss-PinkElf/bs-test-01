@@ -151,10 +151,10 @@
 | CHART-12-02 | Phase 12 | Done |
 | CHART-12-03 | Phase 12 | Done |
 | CHART-12-04 | Phase 12 | Done |
-| AUTHZ-13-01 | Phase 13 | Done（待 UAT） |
-| AUTHZ-13-02 | Phase 13 | Done（待 UAT） |
-| AUTHZ-13-03 | Phase 13 | Done（待 UAT） |
-| AUTHZ-13-04 | Phase 13 | Done（待 UAT） |
+| AUTHZ-13-01 | Phase 13 | Done |
+| AUTHZ-13-02 | Phase 13 | Done |
+| AUTHZ-13-03 | Phase 13 | Done |
+| AUTHZ-13-04 | Phase 13 | Done |
 
 **Coverage:**
 
@@ -174,7 +174,7 @@
 - Unmapped: 0
 
 ---
-*Last updated: 2026-04-12 Phase 13 AUTHZ-13-* 已落盘待人工验收；Phase 12 CHART-12-* 已完成并归档；Phase 10 COMMENT-10-* 已完成；Phase 9 MOCK-09-* 已完成，Phase 5 DEL-05-* 与 Phase 8 SCREEN-08-* 已完成*
+*Last updated: 2026-04-12 Phase 13 AUTHZ-13-* 已完成并归档；Phase 12 CHART-12-* 已完成并归档；Phase 10 COMMENT-10-* 已完成；Phase 9 MOCK-09-* 已完成，Phase 5 DEL-05-* 与 Phase 8 SCREEN-08-* 已完成*
 
 
 
