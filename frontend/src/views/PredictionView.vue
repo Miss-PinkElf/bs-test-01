@@ -10,6 +10,7 @@ import {
   fetchWarehouses,
   predictMetric
 } from "../api/grain";
+import { useAuthStore } from "../stores/auth";
 
 const DAY_IN_MS = 24 * 60 * 60 * 1000;
 const DEFAULT_PREDICTION_CHART_DAYS = 7;
@@ -22,6 +23,7 @@ const taskSummaryCardRef = ref();
 let summaryFlashTimer = null;
 let chart;
 
+const authStore = useAuthStore();
 const loading = ref(false);
 const historyLoading = ref(false);
 const warehouses = ref([]);
@@ -73,6 +75,18 @@ const form = reactive({
 });
 const trainRange = ref(null);
 const trainCollapse = ref([]);
+const isWarehouseManager = computed(() => authStore.isWarehouseManager);
+const isViewer = computed(() => authStore.isViewer);
+const managedWarehouseId = computed(() => authStore.managedWarehouseId ?? null);
+const canExecutePrediction = computed(() => !isViewer.value);
+const canDeletePrediction = computed(() => !isViewer.value);
+const visibleWarehouses = computed(() => {
+  if (!isWarehouseManager.value || managedWarehouseId.value == null) {
+    return warehouses.value;
+  }
+
+  return warehouses.value.filter((item) => item.id === managedWarehouseId.value);
+});
 const filteredPredictionResultList = computed(() => {
   const resultList = Array.isArray(prediction.value.resultList) ? prediction.value.resultList : [];
 
@@ -119,6 +133,21 @@ function parseDateTimeValue(value) {
 function formatChartAxisLabel(value) {
   const normalized = formatDateTime(value);
   return normalized === "-" ? "" : normalized.slice(5, 16);
+}
+
+function resolveWarehouseScope(warehouseId) {
+  if (isWarehouseManager.value) {
+    return managedWarehouseId.value || warehouseId;
+  }
+  return warehouseId;
+}
+
+function applyManagedWarehouseScope() {
+  if (!isWarehouseManager.value || managedWarehouseId.value == null) {
+    return;
+  }
+
+  form.warehouseId = managedWarehouseId.value;
 }
 
 function getChartAxisLabelInterval(pointCount) {
@@ -226,8 +255,9 @@ function clearPredictionChartRange() {
 async function loadWarehouses() {
   try {
     warehouses.value = await fetchWarehouses();
-    if (!form.warehouseId && warehouses.value.length > 0) {
-      form.warehouseId = warehouses.value[0].id;
+    applyManagedWarehouseScope();
+    if (!form.warehouseId && visibleWarehouses.value.length > 0) {
+      form.warehouseId = visibleWarehouses.value[0].id;
     }
   } catch (error) {
     ElMessage.error(error?.message || "仓库列表加载失败");
@@ -267,6 +297,10 @@ async function handleHistoryPageSizeChange(pageSize) {
 }
 
 async function runPrediction() {
+  if (!canExecutePrediction.value) {
+    return;
+  }
+
   if (!validateTrainRange()) {
     return;
   }
@@ -275,7 +309,7 @@ async function runPrediction() {
 
   try {
     const payload = {
-      warehouseId: form.warehouseId,
+      warehouseId: resolveWarehouseScope(form.warehouseId),
       metricCode: "temperature",
       targetType: form.targetType,
       forecastDays: form.forecastDays
@@ -480,7 +514,12 @@ onMounted(async () => {
   await loadWarehouses();
   await loadPredictionHistoryPage();
 
-  if (form.warehouseId) {
+  if (predictionHistory.value.length > 0) {
+    await selectPredictionTask(predictionHistory.value[0]);
+    return;
+  }
+
+  if (canExecutePrediction.value && form.warehouseId) {
     await runPrediction();
   }
 });
@@ -489,6 +528,7 @@ watch(predictionChartRange, async () => {
   await nextTick();
   renderChart();
 });
+watch(managedWarehouseId, () => { applyManagedWarehouseScope(); });
 
 onBeforeUnmount(() => {
   if (summaryFlashTimer != null) {
@@ -511,9 +551,9 @@ onBeforeUnmount(() => {
 
           <el-form inline>
             <el-form-item label="仓库">
-              <el-select v-model="form.warehouseId" class="prediction-select-md">
+              <el-select v-model="form.warehouseId" class="prediction-select-md" :disabled="isWarehouseManager">
                 <el-option
-                  v-for="item in warehouses"
+                  v-for="item in visibleWarehouses"
                   :key="item.id"
                   :label="item.warehouseName"
                   :value="item.id"
@@ -537,7 +577,7 @@ onBeforeUnmount(() => {
             </el-form-item>
 
             <el-form-item>
-              <el-button type="primary" :loading="loading" @click="runPrediction">
+              <el-button v-if="canExecutePrediction" type="primary" :loading="loading" @click="runPrediction">
                 执行预测
               </el-button>
             </el-form-item>
@@ -654,7 +694,7 @@ onBeforeUnmount(() => {
           </template>
 
           <div class="toolbar-row table-toolbar">
-            <el-button type="danger" :disabled="historySelection.length === 0" @click="handleBatchDelete">
+            <el-button v-if="canDeletePrediction" type="danger" :disabled="historySelection.length === 0" @click="handleBatchDelete">
               批量删除
             </el-button>
             <el-input
@@ -700,7 +740,7 @@ onBeforeUnmount(() => {
                 <template #default="{ row }">
                   <el-button link type="primary" @click.stop="focusTaskSummary(row)">查看摘要</el-button>
                   <el-button link type="primary" @click.stop="selectPredictionTask(row)">切换任务</el-button>
-                  <el-button link type="danger" @click.stop="handleDeleteRow(row)">删除</el-button>
+                  <el-button v-if="canDeletePrediction" link type="danger" @click.stop="handleDeleteRow(row)">删除</el-button>
                 </template>
               </el-table-column>
             </el-table>

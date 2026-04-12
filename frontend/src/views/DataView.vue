@@ -23,6 +23,7 @@ import {
   updateGrainTempRecord,
   updateSensorData
 } from "../api/grain";
+import { useAuthStore } from "../stores/auth";
 
 const GRAIN_SUMMARY_TARGET_OPTIONS = [
   { value: "AVG_TEMP", label: "整仓均温" },
@@ -66,11 +67,23 @@ const envRecordPageState = reactive({ pageNum: 1, pageSize: 10, total: 0 });
 let chart;
 let recordKeywordTimer;
 
+const authStore = useAuthStore();
 const filters = reactive({ warehouseId: "", metricCode: "humidity" });
 const grainForm = reactive({ warehouseId: "", zoneCode: "A", layerNo: 1, pointNo: 1, collectedAt: "", temperatureValue: 24.5, probeCode: "", remark: "" });
 const envForm = reactive({ warehouseId: "", metricCode: "humidity", metricValue: 58.2, collectedAt: "" });
 
 const envMetricOptions = computed(() => metricOptions.value.filter((item) => item.value !== "temperature"));
+const isWarehouseManager = computed(() => authStore.isWarehouseManager);
+const isViewer = computed(() => authStore.isViewer);
+const managedWarehouseId = computed(() => authStore.managedWarehouseId ?? null);
+const canWriteData = computed(() => !isViewer.value);
+const visibleWarehouses = computed(() => {
+  if (!isWarehouseManager.value || managedWarehouseId.value == null) {
+    return warehouses.value;
+  }
+
+  return warehouses.value.filter((item) => item.id === managedWarehouseId.value);
+});
 const isEditing = computed(() => editingId.value !== null);
 const dialogTitle = computed(() => (mode.value === "grain"
   ? (isEditing.value ? "编辑粮温原始记录" : "新增粮温原始记录")
@@ -83,6 +96,21 @@ const currentRecordPageState = computed(() => (mode.value === "grain" ? grainRec
 function formatDateTime(value) { return value ? String(value).replace("T", " ") : "-"; }
 function formatTemperatureValue(value) { return value == null || value === "" ? "-" : Number(value).toFixed(2); }
 function getInitialEnvMetricCode() { return envMetricOptions.value[0]?.value || "humidity"; }
+function resolveWarehouseScope(warehouseId) {
+  if (isWarehouseManager.value) {
+    return managedWarehouseId.value || undefined;
+  }
+  return warehouseId || undefined;
+}
+function applyManagedWarehouseScope() {
+  if (!isWarehouseManager.value || managedWarehouseId.value == null) {
+    return;
+  }
+
+  filters.warehouseId = managedWarehouseId.value;
+  grainForm.warehouseId = managedWarehouseId.value;
+  envForm.warehouseId = managedWarehouseId.value;
+}
 function formatDatePart(value) { return String(value).padStart(2, "0"); }
 function formatDateTimeForPicker(date) {
   return `${date.getFullYear()}-${formatDatePart(date.getMonth() + 1)}-${formatDatePart(date.getDate())} ${formatDatePart(date.getHours())}:${formatDatePart(date.getMinutes())}:${formatDatePart(date.getSeconds())}`;
@@ -136,7 +164,7 @@ function getGrainSummaryValue(row, target) {
   }
 }
 function resetGrainForm(row = null) {
-  grainForm.warehouseId = row?.warehouseId || warehouses.value[0]?.id || "";
+  grainForm.warehouseId = resolveWarehouseScope(row?.warehouseId || visibleWarehouses.value[0]?.id || "");
   grainForm.zoneCode = row?.zoneCode || "A";
   grainForm.layerNo = row?.layerNo || 1;
   grainForm.pointNo = row?.pointNo || 1;
@@ -146,7 +174,7 @@ function resetGrainForm(row = null) {
   grainForm.remark = row?.remark || "";
 }
 function resetEnvForm(row = null) {
-  envForm.warehouseId = row?.warehouseId || warehouses.value[0]?.id || "";
+  envForm.warehouseId = resolveWarehouseScope(row?.warehouseId || visibleWarehouses.value[0]?.id || "");
   envForm.metricCode = row?.metricCode || getInitialEnvMetricCode();
   envForm.metricValue = row?.metricValue ?? 58.2;
   envForm.collectedAt = row?.collectedAt || "";
@@ -168,18 +196,19 @@ async function loadMetricOptions() {
 }
 async function loadWarehouses() {
   warehouses.value = await fetchWarehouses();
-  if (!filters.warehouseId && warehouses.value.length > 0) { filters.warehouseId = warehouses.value[0].id; }
-  if (!grainForm.warehouseId && warehouses.value.length > 0) { grainForm.warehouseId = warehouses.value[0].id; }
-  if (!envForm.warehouseId && warehouses.value.length > 0) { envForm.warehouseId = warehouses.value[0].id; }
+  applyManagedWarehouseScope();
+  if (!filters.warehouseId && visibleWarehouses.value.length > 0) { filters.warehouseId = visibleWarehouses.value[0].id; }
+  if (!grainForm.warehouseId && visibleWarehouses.value.length > 0) { grainForm.warehouseId = visibleWarehouses.value[0].id; }
+  if (!envForm.warehouseId && visibleWarehouses.value.length > 0) { envForm.warehouseId = visibleWarehouses.value[0].id; }
 }
 async function loadGrainRecordFilterOptions() {
-  grainFilterOptions.value = await fetchGrainTempRecordFilterOptions({ warehouseId: filters.warehouseId || undefined });
+  grainFilterOptions.value = await fetchGrainTempRecordFilterOptions({ warehouseId: resolveWarehouseScope(filters.warehouseId) });
 }
 async function loadGrainSummarySeries() {
   chartLoading.value = true;
   try {
     const { startTime, endTime } = resolveDateRange(grainSummaryRange.value);
-    grainSummarySeriesRows.value = await fetchGrainTempSummaries({ warehouseId: filters.warehouseId || undefined, startTime, endTime });
+    grainSummarySeriesRows.value = await fetchGrainTempSummaries({ warehouseId: resolveWarehouseScope(filters.warehouseId), startTime, endTime });
   } finally { chartLoading.value = false; }
   await nextTick();
   renderChart();
@@ -191,7 +220,7 @@ async function loadGrainSummaryTable() {
     // 图表查询态和表格细筛态分开维护，汇总表会叠加 warning/keyword/温度区间这些更细的筛选条件。
     const { min, max } = normalizeNumericRange(grainSummaryFilters.tempMin, grainSummaryFilters.tempMax);
     const summaryPage = await fetchGrainTempSummaryPage({
-      warehouseId: filters.warehouseId || undefined,
+      warehouseId: resolveWarehouseScope(filters.warehouseId),
       startTime,
       endTime,
       keyword: grainSummaryFilters.keyword.trim() || undefined,
@@ -213,7 +242,7 @@ async function loadGrainRecords() {
     const { startTime, endTime } = resolveDateRange(grainRecordCollectedRange.value);
     const { min, max } = normalizeNumericRange(grainRecordFilters.tempMin, grainRecordFilters.tempMax);
     const recordList = await fetchGrainTempRecords({
-      warehouseId: filters.warehouseId || undefined,
+      warehouseId: resolveWarehouseScope(filters.warehouseId),
       startTime,
       endTime,
       zoneCode: grainRecordFilters.zoneCode || undefined,
@@ -237,8 +266,8 @@ async function loadEnvData() {
   chartLoading.value = true;
   try {
     const [sensorPage, trendList] = await Promise.all([
-      fetchSensorData({ warehouseId: filters.warehouseId || undefined, metricCode: filters.metricCode, pageNum: envRecordPageState.pageNum, pageSize: envRecordPageState.pageSize, keyword: envRecordKeyword.value.trim() || undefined }),
-      fetchSensorTrend({ warehouseId: filters.warehouseId || undefined, metricCode: filters.metricCode })
+      fetchSensorData({ warehouseId: resolveWarehouseScope(filters.warehouseId), metricCode: filters.metricCode, pageNum: envRecordPageState.pageNum, pageSize: envRecordPageState.pageSize, keyword: envRecordKeyword.value.trim() || undefined }),
+      fetchSensorTrend({ warehouseId: resolveWarehouseScope(filters.warehouseId), metricCode: filters.metricCode })
     ]);
     rows.value = sensorPage.list;
     envRecordPageState.total = sensorPage.total;
@@ -263,11 +292,11 @@ async function reloadCurrentModeData() {
 }
 async function submit() {
   if (mode.value === "grain") {
-    const payload = { warehouseId: grainForm.warehouseId, zoneCode: grainForm.zoneCode, layerNo: grainForm.layerNo, pointNo: grainForm.pointNo, collectedAt: grainForm.collectedAt, temperatureValue: grainForm.temperatureValue, probeCode: grainForm.probeCode, remark: grainForm.remark };
+    const payload = { warehouseId: resolveWarehouseScope(grainForm.warehouseId), zoneCode: grainForm.zoneCode, layerNo: grainForm.layerNo, pointNo: grainForm.pointNo, collectedAt: grainForm.collectedAt, temperatureValue: grainForm.temperatureValue, probeCode: grainForm.probeCode, remark: grainForm.remark };
     if (isEditing.value) { await updateGrainTempRecord(editingId.value, payload); ElMessage.success("粮温原始记录已更新，汇总与真实预警已联动重算"); }
     else { await createGrainTempRecord(payload); ElMessage.success("粮温原始记录已写入数据库"); }
   } else {
-    const payload = { warehouseId: envForm.warehouseId, metricCode: envForm.metricCode, metricValue: envForm.metricValue, collectedAt: envForm.collectedAt };
+    const payload = { warehouseId: resolveWarehouseScope(envForm.warehouseId), metricCode: envForm.metricCode, metricValue: envForm.metricValue, collectedAt: envForm.collectedAt };
     if (isEditing.value) { await updateSensorData(editingId.value, payload); ElMessage.success("环境数据已更新"); }
     else { await createSensorData(payload); ElMessage.success("环境数据已写入数据库"); }
   }
@@ -325,6 +354,7 @@ async function applyGrainRecordFilters() { grainRecordPageState.pageNum = 1; awa
 async function resetGrainRecordFilters() { grainRecordFilters.zoneCode = ""; grainRecordFilters.layerNo = null; grainRecordFilters.pointNo = null; grainRecordFilters.tempMin = null; grainRecordFilters.tempMax = null; grainRecordCollectedRange.value = null; grainRecordKeyword.value = ""; grainRecordPageState.pageNum = 1; await loadGrainRecords(); }
 async function handleModeChange() {
   editingId.value = null;
+  applyManagedWarehouseScope();
   if (mode.value === "env") {
     filters.metricCode = getInitialEnvMetricCode();
     resetEnvForm();
@@ -350,6 +380,7 @@ watch(grainRecordKeyword, scheduleRecordKeywordReload);
 watch(envRecordKeyword, scheduleRecordKeywordReload);
 watch(grainSummaryTarget, async () => { if (mode.value !== "grain") return; await nextTick(); renderChart(); });
 watch(() => filters.warehouseId, async () => { if (mode.value !== "grain") return; await loadGrainRecordFilterOptions(); });
+watch(managedWarehouseId, () => { applyManagedWarehouseScope(); });
 function renderChart() {
   if (!chartRef.value) return;
   if (!chart) chart = echarts.init(chartRef.value);
@@ -439,8 +470,8 @@ onBeforeUnmount(() => { clearTimeout(recordKeywordTimer); if (chart) chart.dispo
 
           <el-form inline>
             <el-form-item label="仓库">
-              <el-select v-model="filters.warehouseId" clearable style="width: 180px">
-                <el-option v-for="item in warehouses" :key="item.id" :label="item.warehouseName" :value="item.id" />
+              <el-select v-model="filters.warehouseId" :clearable="!isWarehouseManager" :disabled="isWarehouseManager" style="width: 180px">
+                <el-option v-for="item in visibleWarehouses" :key="item.id" :label="item.warehouseName" :value="item.id" />
               </el-select>
             </el-form-item>
 
@@ -470,7 +501,7 @@ onBeforeUnmount(() => { clearTimeout(recordKeywordTimer); if (chart) chart.dispo
       </el-col>
     </el-row>
 
-    <el-card class="panel-card" shadow="never">
+    <el-card v-if="canWriteData" class="panel-card" shadow="never">
       <template #header>
         <div class="panel-title">数据录入与导入</div>
       </template>
@@ -611,7 +642,7 @@ onBeforeUnmount(() => { clearTimeout(recordKeywordTimer); if (chart) chart.dispo
         <el-table-column prop="temperatureValue" label="温度值" />
         <el-table-column label="采集时间" min-width="160"><template #default="{ row }">{{ formatDateTime(row.collectedAt) }}</template></el-table-column>
         <el-table-column prop="sourceType" label="来源" width="100" />
-        <el-table-column label="操作" width="160" fixed="right"><template #default="{ row }"><el-button link type="primary" @click="openEditDialog(row)">编辑</el-button><el-button link type="danger" @click="handleDelete(row)">删除</el-button></template></el-table-column>
+        <el-table-column v-if="canWriteData" label="操作" width="160" fixed="right"><template #default="{ row }"><el-button link type="primary" @click="openEditDialog(row)">编辑</el-button><el-button link type="danger" @click="handleDelete(row)">删除</el-button></template></el-table-column>
       </el-table>
 
       <el-table v-else :data="rows" stripe v-loading="recordLoading">
@@ -621,7 +652,7 @@ onBeforeUnmount(() => { clearTimeout(recordKeywordTimer); if (chart) chart.dispo
         <el-table-column label="采集时间" min-width="160"><template #default="{ row }">{{ formatDateTime(row.collectedAt) }}</template></el-table-column>
         <el-table-column prop="sourceType" label="来源" />
         <el-table-column prop="qualityFlag" label="质量标记" />
-        <el-table-column label="操作" width="160" fixed="right"><template #default="{ row }"><el-button link type="primary" @click="openEditDialog(row)">编辑</el-button><el-button link type="danger" @click="handleDelete(row)">删除</el-button></template></el-table-column>
+        <el-table-column v-if="canWriteData" label="操作" width="160" fixed="right"><template #default="{ row }"><el-button link type="primary" @click="openEditDialog(row)">编辑</el-button><el-button link type="danger" @click="handleDelete(row)">删除</el-button></template></el-table-column>
       </el-table>
 
       <div class="table-pagination">
@@ -640,7 +671,7 @@ onBeforeUnmount(() => { clearTimeout(recordKeywordTimer); if (chart) chart.dispo
 
     <el-dialog v-model="dialogVisible" :title="dialogTitle" width="760px">
       <el-form v-if="mode === 'grain'" label-position="top" class="form-grid-2">
-        <el-form-item label="仓库"><el-select v-model="grainForm.warehouseId"><el-option v-for="item in warehouses" :key="item.id" :label="item.warehouseName" :value="item.id" /></el-select></el-form-item>
+        <el-form-item label="仓库"><el-select v-model="grainForm.warehouseId" :disabled="isWarehouseManager"><el-option v-for="item in visibleWarehouses" :key="item.id" :label="item.warehouseName" :value="item.id" /></el-select></el-form-item>
         <el-form-item label="区域"><el-input v-model="grainForm.zoneCode" placeholder="例如 A" /></el-form-item>
         <el-form-item label="层号"><el-input-number v-model="grainForm.layerNo" :min="1" :max="8" /></el-form-item>
         <el-form-item label="点位"><el-input-number v-model="grainForm.pointNo" :min="1" :max="16" /></el-form-item>
@@ -651,7 +682,7 @@ onBeforeUnmount(() => { clearTimeout(recordKeywordTimer); if (chart) chart.dispo
       </el-form>
 
       <el-form v-else label-position="top" class="form-grid-2">
-        <el-form-item label="仓库"><el-select v-model="envForm.warehouseId"><el-option v-for="item in warehouses" :key="item.id" :label="item.warehouseName" :value="item.id" /></el-select></el-form-item>
+        <el-form-item label="仓库"><el-select v-model="envForm.warehouseId" :disabled="isWarehouseManager"><el-option v-for="item in visibleWarehouses" :key="item.id" :label="item.warehouseName" :value="item.id" /></el-select></el-form-item>
         <el-form-item label="指标"><el-select v-model="envForm.metricCode"><el-option v-for="item in envMetricOptions" :key="item.value" :label="item.label" :value="item.value" /></el-select></el-form-item>
         <el-form-item label="采样值"><el-input-number v-model="envForm.metricValue" :step="0.1" /></el-form-item>
         <el-form-item label="采集时间"><el-date-picker v-model="envForm.collectedAt" type="datetime" value-format="YYYY-MM-DD HH:mm:ss" placeholder="不填则默认当前时间" /></el-form-item>
