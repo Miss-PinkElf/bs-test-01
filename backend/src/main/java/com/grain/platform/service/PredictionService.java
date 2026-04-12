@@ -24,6 +24,8 @@ import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.LinkedHashSet;
 import java.util.List;
+import java.util.Locale;
+import java.util.Objects;
 import java.util.UUID;
 
 @Service
@@ -55,7 +57,7 @@ public class PredictionService {
         this.warehouseMapper = warehouseMapper;
     }
 
-    public PredictionTaskResponse predict(PredictionRequest request) {
+    public PredictionTaskResponse predict(PredictionRequest request, Long operatorUserId) {
         SensorMetric metric = metricService.getMetric(request.metricCode());
         Warehouse warehouse = requireWarehouse(request.warehouseId());
         // 温度指标需要先把目标类型收口成预测主线，环境指标则固定走传感器时序。
@@ -91,7 +93,7 @@ public class PredictionService {
         task.setAdjustStatus("UNADJUSTED");
         task.setStatus("SUCCESS");
         task.setRiskLevel(calcRiskLevel(forecastSeries, metric));
-        task.setRequestedBy(1L);
+        task.setRequestedBy(operatorUserId);
         task.setRequestedAt(now);
         task.setCompletedAt(now);
         task.setSummary(buildSummary(warehouse.getWarehouseName(), targetType, request.forecastDays()));
@@ -106,35 +108,37 @@ public class PredictionService {
         return toResponse(task, warehouse, metric, actualSeries, predictionResultMapper.selectByTaskId(task.getId()));
     }
 
-    public List<PredictionTaskResponse> listTasks() {
+    public List<PredictionTaskResponse> listTasks(Long warehouseScope) {
+        if (warehouseScope != null) {
+            return predictionTaskMapper.selectAll().stream()
+                    .filter(task -> Objects.equals(task.getWarehouseId(), warehouseScope))
+                    .map(this::toTaskResponse)
+                    .toList();
+        }
         return predictionTaskMapper.selectAll().stream()
-                .map(task -> toResponse(
-                        task,
-                        requireWarehouse(task.getWarehouseId()),
-                        metricService.getMetric(task.getMetricCode()),
-                        loadActualSeries(task),
-                        predictionResultMapper.selectByTaskId(task.getId())
-                ))
+                .map(this::toTaskResponse)
                 .toList();
     }
 
-    public PageResult<PredictionTaskResponse> listTaskPage(String keyword, Integer pageNum, Integer pageSize) {
+    public PageResult<PredictionTaskResponse> listTaskPage(String keyword, Integer pageNum, Integer pageSize, Long warehouseScope) {
         String kw = (keyword == null || keyword.isBlank()) ? null : keyword.trim();
         int finalPageNum = pageNum == null || pageNum < 1 ? 1 : pageNum;
         int finalPageSize = pageSize == null || pageSize < 1 ? 10 : pageSize;
+        if (warehouseScope != null) {
+            List<PredictionTaskResponse> filtered = predictionTaskMapper.selectAll().stream()
+                    .filter(task -> Objects.equals(task.getWarehouseId(), warehouseScope))
+                    .map(this::toTaskResponse)
+                    .filter(task -> matchesTaskKeyword(task, kw))
+                    .toList();
+            return paginateTaskResponses(filtered, finalPageNum, finalPageSize);
+        }
         long total = predictionTaskMapper.countPage(kw);
         int maxPage = total == 0 ? 1 : (int) Math.ceil((double) total / finalPageSize);
         finalPageNum = Math.min(finalPageNum, maxPage);
         int offset = (finalPageNum - 1) * finalPageSize;
         // 预测分页只裁 task 主表，但返回仍组装完整任务详情，前端才能直接切换摘要和图表。
         List<PredictionTaskResponse> list = predictionTaskMapper.selectPage(kw, offset, finalPageSize).stream()
-                .map(task -> toResponse(
-                        task,
-                        requireWarehouse(task.getWarehouseId()),
-                        metricService.getMetric(task.getMetricCode()),
-                        loadActualSeries(task),
-                        predictionResultMapper.selectByTaskId(task.getId())
-                ))
+                .map(this::toTaskResponse)
                 .toList();
         return new PageResult<>(list, finalPageNum, finalPageSize, total);
     }
@@ -144,13 +148,7 @@ public class PredictionService {
         if (task == null) {
             throw new IllegalArgumentException("预测任务不存在");
         }
-        return toResponse(
-                task,
-                requireWarehouse(task.getWarehouseId()),
-                metricService.getMetric(task.getMetricCode()),
-                loadActualSeries(task),
-                predictionResultMapper.selectByTaskId(taskId)
-        );
+        return toTaskResponse(task);
     }
 
     @Transactional
@@ -180,6 +178,52 @@ public class PredictionService {
             predictionResultMapper.deleteByTaskId(id);
             predictionTaskMapper.deleteById(id);
         }
+    }
+
+    private PredictionTaskResponse toTaskResponse(PredictionTask task) {
+        return toResponse(
+                task,
+                requireWarehouse(task.getWarehouseId()),
+                metricService.getMetric(task.getMetricCode()),
+                loadActualSeries(task),
+                predictionResultMapper.selectByTaskId(task.getId())
+        );
+    }
+
+    private boolean matchesTaskKeyword(PredictionTaskResponse task, String keyword) {
+        if (keyword == null || keyword.isBlank()) {
+            return true;
+        }
+        String normalized = keyword.toLowerCase(Locale.ROOT);
+        String haystack = String.join("|",
+                valueOf(task.taskNo()),
+                valueOf(task.warehouseName()),
+                valueOf(task.riskLevel()),
+                valueOf(task.forecastDays()),
+                valueOf(task.forecastStartTime()),
+                valueOf(task.forecastEndTime()),
+                valueOf(task.requestedAt()),
+                valueOf(task.summary()))
+                .toLowerCase(Locale.ROOT);
+        return haystack.contains(normalized);
+    }
+
+    private PageResult<PredictionTaskResponse> paginateTaskResponses(List<PredictionTaskResponse> tasks,
+                                                                     int pageNum,
+                                                                     int pageSize) {
+        long total = tasks.size();
+        int maxPage = total == 0 ? 1 : (int) Math.ceil((double) total / pageSize);
+        int finalPageNum = Math.min(pageNum, maxPage);
+        int fromIndex = (finalPageNum - 1) * pageSize;
+        int toIndex = Math.min(fromIndex + pageSize, tasks.size());
+        List<PredictionTaskResponse> list = fromIndex >= tasks.size()
+                ? List.of()
+                : tasks.subList(fromIndex, toIndex);
+        return new PageResult<>(list, finalPageNum, pageSize, total);
+    }
+
+    private String valueOf(Object value) {
+        return value == null ? "" : String.valueOf(value);
     }
 
     private List<PredictionPointDto> loadActualSeries(PredictionRequest request, String targetType) {

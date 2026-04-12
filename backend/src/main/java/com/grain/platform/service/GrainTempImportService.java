@@ -1,6 +1,7 @@
 package com.grain.platform.service;
 
 import com.grain.platform.dto.grain.GrainTempImportResultDto;
+import com.grain.platform.common.ForbiddenException;
 import com.grain.platform.entity.GrainTempPoint;
 import com.grain.platform.entity.GrainTempRecord;
 import com.grain.platform.entity.GrainTempSummary;
@@ -75,7 +76,7 @@ public class GrainTempImportService {
         this.warehouseMapper = warehouseMapper;
     }
 
-    public GrainTempImportResultDto importData(MultipartFile file) throws IOException {
+    public GrainTempImportResultDto importData(MultipartFile file, Long operatorUserId, Long allowedWarehouseId) throws IOException {
         String originalFilename = file.getOriginalFilename();
         String lowerFilename = originalFilename == null ? "" : originalFilename.toLowerCase(Locale.ROOT);
         List<ImportRow> rows;
@@ -93,6 +94,9 @@ public class GrainTempImportService {
         }
 
         Long warehouseId = rows.get(0).warehouseId();
+        if (allowedWarehouseId != null && !allowedWarehouseId.equals(warehouseId)) {
+            throw new ForbiddenException("仓库管理员仅可导入所属仓库粮温数据");
+        }
         LocalDateTime collectedAt = rows.get(0).collectedAt();
         boolean sameHeader = rows.stream()
                 .allMatch(item -> item.warehouseId().equals(warehouseId) && item.collectedAt().equals(collectedAt));
@@ -134,7 +138,7 @@ public class GrainTempImportService {
             record.setBatchNo(batchNo);
             record.setQualityFlag("NORMAL");
             record.setRemark(row.remark());
-            record.setCreatedBy(1L);
+            record.setCreatedBy(operatorUserId);
             records.add(record);
         }
 

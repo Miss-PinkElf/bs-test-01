@@ -1,6 +1,7 @@
 package com.grain.platform.service;
 
 import com.grain.platform.common.PageResult;
+import com.grain.platform.common.ForbiddenException;
 import com.grain.platform.dto.sensor.SensorDataCreateRequest;
 import com.grain.platform.dto.sensor.SensorDataImportResultDto;
 import com.grain.platform.dto.sensor.SensorDataImportRowDto;
@@ -55,7 +56,7 @@ public class SensorDataService {
         return new SensorTrendResponse(points);
     }
 
-    public IdVO create(SensorDataCreateRequest request) {
+    public IdVO create(SensorDataCreateRequest request, Long operatorUserId) {
         SensorData sensorData = new SensorData(
                 null,
                 request.warehouseId(),
@@ -66,7 +67,7 @@ public class SensorDataService {
                 null,
                 "NORMAL",
                 null,
-                1L,
+                operatorUserId,
                 null,
                 null
         );
@@ -74,7 +75,7 @@ public class SensorDataService {
         return new IdVO(sensorData.getId());
     }
 
-    public IdVO update(Long id, SensorDataUpdateRequest request) {
+    public IdVO update(Long id, SensorDataUpdateRequest request, Long operatorUserId) {
         SensorData sensorData = requireSensorData(id);
         sensorData.setWarehouseId(request.warehouseId());
         sensorData.setMetricCode(request.metricCode());
@@ -84,7 +85,7 @@ public class SensorDataService {
         sensorData.setSourceBatchNo(null);
         sensorData.setQualityFlag("NORMAL");
         sensorData.setRemark(null);
-        sensorData.setCreatedBy(1L);
+        sensorData.setCreatedBy(operatorUserId);
         sensorDataMapper.update(sensorData);
         return new IdVO(sensorData.getId());
     }
@@ -94,11 +95,15 @@ public class SensorDataService {
         sensorDataMapper.deleteById(id);
     }
 
-    public SensorDataImportResultDto importData(MultipartFile file) {
+    public SensorDataImportResultDto importData(MultipartFile file, Long operatorUserId, Long allowedWarehouseId) {
         try {
             List<SensorDataImportRowDto> rows = sensorDataImportService.parse(file);
             if (rows.isEmpty()) {
                 throw new IllegalArgumentException("导入文件为空或没有有效数据");
+            }
+            if (allowedWarehouseId != null
+                    && rows.stream().anyMatch(item -> !allowedWarehouseId.equals(item.warehouseId()))) {
+                throw new ForbiddenException("仓库管理员仅可导入所属仓库环境数据");
             }
 
             String batchNo = "BATCH-" + UUID.randomUUID().toString().substring(0, 8).toUpperCase();
@@ -113,7 +118,7 @@ public class SensorDataService {
                             batchNo,
                             "NORMAL",
                             item.remark(),
-                            1L,
+                            operatorUserId,
                             null,
                             null
                     ))
@@ -133,6 +138,10 @@ public class SensorDataService {
 
     public List<SensorDataPointDto> listRecentTemperatureHistory(Long warehouseId) {
         return sensorDataMapper.selectRecentByMetric(warehouseId, "temperature");
+    }
+
+    public Long getWarehouseId(Long id) {
+        return requireSensorData(id).getWarehouseId();
     }
 
     private SensorData requireSensorData(Long id) {

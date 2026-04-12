@@ -165,15 +165,15 @@ public class GrainTempService {
         return new PageResult<>(list, finalPageNum, finalPageSize, total);
     }
 
-    public GrainTempImportResultDto importData(MultipartFile file) throws IOException {
-        return grainTempImportService.importData(file);
+    public GrainTempImportResultDto importData(MultipartFile file, Long operatorUserId, Long allowedWarehouseId) throws IOException {
+        return grainTempImportService.importData(file, operatorUserId, allowedWarehouseId);
     }
 
     public byte[] getImportTemplate() throws IOException {
         return grainTempImportService.getExcelTemplate();
     }
 
-    public IdVO createRecord(GrainTempRecordUpsertRequest request) {
+    public IdVO createRecord(GrainTempRecordUpsertRequest request, Long operatorUserId) {
         GrainTempPoint point = ensurePoint(request);
         GrainTempRecord record = new GrainTempRecord();
         record.setWarehouseId(request.warehouseId());
@@ -184,13 +184,13 @@ public class GrainTempService {
         record.setBatchNo(null);
         record.setQualityFlag("NORMAL");
         record.setRemark(request.remark());
-        record.setCreatedBy(1L);
+        record.setCreatedBy(operatorUserId);
         grainTempRecordMapper.insert(record);
         rebuildSummary(request.warehouseId(), request.collectedAt());
         return new IdVO(record.getId());
     }
 
-    public IdVO updateRecord(Long id, GrainTempRecordUpsertRequest request) {
+    public IdVO updateRecord(Long id, GrainTempRecordUpsertRequest request, Long operatorUserId) {
         GrainTempRecord existing = requireRecord(id);
         Long oldWarehouseId = existing.getWarehouseId();
         LocalDateTime oldCollectedAt = existing.getCollectedAt();
@@ -204,7 +204,7 @@ public class GrainTempService {
         existing.setBatchNo(null);
         existing.setQualityFlag("NORMAL");
         existing.setRemark(request.remark());
-        existing.setCreatedBy(1L);
+        existing.setCreatedBy(operatorUserId);
         grainTempRecordMapper.update(existing);
 
         // 原始记录一旦变更就重算对应时间点汇总，仓库或采集时间变了还要把新旧两个桶都补齐。
@@ -219,6 +219,10 @@ public class GrainTempService {
         GrainTempRecord existing = requireRecord(id);
         grainTempRecordMapper.deleteById(id);
         rebuildSummary(existing.getWarehouseId(), existing.getCollectedAt());
+    }
+
+    public Long getRecordWarehouseId(Long id) {
+        return requireRecord(id).getWarehouseId();
     }
 
     public List<PredictionPointDto> listPredictionSeries(Long warehouseId,
