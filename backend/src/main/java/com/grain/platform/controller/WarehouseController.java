@@ -1,9 +1,12 @@
 package com.grain.platform.controller;
 
 import com.grain.platform.common.ApiResponse;
+import com.grain.platform.common.ForbiddenException;
 import com.grain.platform.common.PageResult;
 import com.grain.platform.dto.warehouse.WarehouseDto;
 import com.grain.platform.dto.warehouse.WarehouseStatsResponse;
+import com.grain.platform.security.AccessControlService;
+import com.grain.platform.security.CurrentUserContext;
 import com.grain.platform.service.WarehouseService;
 import com.grain.platform.vo.common.IdVO;
 import jakarta.validation.Valid;
@@ -16,6 +19,7 @@ import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestHeader;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
@@ -28,26 +32,33 @@ public class WarehouseController {
     private static final Logger log = LoggerFactory.getLogger(WarehouseController.class);
 
     private final WarehouseService warehouseService;
+    private final AccessControlService accessControlService;
 
-    public WarehouseController(WarehouseService warehouseService) {
+    public WarehouseController(WarehouseService warehouseService, AccessControlService accessControlService) {
         this.warehouseService = warehouseService;
+        this.accessControlService = accessControlService;
     }
 
     // 查询仓库列表。
     @GetMapping
-    public ApiResponse<List<WarehouseDto>> list() {
+    public ApiResponse<List<WarehouseDto>> list(
+            @RequestHeader(value = "X-Demo-Username", required = false) String username
+    ) {
+        CurrentUserContext currentUser = accessControlService.requireCurrentUser(username);
         log.info("调用仓库列表接口");
-        List<WarehouseDto> response = warehouseService.list();
+        List<WarehouseDto> response = warehouseService.listVisible(currentUser);
         log.info("获取仓库列表成功，count={}", response.size());
         return ApiResponse.success(response);
     }
 
     @GetMapping("/page")
     public ApiResponse<PageResult<WarehouseDto>> listPage(
+            @RequestHeader(value = "X-Demo-Username", required = false) String username,
             @RequestParam(required = false) String keyword,
             @RequestParam(required = false) Integer pageNum,
             @RequestParam(required = false) Integer pageSize
     ) {
+        requireWarehouseAdmin(username);
         log.info("调用仓库分页列表接口，keyword={}, pageNum={}, pageSize={}", keyword, pageNum, pageSize);
         PageResult<WarehouseDto> response = warehouseService.listPage(keyword, pageNum, pageSize);
         log.info("获取仓库分页列表成功，pageNum={}, pageSize={}, total={}",
@@ -56,7 +67,10 @@ public class WarehouseController {
     }
 
     @GetMapping("/stats")
-    public ApiResponse<WarehouseStatsResponse> stats() {
+    public ApiResponse<WarehouseStatsResponse> stats(
+            @RequestHeader(value = "X-Demo-Username", required = false) String username
+    ) {
+        requireWarehouseAdmin(username);
         log.info("调用仓库统计接口");
         WarehouseStatsResponse response = warehouseService.stats();
         log.info("获取仓库统计成功，totalCount={}, activeCount={}, nonActiveCount={}",
@@ -66,16 +80,23 @@ public class WarehouseController {
 
     // 查询仓库下拉选项。
     @GetMapping("/options")
-    public ApiResponse<List<WarehouseDto>> options() {
+    public ApiResponse<List<WarehouseDto>> options(
+            @RequestHeader(value = "X-Demo-Username", required = false) String username
+    ) {
+        CurrentUserContext currentUser = accessControlService.requireCurrentUser(username);
         log.info("调用仓库选项接口");
-        List<WarehouseDto> response = warehouseService.options();
+        List<WarehouseDto> response = warehouseService.optionsVisible(currentUser);
         log.info("获取仓库选项成功，count={}", response.size());
         return ApiResponse.success(response);
     }
 
     // 新增仓库。
     @PostMapping
-    public ApiResponse<IdVO> create(@Valid @RequestBody WarehouseDto request) {
+    public ApiResponse<IdVO> create(
+            @RequestHeader(value = "X-Demo-Username", required = false) String username,
+            @Valid @RequestBody WarehouseDto request
+    ) {
+        requireWarehouseAdmin(username);
         log.info("调用新增仓库接口，warehouseCode={}, warehouseName={}", request.warehouseCode(), request.warehouseName());
         IdVO response = warehouseService.create(request);
         log.info("新增仓库成功，id={}", response.id());
@@ -84,7 +105,12 @@ public class WarehouseController {
 
     // 编辑仓库。
     @PutMapping("/{id}")
-    public ApiResponse<IdVO> update(@PathVariable Long id, @Valid @RequestBody WarehouseDto request) {
+    public ApiResponse<IdVO> update(
+            @RequestHeader(value = "X-Demo-Username", required = false) String username,
+            @PathVariable Long id,
+            @Valid @RequestBody WarehouseDto request
+    ) {
+        requireWarehouseAdmin(username);
         log.info("调用编辑仓库接口，id={}, warehouseCode={}, warehouseName={}", id, request.warehouseCode(), request.warehouseName());
         IdVO response = warehouseService.update(id, request);
         log.info("编辑仓库成功，id={}", response.id());
@@ -93,10 +119,21 @@ public class WarehouseController {
 
     // 删除仓库。
     @DeleteMapping("/{id}")
-    public ApiResponse<Void> delete(@PathVariable Long id) {
+    public ApiResponse<Void> delete(
+            @RequestHeader(value = "X-Demo-Username", required = false) String username,
+            @PathVariable Long id
+    ) {
+        requireWarehouseAdmin(username);
         log.info("调用删除仓库接口，id={}", id);
         warehouseService.delete(id);
         log.info("删除仓库成功，id={}", id);
         return ApiResponse.success(null);
+    }
+
+    private void requireWarehouseAdmin(String username) {
+        CurrentUserContext currentUser = accessControlService.requireCurrentUser(username);
+        if (!accessControlService.isAdmin(currentUser)) {
+            throw new ForbiddenException("仅管理员可维护仓库");
+        }
     }
 }

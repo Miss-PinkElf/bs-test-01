@@ -5,6 +5,7 @@ import com.grain.platform.dto.warehouse.WarehouseDto;
 import com.grain.platform.dto.warehouse.WarehouseStatsResponse;
 import com.grain.platform.entity.Warehouse;
 import com.grain.platform.mapper.WarehouseMapper;
+import com.grain.platform.security.CurrentUserContext;
 import com.grain.platform.vo.common.IdVO;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.stereotype.Service;
@@ -24,6 +25,16 @@ public class WarehouseService {
 
     public List<WarehouseDto> list() {
         return warehouseMapper.selectAll().stream().map(this::toDto).toList();
+    }
+
+    public List<WarehouseDto> listVisible(CurrentUserContext currentUser) {
+        if (currentUser != null && currentUser.warehouseId() != null
+                && currentUser.roleCodes() != null
+                && currentUser.roleCodes().contains("WAREHOUSE_MANAGER")) {
+            Warehouse warehouse = warehouseMapper.selectById(currentUser.warehouseId());
+            return warehouse == null ? List.of() : List.of(toDto(warehouse));
+        }
+        return list();
     }
 
     public PageResult<WarehouseDto> listPage(String keyword, Integer pageNum, Integer pageSize) {
@@ -50,6 +61,16 @@ public class WarehouseService {
 
     public List<WarehouseDto> options() {
         return warehouseMapper.selectOptions().stream().map(this::toDto).toList();
+    }
+
+    public List<WarehouseDto> optionsVisible(CurrentUserContext currentUser) {
+        if (currentUser != null && currentUser.warehouseId() != null
+                && currentUser.roleCodes() != null
+                && currentUser.roleCodes().contains("WAREHOUSE_MANAGER")) {
+            Warehouse warehouse = warehouseMapper.selectById(currentUser.warehouseId());
+            return warehouse == null ? List.of() : List.of(toDto(warehouse));
+        }
+        return options();
     }
 
     public IdVO create(WarehouseDto request) {
