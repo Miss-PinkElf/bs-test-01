@@ -20,7 +20,7 @@ progress:
 See: `.planning/PROJECT.md`（updated 2026-04-11）
 
 **Core value:** 粮温与环境数据可导入、可查、可汇总，预测结果可追溯展示。  
-**Current focus:** Phase 12 已实现，等待人工验收图表时间范围与长 x 轴收口
+**Current focus:** Phase 12 已扩到大屏粮温趋势，等待补充人工验收
 
 ## Implementation Truth Source
 
@@ -59,6 +59,7 @@ See: `.planning/PROJECT.md`（updated 2026-04-11）
 
 ## Session Notes
 
+- 2026-04-12：**Phase 12 已继续扩到大屏粮温趋势，等待补充人工验收** — 用户已确认 `DataView.vue` 与 `PredictionView.vue` 当前方案可接受，随后要求把 `BigScreenView.vue` 的粮温趋势主图也按同类方案收口；现已为大屏粮温主图补 `axisLabel + rotate + dataZoom`，继续复用大屏共享时间范围。由于本仓库 `STATE.md` 仍保留人工维护字段，本次继续手动同步 phase 进度与验收状态。
 - 2026-04-12：**Phase 12 已执行完成，等待人工验收** — `DataView.vue` 粮温汇总趋势图首次进入默认最近 30 天，并补 `axisLabel + rotate + dataZoom`；`PredictionView.vue` 双线图新增图表级时间范围控件，默认最近 7 天且清空可恢复完整时间线；`cd frontend && npm run build` 已通过。由于本仓库 `STATE.md` 仍保留人工维护字段，本次继续手动同步 phase 进度与验收状态。
 - 2026-04-11：**Quick 260411-tr6 已完成** — 新增 `zzz-docs/写论文用/数据库设计讲解-论文版.md`，将两套设计文档与论文目录中的数据库内容整理为一份面向论文写作的讲解文档；文档补充了 ER 图、11 张核心表字段说明、主外键设计、索引思路与设计原因分析，并明确以 `backend/src/main/resources/db/schema.sql` 作为当前结构真相源。
 - 2026-04-11：**Phase 11 已归档** — `11-01-SUMMARY.md`、`11-02-SUMMARY.md`、`11-VERIFICATION.md`、`11-HUMAN-UAT.md` 与归档说明已补齐；用户接受当前结果并要求直接归档，Phase 11 已从待人工确认收口为完成状态。

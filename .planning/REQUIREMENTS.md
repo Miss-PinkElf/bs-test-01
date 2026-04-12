@@ -91,7 +91,8 @@
 
 - [x] **CHART-12-01**: `frontend/src/views/DataView.vue` 的粮温汇总趋势图继续保留在当前页面结构和共享查询链路内，支持用户选择仓库 + 时间范围；首次进入粮温主线时默认落在最近 30 天，并通过 `axisLabel` 压缩、适度 `rotate` 与 `dataZoom` 解决长 x 轴展示不全问题（2026-04-12：前端实现与 `npm run build` 已通过，待人工验收）
 - [x] **CHART-12-02**: `frontend/src/views/PredictionView.vue` 的实际值 / 预测值双线图支持图表级时间范围，只影响图表显示，不回写任务摘要与历史任务记录语义；默认展示最近 7 天窗口，清空后恢复完整时间线（2026-04-12：前端实现与 `npm run build` 已通过，待人工验收）
-- [x] **CHART-12-03**: 两张图都采用“时间范围优先、图表交互兜底”的收口方式，而不是只靠完整时间标签硬撑全部历史窗口；当时间线较长时，用户仍可通过缩放 / 滑动继续查看（2026-04-12：DataView / PredictionView 双图已同步收口，待人工验收）
+- [x] **CHART-12-03**: `frontend/src/views/BigScreenView.vue` 的粮温趋势主图继续复用页面现有 `screenFilters.timeRange` 共享查询，不新增第二套图表时间范围状态；当共享时间窗口较长时，图表仍可通过 `axisLabel` 压缩、适度 `rotate` 与 `dataZoom` 保持可读（2026-04-12：前端实现与 `npm run build` 已通过，待人工验收）
+- [x] **CHART-12-04**: 三张目标图都采用“时间范围优先、图表交互兜底”的收口方式，而不是只靠完整时间标签硬撑全部历史窗口；当时间线较长时，用户仍可通过缩放 / 滑动继续查看（2026-04-12：DataView / PredictionView / BigScreen 粮温主图已同步收口，待人工验收）
 ## v2 Requirements
 
 - [ ] **DATA-05**: 验收脚本 `run-acceptance-smoke.ps1` 增加针对新版模板版式或关键标签的断言（可选）
@@ -140,6 +141,7 @@
 | CHART-12-01 | Phase 12 | Done（待 UAT） |
 | CHART-12-02 | Phase 12 | Done（待 UAT） |
 | CHART-12-03 | Phase 12 | Done（待 UAT） |
+| CHART-12-04 | Phase 12 | Done（待 UAT） |
 
 **Coverage:**
 
@@ -153,12 +155,12 @@
 - Phase 8 / 展示大屏优化：3 条（SCREEN-08-*）
 - Phase 9 / 管理端列表去 mock：4 条（MOCK-09-*）
 - Phase 10 / 前后端简单注释可读性：3 条（COMMENT-10-*）
-- Phase 12 / 图表时间范围与长 x 轴收口：3 条（CHART-12-*）
-- Mapped to phases: 33
+- Phase 12 / 图表时间范围与长 x 轴收口：4 条（CHART-12-*）
+- Mapped to phases: 34
 - Unmapped: 0
 
 ---
-*Last updated: 2026-04-12 Phase 12 CHART-12-* 已落地待 UAT；Phase 10 COMMENT-10-* 已完成；Phase 9 MOCK-09-* 已完成，Phase 5 DEL-05-* 与 Phase 8 SCREEN-08-* 已完成*
+*Last updated: 2026-04-12 Phase 12 CHART-12-* 已扩到大屏粮温趋势并落地待 UAT；Phase 10 COMMENT-10-* 已完成；Phase 9 MOCK-09-* 已完成，Phase 5 DEL-05-* 与 Phase 8 SCREEN-08-* 已完成*
 
 
 
