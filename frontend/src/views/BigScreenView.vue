@@ -7,9 +7,9 @@ import { fetchScreenDashboard, fetchWarehouses } from "../api/grain";
 const DEFAULT_RANGE_DAYS = 7;
 const MAX_CHART_AXIS_LABELS = 8;
 const SCREEN_NOTE_LINES = [
-  "当前大屏优先展示粮温趋势、预警变化、预测任务与仓库对比。",
+  "当前页面集中展示粮温趋势、预警变化、预测任务与仓库对比。",
   "顶部指标、最新预警、重点仓库和最近预测任务均来自真实接口聚合结果。",
-  "如需排查明细或回到业务链路，请使用“查看后台数据”进入管理台。"
+  "如需查看明细数据或继续业务操作，可使用“查看后台数据”进入管理后台。"
 ];
 
 const router = useRouter();
@@ -545,7 +545,7 @@ onUnmounted(() => {
     <div class="screen-topbar">
       <div class="screen-topbar-main">
         <div class="screen-title">粮仓环境数据预测管理平台</div>
-        <div class="screen-subtitle">答辩展示大屏</div>
+        <div class="screen-subtitle">数据大屏</div>
         <div class="screen-last-updated" v-if="screenState.lastUpdated">最近刷新：{{ screenState.lastUpdated }}</div>
       </div>
       <div class="screen-actions">
@@ -718,7 +718,7 @@ onUnmounted(() => {
           <div class="panel-header">
             <div>
               <div class="panel-title">说明</div>
-              <div class="panel-subtitle">仅保留答辩讲解所需的轻量说明，不再占用主视觉。</div>
+              <div class="panel-subtitle">补充当前页面的数据范围、来源与使用方式。</div>
             </div>
           </div>
         </template>

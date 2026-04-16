@@ -47,10 +47,10 @@ function openScreen() {
 <template>
   <div class="login-page">
     <div class="login-hero">
-      <div class="login-eyebrow">毕业设计正式开发入口</div>
+      <div class="login-eyebrow">平台统一入口</div>
       <h1>粮仓环境数据预测管理平台</h1>
       <p>
-        正式路线使用 Vue 3 + Pinia + Element Plus + Axios。当前页面负责把登录、后台入口和展示大屏入口先稳定下来。
+        系统提供登录鉴权、后台管理和数据大屏入口，便于统一查看粮仓数据、预警信息与预测结果。
       </p>
       <div class="hero-badges">
         <span>登录与角色识别</span>
@@ -91,7 +91,7 @@ function openScreen() {
         <el-button type="primary" :loading="loading" @click="submit">
           {{ loading ? "登录中" : "进入后台" }}
         </el-button>
-        <el-button plain @click="openScreen">查看展示大屏</el-button>
+        <el-button plain @click="openScreen">查看数据大屏</el-button>
       </div>
     </el-card>
   </div>

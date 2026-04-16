@@ -1,7 +1,7 @@
 # 当前状态
 
 ## 当前阶段
-- Apply / Verify completed: Windows PowerShell startup compatibility bug fixed; ready to continue
+- Apply / Verify completed: frontend copy cleanup and `/screen` renamed to 数据大屏; ready to continue
 
 ## 已确认的事实
 - 用户要求使用 `devflow` 记录过程。
@@ -144,6 +144,16 @@
 - 已完成运行态验证：
   - `powershell -NoProfile -ExecutionPolicy Bypass -File scripts/start-backend.ps1` 不再报 `字符串缺少终止符`
   - `npm run backend` 不再报 PowerShell 解析错误，最新验证已进入 Spring Boot 启动阶段，并因 `8081` 端口占用失败
+- 已新增前端文案收口计划：
+  - `.devflow/grain-platform-bootstrap/plans/2026-04-16-frontend-copy-cleanup-and-screen-rename.md`
+  - 本轮目标仅限 `frontend/` 的用户可见文案清理与 `/screen` 命名统一，不扩散到 `frontend-next/`、`README.md` 或论文文档
+- 已完成正式前端过渡文案清理：
+  - `frontend/src/layout/ConsoleLayout.vue` 已去掉“正式版 Vue 管理端骨架”“Vue 正式实现骨架”“答辩演示入口”，统一为正式后台文案
+  - `frontend/src/views/LoginView.vue` 已去掉“毕业设计正式开发入口”等过渡说明，并把入口按钮统一为“数据大屏”
+  - `frontend/src/views/BigScreenView.vue` 已将副标题由“答辩展示大屏”收口为“数据大屏”，说明区改为常规页面说明
+  - `frontend/src/router/index.js` 已将 `/screen` 页面标题统一为“数据大屏”
+  - `frontend/src` 内针对“骨架 / 答辩 / 演示入口 / 轻量说明”的检索已清空
+  - 静态验证已通过：`frontend/` 执行 `npm run build` 成功
 ## 工作假设
 - 以毕业设计 MVP 为目标，先做可演示的软件平台，不接入真实硬件。
 - 预测功能继续采用简单回归或移动平均，重点在数据库可追溯与归档，而不是算法复杂度。
@@ -168,6 +178,7 @@
 - 如需在沙箱环境里重复跑脚本，可优先使用 `-SkipStaticChecks`，静态命令单独执行。
 
 ## 当前参考计划
+- `.devflow/grain-platform-bootstrap/plans/2026-04-16-frontend-copy-cleanup-and-screen-rename.md`
 - `.devflow/grain-platform-bootstrap/plans/2026-04-11-gsd-devflow-prd-database-doc-sync.md`
 - `.devflow/grain-platform-bootstrap/plans/active-plan-links.md`
 - `.devflow/grain-platform-bootstrap/plans/2026-04-10-console-layout-scroll-and-scrollbar.md`

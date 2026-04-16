@@ -22,7 +22,7 @@ const routes = [
   {
     path: "/screen",
     component: BigScreenView,
-    meta: { title: "展示大屏", public: true }
+    meta: { title: "数据大屏", public: true }
   },
   {
     path: "/",

@@ -18,7 +18,7 @@ const navItems = computed(() => router.getRoutes()
 
 const pageTitle = computed(() => route.meta.title || "粮仓平台");
 const pageSubtitle = computed(
-  () => route.meta.description || "正式版 Vue 管理端骨架"
+  () => route.meta.description || "集中查看平台数据、预警与业务管理。"
 );
 
 function openScreen() {
@@ -40,7 +40,7 @@ function handleLogout() {
             <div class="brand-mark">粮</div>
             <div>
               <div class="brand-title">粮仓环境数据平台</div>
-              <div class="brand-subtitle">Vue 正式实现骨架</div>
+              <div class="brand-subtitle">管理后台</div>
             </div>
           </div>
 
@@ -64,9 +64,9 @@ function handleLogout() {
       </el-scrollbar>
 
       <div class="aside-footer">
-        <div class="aside-tip">答辩演示入口</div>
+        <div class="aside-tip">快速入口</div>
         <el-button class="screen-entry" plain @click="openScreen">
-          展示大屏
+          数据大屏
         </el-button>
       </div>
     </el-aside>
@@ -83,7 +83,7 @@ function handleLogout() {
             <span>{{ authStore.user?.displayName || "未登录" }}</span>
             <el-tag type="success">{{ authStore.primaryRole }}</el-tag>
           </div>
-          <el-button plain @click="openScreen">展示大屏</el-button>
+          <el-button plain @click="openScreen">数据大屏</el-button>
           <el-button type="danger" plain @click="handleLogout">退出</el-button>
         </div>
       </el-header>
