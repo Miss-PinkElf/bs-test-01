@@ -1,75 +1,104 @@
-<!-- GSD:project-start source:PROJECT.md -->
-## Project
+# 协作约束
 
-Project not yet initialized. Run /gsd-new-project to set up.
-<!-- GSD:project-end -->
+## 工具约束
 
-<!-- GSD:stack-start source:STACK.md -->
-## Technology Stack
+## 1. 输出与语言
 
-Technology stack not yet documented. Will populate after codebase mapping or first phase.
-<!-- GSD:stack-end -->
+1. 必须始终使用简体中文。
+2. 产出的文档默认使用简体中文，禁止默认输出英文。
+3. 包括但不限于 devflow、OpenSpec、handoff、skills 相关文档，默认都使用简体中文。
 
-<!-- GSD:conventions-start source:CONVENTIONS.md -->
-## Conventions
+## 2. 提交流程
 
-Conventions not yet established. Will populate as patterns emerge during development.
-<!-- GSD:conventions-end -->
+1. 每次完成代码修改后，必须先询问我是否需要提交代码。
+2. 没有我的明确允许，不能执行 commit。
+3. 如果需要 commit，提交信息必须使用中文。
 
-<!-- GSD:architecture-start source:ARCHITECTURE.md -->
-## Architecture
+## 3. 工作流要求
 
-Architecture not yet mapped. Follow existing patterns found in the codebase.
-<!-- GSD:architecture-end -->
+1. 默认使用 `devflow` 进行长期任务的探索、记录和推进。
+2. 在走 `devflow` 流程时，需要按阶段进入其中的 OpenSpec / Superpowers 子技能完成对齐、计划、实施、验证与 handoff。
+3. 在进入实现前，先进行一次头脑风暴，和我讨论方案，不要跳过讨论直接改代码。
+4. 需要顺手判断：这次需求是否需要补充或更新相关文档。
 
-<!-- GSD:skills-start source:skills/ -->
-## Project Skills
+## 4. 文档与计划落盘要求
 
-| Skill | Description | Path |
-|-------|-------------|------|
-| agent-browser | Browser automation CLI for AI agents. Use when the user needs to interact with websites, including navigating pages, filling forms, clicking buttons, taking screenshots, extracting data, testing web apps, or automating any browser task. Triggers include requests to "open a website", "fill out a form", "click a button", "take a screenshot", "scrape data from a page", "test this web app", "login to a site", "automate browser actions", or any task requiring programmatic web interaction. | `.claude/skills/agent-browser/SKILL.md` |
-| brainstorming | "You MUST use this before any creative work - creating features, building components, adding functionality, or modifying behavior. Explores user intent, requirements and design before implementation." | `.claude/skills/brainstorming/SKILL.md` |
-| context-budget-explore | \| 探索、需求、实施一体化的上下文预算工作流管理器。适用于长期探索、需求澄清、方案对比、迭代开发、质检闭环、跨对话续接、上下文过长、需要记录过程与决策的任务。优先在 Claude Code 中使用，但也可作为通用 skill：把阶段、任务、决策、经验、checkpoint、handoff 全部沉淀到仓库根目录 `.explore/`，让 AI 在长任务中始终有记录、有恢复点、有清晰过程。 只要用户提到“探索一下”“先梳理需求”“边做边记录”“跨对话继续”“保存进度”“上下文太长”“这个任务会做很久”“想把过程沉淀下来”，都应该主动触发本 skill。 | `.claude/skills/context-budget-explore/SKILL.md` |
-| docx | "Use this skill whenever the user wants to create, read, edit, or manipulate Word documents (.docx files). Triggers include: any mention of 'Word doc', 'word document', '.docx', or requests to produce professional documents with formatting like tables of contents, headings, page numbers, or letterheads. Also use when extracting or reorganizing content from .docx files, inserting or replacing images in documents, performing find-and-replace in Word files, working with tracked changes or comments, or converting content into a polished Word document. If the user asks for a 'report', 'memo', 'letter', 'template', or similar deliverable as a Word or .docx file, use this skill. Do NOT use for PDFs, spreadsheets, Google Docs, or general coding tasks unrelated to document generation." | `.claude/skills/docx/SKILL.md` |
-| electron-local-cache-install | Handle Electron binary download failures during `npm install`, `pnpm install`, or other package-manager installs when `node_modules/electron` fails in `install.js` or `@electron/get`. Use when the exact Electron zip is already available locally and Codex needs a project-scoped cache-based fix on Windows, macOS, or Linux/WSL without changing global npm config. | `.claude/skills/electron-local-cache-install/SKILL.md` |
-| executing-plans | Use when you have a written implementation plan to execute in a separate session with review checkpoints | `.claude/skills/executing-plans/SKILL.md` |
-| find-skills | Helps users discover and install agent skills when they ask questions like "how do I do X", "find a skill for X", "is there a skill that can...", or express interest in extending capabilities. This skill should be used when the user is looking for functionality that might exist as an installable skill. | `.claude/skills/find-skills/SKILL.md` |
-| prd | 'Generate high-quality Product Requirements Documents (PRDs) for software systems and AI-powered features. Includes executive summaries, user stories, technical specifications, and risk analysis.' | `.claude/skills/prd/SKILL.md` |
-| react-tsx-readability-guard | \| 让 React 和 TSX 代码更整洁、更好读。只要 Claude 需要生成、修改、重构或审查 React 组件、TSX 页面、JSX 较多的 UI 逻辑，尤其是 Ant Design 的表单、列表、弹窗、Drawer、Modal 等场景，都应优先使用这个 skill。即使用户没有明确提到“可读性”“clean code”“提常量”“加注释”，只要是在写 React/TSX 代码，也应该优先按本 skill 输出。优先保证代码结构清晰、命名语义化、减少魔法数字、拆分复杂条件、保持 JSX 轻量、避免过度抽象，并补充简短但有意义的注释。 | `.claude/skills/react-tsx-readability-guard/SKILL.md` |
-| session-handoff | "Creates comprehensive handoff documents for seamless AI agent session transfers. Triggered when: (1) user requests handoff/memory/context save, (2) context window approaches capacity, (3) major task milestone completed, (4) work session ending, (5) user says 'save state', 'create handoff', 'I need to pause', 'context is getting full', (6) resuming work with 'load handoff', 'resume from', 'continue where we left off'. Proactively suggests handoffs after substantial work (multiple file edits, complex debugging, architecture decisions). Solves long-running agent context exhaustion by enabling fresh agents to continue with zero ambiguity." | `.claude/skills/session-handoff/SKILL.md` |
-| skill-creator | Create new skills, modify and improve existing skills, and measure skill performance. Use when users want to create a skill from scratch, edit, or optimize an existing skill, run evals to test a skill, benchmark skill performance with variance analysis, or optimize a skill's description for better triggering accuracy. | `.claude/skills/skill-creator/SKILL.md` |
-| web-fetch-mcp-preferred | \| 优先使用 MCP `fetch` 读取网页正文，并在需要 JS 渲染、登录态、点击交互、截图、表单填写或多步网页操作时切换到 `agent-browser`。当用户提到网页抓取、网页摘要、读取 URL、提取文章正文、替代 Claude Code 内置 WebFetch、禁用 WebFetch、抓公开页面文本、网页调研、读取博客文档或从链接整理信息时，应主动使用本 skill。不要把动态网页、登录页或需要点击后内容才出现的页面硬塞给 `fetch`。 | `.claude/skills/web-fetch-mcp-preferred/SKILL.md` |
-| writing-plans | Use when you have a spec or requirements for a multi-step task, before touching code | `.claude/skills/writing-plans/SKILL.md` |
-| devflow | \| 长期开发任务主入口。适用于中大型开发、长任务推进、跨对话续接、过程记录、方案讨论、计划沉淀、bug 调试、handoff 交接。显式调用时直接使用；当任务涉及多阶段推进、需要记录决策与过程、或预计会跨多轮继续时，也应主动触发本 skill。 一旦进入本 skill，默认把任务过程沉淀到仓库根目录 `.devflow/<mission-slug>/`，并根据任务形态选择轻量路径、重型路径、bug 路径或 resume 路径。不要把记录当成附属说明，记录本身就是主流程的一部分。 | `.cursor/skills/devflow/SKILL.md` |
-| skill-creator-cc | Create new skills, modify and improve existing skills, and measure skill performance. Use when users want to create a skill from scratch, edit, or optimize an existing skill, run evals to test a skill, benchmark skill performance with variance analysis, or optimize a skill's description for better triggering accuracy. | `.cursor/skills/skill-creator-cc/SKILL.md` |
-<!-- GSD:skills-end -->
+1. plan 文件名必须与本次需求强相关，便于后续查找。
+2. 走 `devflow` 时，当前 mission 的 plan / spec / handoff / state / checkpoint 等过程文档，必须优先落在 `.devflow/<mission-slug>/` 下，不能默认写到 `docs/superpowers/`。
+3. 只有在我明确要求产出仓库级公共文档时，才可以写到 `docs/` 或其它公共目录。
+4. 非 `devflow` 的普通说明文档，除特殊说明外，再按现有约定放到对应目录，不要擅自混放。
+5. 更新问题清单时，必须写清楚：
+   - 问题现象
+   - 问题原因
+   - 解决方案
 
-<!-- GSD:workflow-start source:GSD defaults -->
-## GSD Workflow Enforcement
+## 5. 路径与环境要求
 
-Before using Edit, Write, or other file-changing tools, start work through a GSD command so planning artifacts and execution context stay in sync.
+1. 本仓库内涉及文件路径时，必须使用相对路径。
 
-Use these entry points:
-- `/gsd-quick` for small fixes, doc updates, and ad-hoc tasks
-- `/gsd-debug` for investigation and bug fixing
-- `/gsd-execute-phase` for planned phase work
+## 6. 校验与改动边界
 
-Do not make direct repo edits outside a GSD workflow unless the user explicitly asks to bypass it.
-<!-- GSD:workflow-end -->
+1. 不需要做全局 ESLint 校验。
+2. 不影响运行的 TypeScript 报错可以先不处理。
+3. 如果要顺手修改 TypeScript 错误，必须先征求我的确认。
 
+---
 
+# 开发规范
 
-## Completion Reminder
+## 1. 代码风格
 
-当某个 phase 的代码已经做完并且你确认可接受时，必须立即补齐 GSD 收口：
-- 更新该 phase 的 `*-SUMMARY.md`、`*-VERIFICATION.md`、`*-HUMAN-UAT.md`（如适用）
-- 同步 `ROADMAP.md`、`REQUIREMENTS.md`、`STATE.md`
-- 如已交付，补一份归档说明到 `zzz-docs/归档/`
-- 不要让已完成的 phase 长时间停留在 planned / pending / human_needed 状态
-<!-- GSD:profile-start -->
-## Developer Profile
+1. 可读性优先。
+2. 修改 React / TSX 代码时，优先参考现有代码风格保持一致。
+3. 需要使用 `react-tsx-readability-guard` 提升 React / TSX 代码可读性。
 
-> Profile not yet configured. Run `/gsd-profile-user` to generate your developer profile.
-> This section is managed by `generate-claude-profile` -- do not edit manually.
-<!-- GSD:profile-end -->
+## 2. 组件库
 
+1. 使用element-plus。
+
+## 3. 样式规范
+
+1. 默认不要使用行内样式。
+2. 默认使用 CSS Module，推荐 `less` 或 `sass`。
+3. 样式结构默认采用“外层包裹 + 内层 className”的写法。
+
+### CSS Module 示例
+
+```css
+.wrapper {
+  padding: 20px;
+  background: #f5f5f5;
+
+  :global {
+    .user-info {
+      .user-name {
+      }
+    }
+  }
+}
+```
+
+```tsx
+<div className={styles.wrapper}>
+  <div className="user-info">
+    <span className="user-name">张三</span>
+  </div>
+</div>
+```
+
+### CSS-in-JS 示例
+
+```tsx
+export const DetailDiv = styled.div`
+  .user-info {
+    .user-name {
+    }
+  }
+`
+
+<DetailDiv>
+  <div className="user-info">
+    <div className="user-name" />
+  </div>
+</DetailDiv>
+```
