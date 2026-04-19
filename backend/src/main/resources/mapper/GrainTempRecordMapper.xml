@@ -93,6 +93,37 @@
         limit 1
     </select>
 
+    <insert id="upsert" parameterType="com.grain.platform.entity.GrainTempRecord" useGeneratedKeys="true" keyProperty="id">
+        insert into grain_temp_record (
+            warehouse_id,
+            point_id,
+            collected_at,
+            temperature_value,
+            source_type,
+            batch_no,
+            quality_flag,
+            remark,
+            created_by
+        ) values (
+            #{warehouseId},
+            #{pointId},
+            #{collectedAt},
+            #{temperatureValue},
+            #{sourceType},
+            #{batchNo},
+            #{qualityFlag},
+            #{remark},
+            #{createdBy}
+        )
+        on duplicate key update
+            temperature_value = values(temperature_value),
+            source_type = values(source_type),
+            batch_no = values(batch_no),
+            quality_flag = values(quality_flag),
+            remark = values(remark),
+            created_by = values(created_by)
+    </insert>
+
     <insert id="upsertBatch">
         insert into grain_temp_record (
             warehouse_id,

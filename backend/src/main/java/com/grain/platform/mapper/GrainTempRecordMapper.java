@@ -19,6 +19,8 @@ public interface GrainTempRecordMapper {
 
     GrainTempRecord selectEntityById(@Param("id") Long id);
 
+    void upsert(GrainTempRecord record);
+
     void upsertBatch(@Param("list") List<GrainTempRecord> list);
 
     List<GrainTempRecordItemDto> selectByCondition(@Param("warehouseId") Long warehouseId,

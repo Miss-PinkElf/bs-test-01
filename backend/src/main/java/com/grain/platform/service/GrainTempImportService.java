@@ -25,6 +25,7 @@ import org.apache.poi.ss.usermodel.WorkbookFactory;
 import org.apache.poi.ss.util.CellRangeAddress;
 import org.apache.poi.xssf.usermodel.XSSFFont;
 import org.apache.poi.xssf.usermodel.XSSFWorkbook;
+import org.springframework.dao.DeadlockLoserDataAccessException;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
@@ -40,6 +41,12 @@ import java.time.ZoneId;
 import java.time.format.DateTimeFormatter;
 import java.time.format.DateTimeParseException;
 import java.util.ArrayList;
+import java.util.Comparator;
+import java.util.LinkedHashMap;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ConcurrentMap;
+import java.util.concurrent.locks.ReentrantLock;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
@@ -57,6 +64,8 @@ public class GrainTempImportService {
     private static final String UTF8_BOM = "\uFEFF";
     private static final int FIXED_TEMPLATE_POINT_COUNT = 4;
     private static final int FIXED_TEMPLATE_LAYER_COUNT = 4;
+    private static final int RECORD_UPSERT_MAX_RETRIES = 3;
+    private static final ConcurrentMap<String, ReentrantLock> IMPORT_LOCKS = new ConcurrentHashMap<>();
 
     private final GrainTempPointMapper grainTempPointMapper;
     private final GrainTempRecordMapper grainTempRecordMapper;
@@ -101,7 +110,7 @@ public class GrainTempImportService {
         boolean sameHeader = rows.stream()
                 .allMatch(item -> item.warehouseId().equals(warehouseId) && item.collectedAt().equals(collectedAt));
         if (!sameHeader) {
-            throw new IllegalArgumentException("当前粮温 MVP 导入要求同一文件中的 warehouseId 与 collectedAt 保持一致");
+            throw new IllegalArgumentException("当前粮温 MVP 导入要求同一文件中的 warehouseCode/warehouseId 与 collectedAt 保持一致");
         }
 
         Warehouse warehouse = warehouseMapper.selectById(warehouseId);
@@ -110,51 +119,69 @@ public class GrainTempImportService {
         }
 
         String batchNo = "BATCH-GRAIN-" + UUID.randomUUID().toString().substring(0, 8).toUpperCase(Locale.ROOT);
-        List<GrainTempRecord> records = new ArrayList<>();
+        String importLockKey = String.valueOf(warehouseId);
+        ReentrantLock lock = IMPORT_LOCKS.computeIfAbsent(importLockKey, key -> new ReentrantLock());
+        lock.lock();
+        try {
+            List<ImportRow> effectiveRows = deduplicateRows(rows);
+            List<ImportRow> orderedRows = effectiveRows.stream()
+                    .sorted(Comparator.comparing(
+                            ImportRow::zoneCode,
+                            Comparator.nullsFirst(String::compareToIgnoreCase))
+                            .thenComparing(ImportRow::layerNo, Comparator.nullsFirst(Integer::compareTo))
+                            .thenComparing(ImportRow::pointNo, Comparator.nullsFirst(Integer::compareTo)))
+                    .toList();
+            List<GrainTempRecord> records = new ArrayList<>();
 
-        for (ImportRow row : rows) {
-            GrainTempPoint point = grainTempPointMapper.selectByUniqueKey(row.warehouseId(), row.zoneCode(),
-                    row.layerNo(), row.pointNo());
-            if (point == null) {
-                point = new GrainTempPoint();
-                point.setWarehouseId(row.warehouseId());
-                point.setProbeCode(row.probeCode() == null || row.probeCode().isBlank() ? "AUTO-" + row.zoneCode()
-                        : row.probeCode());
-                point.setZoneCode(row.zoneCode());
-                point.setLayerNo(row.layerNo());
-                point.setPointNo(row.pointNo());
-                point.setPointName(row.zoneCode() + "-" + row.layerNo() + "-" + row.pointNo() + "测点");
-                point.setStatus("ACTIVE");
-                point.setRemark(row.remark());
-                grainTempPointMapper.insert(point);
+            for (ImportRow row : orderedRows) {
+                GrainTempPoint point = grainTempPointMapper.selectByUniqueKey(row.warehouseId(), row.zoneCode(),
+                        row.layerNo(), row.pointNo());
+                if (point == null) {
+                    point = new GrainTempPoint();
+                    point.setWarehouseId(row.warehouseId());
+                    point.setProbeCode(row.probeCode() == null || row.probeCode().isBlank() ? "AUTO-" + row.zoneCode()
+                            : row.probeCode());
+                    point.setZoneCode(row.zoneCode());
+                    point.setLayerNo(row.layerNo());
+                    point.setPointNo(row.pointNo());
+                    point.setPointName(row.zoneCode() + "-" + row.layerNo() + "-" + row.pointNo() + "测点");
+                    point.setStatus("ACTIVE");
+                    point.setRemark(row.remark());
+                    grainTempPointMapper.insert(point);
+                }
+
+                GrainTempRecord record = new GrainTempRecord();
+                record.setWarehouseId(row.warehouseId());
+                record.setPointId(point.getId());
+                record.setCollectedAt(row.collectedAt());
+                record.setTemperatureValue(BigDecimal.valueOf(row.temperatureValue()));
+                record.setSourceType("IMPORT");
+                record.setBatchNo(batchNo);
+                record.setQualityFlag("NORMAL");
+                record.setRemark(row.remark());
+                record.setCreatedBy(operatorUserId);
+                records.add(record);
             }
 
-            GrainTempRecord record = new GrainTempRecord();
-            record.setWarehouseId(row.warehouseId());
-            record.setPointId(point.getId());
-            record.setCollectedAt(row.collectedAt());
-            record.setTemperatureValue(BigDecimal.valueOf(row.temperatureValue()));
-            record.setSourceType("IMPORT");
-            record.setBatchNo(batchNo);
-            record.setQualityFlag("NORMAL");
-            record.setRemark(row.remark());
-            record.setCreatedBy(operatorUserId);
-            records.add(record);
+            upsertRecords(records);
+            GrainTempSummary summary = buildSummary(warehouseId, collectedAt, orderedRows, metricService.getMetric("temperature"));
+            grainTempSummaryMapper.upsert(summary);
+
+            return new GrainTempImportResultDto(
+                    batchNo,
+                    warehouseId,
+                    warehouse.getWarehouseName(),
+                    collectedAt.format(DATE_TIME_FORMATTER),
+                    orderedRows.size(),
+                    true,
+                    summary.getWarningLevel(),
+                    summary.getWarningMessage());
+        } finally {
+            lock.unlock();
+            if (!lock.hasQueuedThreads() && !lock.isLocked()) {
+                IMPORT_LOCKS.remove(importLockKey, lock);
+            }
         }
-
-        grainTempRecordMapper.upsertBatch(records);
-        GrainTempSummary summary = buildSummary(warehouseId, collectedAt, rows, metricService.getMetric("temperature"));
-        grainTempSummaryMapper.upsert(summary);
-
-        return new GrainTempImportResultDto(
-                batchNo,
-                warehouseId,
-                warehouse.getWarehouseName(),
-                collectedAt.format(DATE_TIME_FORMATTER),
-                rows.size(),
-                true,
-                summary.getWarningLevel(),
-                summary.getWarningMessage());
     }
 
     public String getCsvTemplate() {
@@ -385,6 +412,64 @@ public class GrainTempImportService {
 
     private BigDecimal toDecimal(double value) {
         return BigDecimal.valueOf(value).setScale(2, RoundingMode.HALF_UP);
+    }
+
+    private List<ImportRow> deduplicateRows(List<ImportRow> rows) {
+        Map<String, ImportRow> latestRows = new LinkedHashMap<>();
+        for (ImportRow row : rows) {
+            latestRows.put(buildRowKey(row), row);
+        }
+        return new ArrayList<>(latestRows.values());
+    }
+
+    private String buildRowKey(ImportRow row) {
+        return row.warehouseId() + "#" + row.collectedAt() + "#" + row.zoneCode() + "#" + row.layerNo() + "#" + row.pointNo();
+    }
+
+    private void upsertRecords(List<GrainTempRecord> records) {
+        for (GrainTempRecord record : records) {
+            upsertRecordWithRetry(record);
+        }
+    }
+
+    private void upsertRecordWithRetry(GrainTempRecord record) {
+        int attempt = 0;
+        while (true) {
+            try {
+                grainTempRecordMapper.upsert(record);
+                return;
+            } catch (RuntimeException ex) {
+                attempt++;
+                if (!isDeadlock(ex) || attempt >= RECORD_UPSERT_MAX_RETRIES) {
+                    throw ex;
+                }
+                sleepBeforeRetry(attempt);
+            }
+        }
+    }
+
+    private boolean isDeadlock(Throwable throwable) {
+        Throwable current = throwable;
+        while (current != null) {
+            if (current instanceof DeadlockLoserDataAccessException) {
+                return true;
+            }
+            String message = current.getMessage();
+            if (message != null && message.contains("Deadlock found when trying to get lock")) {
+                return true;
+            }
+            current = current.getCause();
+        }
+        return false;
+    }
+
+    private void sleepBeforeRetry(int attempt) {
+        try {
+            TimeUnit.MILLISECONDS.sleep(80L * attempt);
+        } catch (InterruptedException interruptedException) {
+            Thread.currentThread().interrupt();
+            throw new IllegalStateException("粮温导入重试被中断", interruptedException);
+        }
     }
 
     private List<ImportRow> parse(MultipartFile file) throws IOException {
@@ -664,13 +749,13 @@ public class GrainTempImportService {
 
     private Long resolveWarehouseReference(String raw, int rowIndex) {
         String value = requireText(raw, rowIndex, "warehouseCode");
+        Warehouse warehouse = warehouseMapper.selectByWarehouseCode(value.trim());
+        if (warehouse != null) {
+            return warehouse.getId();
+        }
         try {
             return Long.parseLong(value.trim());
         } catch (Exception ignored) {
-            Warehouse warehouse = warehouseMapper.selectByWarehouseCode(value.trim());
-            if (warehouse != null) {
-                return warehouse.getId();
-            }
             throw new IllegalArgumentException("第 " + rowIndex + " 行字段 warehouseCode/warehouseId 不是有效仓库编号");
         }
     }
