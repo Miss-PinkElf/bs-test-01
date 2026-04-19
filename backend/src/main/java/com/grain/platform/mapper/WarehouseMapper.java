@@ -20,6 +20,8 @@ public interface WarehouseMapper {
 
     Warehouse selectById(Long id);
 
+    Warehouse selectByWarehouseCode(@Param("warehouseCode") String warehouseCode);
+
     long countActive();
 
     long countNonActive();

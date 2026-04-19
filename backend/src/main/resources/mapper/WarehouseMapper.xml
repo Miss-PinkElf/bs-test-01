@@ -78,6 +78,13 @@
         limit 1
     </select>
 
+    <select id="selectByWarehouseCode" resultMap="warehouseResultMap">
+        select *
+        from warehouse
+        where warehouse_code = #{warehouseCode}
+        limit 1
+    </select>
+
     <select id="countActive" resultType="long">
         select count(*)
         from warehouse

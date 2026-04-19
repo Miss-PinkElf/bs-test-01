@@ -50,10 +50,10 @@ import java.util.stream.Collectors;
 public class GrainTempImportService {
 
     private static final DateTimeFormatter DATE_TIME_FORMATTER = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
-    private static final String CSV_TEMPLATE = "warehouseId,collectedAt,zoneCode,layerNo,pointNo,temperatureValue,probeCode,remark\n"
-            + "1,2026-04-08 08:40:00,A,1,1,24.3,CABLE-A,第一层测点\n"
-            + "1,2026-04-08 08:40:00,A,1,2,24.5,CABLE-A,第一层测点\n"
-            + "1,2026-04-08 08:40:00,A,2,1,24.8,CABLE-A,第二层测点\n";
+    private static final String CSV_TEMPLATE = "warehouseCode,collectedAt,zoneCode,layerNo,pointNo,temperatureValue,probeCode,remark\n"
+            + "WH-A01,2026-04-08 08:40:00,A,1,1,24.3,CABLE-A,第一层测点\n"
+            + "WH-A01,2026-04-08 08:40:00,A,1,2,24.5,CABLE-A,第一层测点\n"
+            + "WH-A01,2026-04-08 08:40:00,A,2,1,24.8,CABLE-A,第二层测点\n";
     private static final String UTF8_BOM = "\uFEFF";
     private static final int FIXED_TEMPLATE_POINT_COUNT = 4;
     private static final int FIXED_TEMPLATE_LAYER_COUNT = 4;
@@ -175,7 +175,7 @@ public class GrainTempImportService {
     }
 
     private List<ImportRow> parseGeneratedFixedTemplate(Sheet sheet, DataFormatter formatter) {
-        Long warehouseId = parseLong(getCellText(sheet.getRow(4), 1, formatter), 5, "warehouseId");
+        Long warehouseId = resolveWarehouseReference(getCellText(sheet.getRow(4), 1, formatter), 5);
         LocalDateTime collectedAt = parseDateTimeCell(sheet.getRow(5).getCell(1), formatter, 6);
         List<ImportRow> rows = new ArrayList<>();
         appendGeneratedFixedZone(sheet, formatter, 10, warehouseId, collectedAt, rows);
@@ -259,18 +259,18 @@ public class GrainTempImportService {
                     r++,
                     0,
                     5,
-                    "填写说明：① 先完成「一、基础信息」中的仓库编号与采集时间，整表只能对应同一仓库、同一时间；② 在「二、测点温度矩阵」中按区域分块填写，"
+                    "填写说明：① 先完成「一、基础信息」中的仓库编码与采集时间，整表只能对应同一仓库、同一时间；② 在「二、测点温度矩阵」中按区域分块填写，"
                             + "每一块的「行」为层号、「列」为点位编号，单元格填摄氏温度数值；③ 可增加更多区域块：复制一块的结构并修改区域编码与缆号即可；④ 底部汇总区可留空，导入后由系统自动计算。",
                     wrapStyle);
             r++;
             addMergedRow(sheet, r++, 0, 5, "一、基础信息", sectionStyle);
-            createRow(sheet, r++, "仓库编号（warehouseId）", "1");
+            createRow(sheet, r++, "仓库编码（warehouseCode）", "WH-A01");
             createRow(sheet, r++, "采集时间（collectedAt）", "2026-04-08 08:40:00");
             addMergedRow(sheet,
                     r++,
                     0,
                     5,
-                    "提示：仓库编号须与系统中仓库主数据一致；采集时间格式为 yyyy-MM-dd HH:mm:ss（也可在 Excel 中按日期时间格式填写）。",
+                    "提示：仓库编码须与系统中仓库主数据一致；也兼容旧版仓库ID填写。采集时间格式为 yyyy-MM-dd HH:mm:ss（也可在 Excel 中按日期时间格式填写）。",
                     wrapStyle);
             r++;
             addMergedRow(sheet, r++, 0, 5, "二、测点温度矩阵（行=层号，列=点位编号）", sectionStyle);
@@ -413,10 +413,10 @@ public class GrainTempImportService {
                 String[] parts = line.split(",", -1);
                 if (parts.length < 6) {
                     throw new IllegalArgumentException("CSV 第 " + rowIndex
-                            + " 行字段不足，至少需要 warehouseId,collectedAt,zoneCode,layerNo,pointNo,temperatureValue");
+                            + " 行字段不足，至少需要 warehouseCode/warehouseId,collectedAt,zoneCode,layerNo,pointNo,temperatureValue");
                 }
                 rows.add(new ImportRow(
-                        parseLong(parts[0], rowIndex, "warehouseId"),
+                        resolveWarehouseReference(parts[0], rowIndex),
                         parseDateTime(parts[1], rowIndex, "collectedAt"),
                         parts[2].trim(),
                         parseInteger(parts[3], rowIndex, "layerNo"),
@@ -455,7 +455,7 @@ public class GrainTempImportService {
         int maxRow = Math.min(sheet.getLastRowNum(), 40);
         for (int index = 0; index <= maxRow; index++) {
             String firstCell = getCellText(sheet.getRow(index), 0, formatter);
-            if (cellMatchesKey(firstCell, "warehouseId")) {
+            if (cellMatchesKey(firstCell, "warehouseId") || cellMatchesKey(firstCell, "warehouseCode")) {
                 hasWarehouseId = true;
             }
             if (cellMatchesKey(firstCell, "zoneCode")) {
@@ -478,7 +478,8 @@ public class GrainTempImportService {
             return true;
         }
         return switch (englishKey) {
-            case "warehouseId" -> t.startsWith("仓库编号");
+            case "warehouseId" -> t.startsWith("仓库编号") || t.startsWith("仓库ID") || t.startsWith("仓库主键");
+            case "warehouseCode" -> t.startsWith("仓库编码") || t.startsWith("仓库编号");
             case "collectedAt" -> t.startsWith("采集时间");
             case "zoneCode" -> t.startsWith("区域编码");
             case "probeCode" -> t.startsWith("缆号") || t.startsWith("探头编码") || t.startsWith("探头");
@@ -492,8 +493,8 @@ public class GrainTempImportService {
         for (int index = 0; index <= Math.min(sheet.getLastRowNum(), 40); index++) {
             Row row = sheet.getRow(index);
             String firstCell = getCellText(row, 0, formatter);
-            if (cellMatchesKey(firstCell, "warehouseId")) {
-                warehouseId = parseLong(getCellText(row, 1, formatter), index + 1, "warehouseId");
+            if (cellMatchesKey(firstCell, "warehouseId") || cellMatchesKey(firstCell, "warehouseCode")) {
+                warehouseId = resolveWarehouseReference(getCellText(row, 1, formatter), index + 1);
             }
             if (cellMatchesKey(firstCell, "collectedAt")) {
                 collectedAt = parseDateTimeCell(row.getCell(1), formatter, index + 1);
@@ -501,7 +502,7 @@ public class GrainTempImportService {
         }
 
         if (warehouseId == null || collectedAt == null) {
-            throw new IllegalArgumentException("固定模板缺少 warehouseId 或 collectedAt 基础信息");
+            throw new IllegalArgumentException("固定模板缺少 warehouseCode/warehouseId 或 collectedAt 基础信息");
         }
 
         List<ImportRow> rows = new ArrayList<>();
@@ -601,7 +602,7 @@ public class GrainTempImportService {
                 continue;
             }
             rows.add(new ImportRow(
-                    parseLong(getCellText(row, 0, formatter), i + 1, "warehouseId"),
+                    resolveWarehouseReference(getCellText(row, 0, formatter), i + 1),
                     parseDateTimeCell(row.getCell(1), formatter, i + 1),
                     getCellText(row, 2, formatter),
                     parseInteger(getCellText(row, 3, formatter), i + 1, "layerNo"),
@@ -658,6 +659,19 @@ public class GrainTempImportService {
             return Long.parseLong(raw.trim());
         } catch (Exception ex) {
             throw new IllegalArgumentException("第 " + rowIndex + " 行字段 " + fieldName + " 不是有效整数");
+        }
+    }
+
+    private Long resolveWarehouseReference(String raw, int rowIndex) {
+        String value = requireText(raw, rowIndex, "warehouseCode");
+        try {
+            return Long.parseLong(value.trim());
+        } catch (Exception ignored) {
+            Warehouse warehouse = warehouseMapper.selectByWarehouseCode(value.trim());
+            if (warehouse != null) {
+                return warehouse.getId();
+            }
+            throw new IllegalArgumentException("第 " + rowIndex + " 行字段 warehouseCode/warehouseId 不是有效仓库编号");
         }
     }
 

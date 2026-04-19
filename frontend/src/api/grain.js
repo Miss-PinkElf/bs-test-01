@@ -23,6 +23,18 @@ function createDemoUsernameHeaders(baseHeaders = {}) {
   };
 }
 
+function downloadBlobFile(blob, filename) {
+  const objectUrl = window.URL.createObjectURL(blob);
+  const link = document.createElement("a");
+  link.href = objectUrl;
+  link.download = filename;
+  link.style.display = "none";
+  document.body.appendChild(link);
+  link.click();
+  document.body.removeChild(link);
+  window.URL.revokeObjectURL(objectUrl);
+}
+
 // 统一兼容后端可能返回的角色字段，避免页面各自判断 role / roleCodes。
 function normalizeRoleCodes(raw) {
   if (Array.isArray(raw?.roleCodes)) {
@@ -492,7 +504,11 @@ export async function deleteSensorData(id) {
 
 export async function importSensorData(file) {
   const formData = new FormData();
-  formData.append("file", file);
+  const selectedFile = file?.raw ?? file;
+  if (!selectedFile) {
+    throw new Error("请选择要导入的文件");
+  }
+  formData.append("file", selectedFile);
 
   const response = await axios.post(`${API_BASE_URL}/api/sensor-data/import`, formData, {
     headers: createDemoUsernameHeaders({
@@ -504,7 +520,12 @@ export async function importSensorData(file) {
 }
 
 export function downloadSensorTemplate() {
-  window.open(`${API_BASE_URL}/api/sensor-data/import/template`, "_blank");
+  return axios.get(`${API_BASE_URL}/api/sensor-data/import/template`, {
+    responseType: "blob",
+    headers: createDemoUsernameHeaders()
+  }).then((response) => {
+    downloadBlobFile(response.data, "sensor-data-template.csv");
+  });
 }
 
 export async function fetchGrainTempSummaries(params = {}) {
@@ -633,7 +654,11 @@ export async function deleteGrainTempRecord(id) {
 
 export async function importGrainTemp(file) {
   const formData = new FormData();
-  formData.append("file", file);
+  const selectedFile = file?.raw ?? file;
+  if (!selectedFile) {
+    throw new Error("请选择要导入的文件");
+  }
+  formData.append("file", selectedFile);
 
   const response = await axios.post(`${API_BASE_URL}/api/grain-temp/import`, formData, {
     headers: createDemoUsernameHeaders({
@@ -645,7 +670,12 @@ export async function importGrainTemp(file) {
 }
 
 export function downloadGrainTempTemplate() {
-  window.open(`${API_BASE_URL}/api/grain-temp/import/template`, "_blank");
+  return axios.get(`${API_BASE_URL}/api/grain-temp/import/template`, {
+    responseType: "blob",
+    headers: createDemoUsernameHeaders()
+  }).then((response) => {
+    downloadBlobFile(response.data, "grain-temp-fixed-template.xlsx");
+  });
 }
 
 // 导入接口统一按 ApiResponse.data 解包，异常时沿用后端 message 直接提示页面。

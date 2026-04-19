@@ -41,7 +41,8 @@ const chartRef = ref();
 const chartLoading = ref(false);
 const summaryLoading = ref(false);
 const recordLoading = ref(false);
-const importLoading = ref(false);
+const importLoadingCount = ref(0);
+const importLoading = computed(() => importLoadingCount.value > 0);
 const dialogVisible = ref(false);
 const mode = ref("grain");
 const warehouses = ref([]);
@@ -312,11 +313,11 @@ async function handleDelete(row) {
   await reloadCurrentModeData();
 }
 async function handleImportUpload(uploadFile) {
-  importLoading.value = true;
+  importLoadingCount.value += 1;
   try {
-    if (mode.value === "grain") { const result = await importGrainTemp(uploadFile.raw); ElMessage.success(`粮温导入成功，批次号：${result.batchNo}`); }
+    if (mode.value === "grain") { const result = await importGrainTemp(uploadFile); ElMessage.success(`粮温导入成功，批次号：${result.batchNo}`); }
     else {
-      const result = await importSensorData(uploadFile.raw);
+      const result = await importSensorData(uploadFile);
       if (result.failedCount > 0) { throw new Error(result.errorMessages?.[0] || "导入失败"); }
       ElMessage.success(`环境数据导入成功，批次号：${result.batchNo}`);
     }
@@ -325,13 +326,22 @@ async function handleImportUpload(uploadFile) {
   } catch (error) {
     ElMessage.error(error.message || "导入失败");
   } finally {
-    importLoading.value = false;
+    importLoadingCount.value = Math.max(importLoadingCount.value - 1, 0);
   }
   return false;
 }
-function handleTemplateDownload() {
-  if (mode.value === "grain") { downloadGrainTempTemplate(); return; }
-  downloadSensorTemplate();
+async function handleTemplateDownload() {
+  try {
+    if (mode.value === "grain") {
+      await downloadGrainTempTemplate();
+      ElMessage.success("粮温模板已开始下载");
+      return;
+    }
+    await downloadSensorTemplate();
+    ElMessage.success("环境数据模板已开始下载");
+  } catch (error) {
+    ElMessage.error(error.message || "模板下载失败");
+  }
 }
 async function handleRecordPageChange(page) { currentRecordPageState.value.pageNum = page; if (mode.value === "grain") { await loadGrainRecords(); return; } await loadEnvData(); }
 async function handleRecordPageSizeChange(size) { currentRecordPageState.value.pageSize = size; currentRecordPageState.value.pageNum = 1; if (mode.value === "grain") { await loadGrainRecords(); return; } await loadEnvData(); }
@@ -508,15 +518,15 @@ onBeforeUnmount(() => { clearTimeout(recordKeywordTimer); if (chart) chart.dispo
 
       <div class="toolbar-row">
         <el-button type="primary" @click="openManualDialog">{{ mode === "grain" ? "新增粮温记录" : "手工录入" }}</el-button>
-        <el-upload :show-file-list="false" :before-upload="handleImportUpload" accept=".csv,.xls,.xlsx">
+        <el-upload :show-file-list="false" :before-upload="handleImportUpload" accept=".csv,.xls,.xlsx" multiple>
           <el-button :loading="importLoading">{{ mode === "grain" ? "导入粮温模板" : "导入环境数据" }}</el-button>
         </el-upload>
         <el-button plain @click="handleTemplateDownload">下载导入模板</el-button>
       </div>
 
       <div class="compact-lines">
-        <div v-if="mode === 'grain'">粮温固定 XLSX：含分区标题与合并单元格说明。「一、基础信息」填写仓库编号、采集时间（括号内英文键与程序识别一致）。「二、测点温度矩阵」按区域分块：块首行填区域编码与缆号/探头编码；表头行含「层号」与「点位」，数据行左侧为层号、向右为各点位列温度。底部「三、汇总分析」可留空，导入后由系统汇总。</div>
-        <div v-if="mode === 'grain'">后端仍兼容旧版纯英文标签的固定模板、CSV 与行式 Excel；手工维护会直接影响原始测点记录。</div>
+        <div v-if="mode === 'grain'">粮温固定 XLSX：含分区标题与合并单元格说明。「一、基础信息」填写仓库编码（可兼容旧版仓库ID）、采集时间（括号内英文键与程序识别一致）。「二、测点温度矩阵」按区域分块：块首行填区域编码与缆号/探头编码；表头行含「层号」与「点位」，数据行左侧为层号、向右为各点位列温度。底部「三、汇总分析」可留空，导入后由系统汇总。</div>
+        <div v-if="mode === 'grain'">后端仍兼容旧版纯英文标签的固定模板、CSV 与行式 Excel；同一测点新值会覆盖旧值，手工维护会直接影响原始测点记录。</div>
         <div v-else>普通环境模板字段：warehouseId、metricCode、metricValue、collectedAt、remark。</div>
       </div>
     </el-card>
