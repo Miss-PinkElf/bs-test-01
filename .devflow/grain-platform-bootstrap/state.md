@@ -154,6 +154,12 @@
   - `frontend/src/router/index.js` 已将 `/screen` 页面标题统一为“数据大屏”
   - `frontend/src` 内针对“骨架 / 答辩 / 演示入口 / 轻量说明”的检索已清空
   - 静态验证已通过：`frontend/` 执行 `npm run build` 成功
+- 已进入 2026-04-20 粮温导入 deadlock bug 路径，并完成第二轮止血代码：
+  - 已确认问题现象：一次并发导入 6 个 Excel 时，`grain_temp_record` 的 `insert ... on duplicate key update` 仍会抛 `Deadlock found when trying to get lock`
+  - 已确认首轮修复不足点：仅按 `warehouseId + collectedAt` 串行、批量 `upsertBatch` 仍无法覆盖“同仓库不同采集时间”的并发导入
+  - 已完成第二轮修复代码：导入锁扩大为 `warehouseId` 级串行；`grain_temp_record` 改为单条 `upsert + 有限重试`；同批去重与稳定排序保留；`warehouseCode` 解析优先于 `warehouseId`
+  - 已完成静态验证：`backend/` 执行 `mvn -q -DskipTests compile` 成功
+  - 运行态回归状态：仍待用户在真实“同仓库多 Excel 并发导入”场景下确认是否彻底收口
 ## 工作假设
 - 以毕业设计 MVP 为目标，先做可演示的软件平台，不接入真实硬件。
 - 预测功能继续采用简单回归或移动平均，重点在数据库可追溯与归档，而不是算法复杂度。
@@ -170,8 +176,11 @@
 - `/screen` 大屏表格未加本地筛选（可选）。
 - 归档目录、历史 handoff（`.explore/`、`zzz-docs/Archive/` 等）仍可能含旧主线表述，检索时以本 `state.md` 与最新 PRD 为准。
 - 旧版 PRD、数据库定稿、旧接口设计已归档；历史 handoff/checkpoint 中仍保留旧文件名，属于历史上下文，不应作为当前真相源。
+- 粮温多 Excel 并发导入 deadlock 已完成第二轮代码收口，但真实运行态尚未完成最终复测；若仍报 deadlock，需要进一步判断是否存在多实例后端或数据库侧其他并发写入链路。
 
 ## 下一步
+- 优先让用户复测“同仓库多 Excel 并发导入”场景，确认 `grain_temp_record` deadlock 是否已被仓库级串行 + 单条 `upsert` 收口。
+- 若仍复现 deadlock，下一步要先确认是否存在多实例后端、数据库事件/脚本或其他同时写 `grain_temp_record` 的链路，而不是继续在当前单实例假设下盲目调 SQL。
 - 如继续联调：可先处理 `8081` 端口占用与沙箱内 Node `spawn EPERM`；两者均属于本次 PowerShell 解析 bug 之后的新独立阻塞。
 - 如继续写论文，可直接以已更新的 PRD、数据库设计、接口设计文档为材料基线，再补章节化描述或截图。
 - 可选：扩展验收脚本与回归清单（粮温筛选）；按需 `git push`；初始化 GSD 时保持与 devflow 分工。

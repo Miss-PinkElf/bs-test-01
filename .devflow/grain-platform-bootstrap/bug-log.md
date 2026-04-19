@@ -103,3 +103,47 @@
 - **计划：** `.devflow/grain-platform-bootstrap/plans/2026-04-12-windows-powershell-startup-script-compatibility.md`
 - **验证：** `powershell -NoProfile -ExecutionPolicy Bypass -File scripts/start-backend.ps1`、`npm run backend`
 
+---
+
+## BUG-2026-04-20-004：粮温多 Excel 并发导入时 `grain_temp_record` 发生 MySQL deadlock
+
+### 问题现象
+
+- 在数据管理页一次导入多个粮温 Excel 时，单文件导入可以成功，但并发导入 6 个 Excel 仍会间歇性失败。
+- 后端报错集中在 `grain_temp_record` 的 `insert ... on duplicate key update`，异常为 `Deadlock found when trying to get lock; try restarting transaction`。
+- 已做过的首轮止血方案包括：
+  - 模板与导入口径改为 `warehouseCode` 优先；
+  - 同批重复点位保留最后一条；
+  - 导入行稳定排序；
+  - 进程内锁按 `warehouseId + collectedAt` 串行。
+- 但在“同一仓库、不同采集时间”的多文件并发导入场景下，死锁仍然出现，说明首轮锁粒度不足。
+
+### 问题原因
+
+1. `grain_temp_record` 的唯一键是 `(point_id, collected_at)`，同时存在查询索引 `(warehouse_id, collected_at)`；多请求并发写入同一仓库时，即使采集时间不同，也会在同表索引页和相关行锁上产生竞争。
+2. 首轮应用层锁只锁到 `warehouseId + collectedAt`，只能挡住“同仓库同时间”的并发，挡不住“同仓库不同时间”的 6 个文件并发导入。
+3. 原始 SQL 采用多值批量 `upsertBatch`，单次语句会同时持有多条记录相关锁，事务窗口更长，死锁概率被放大。
+4. 仓库字段历史上同时兼容 `warehouseId` 与 `warehouseCode`，如果先按数字解析主键，再回退到编码查询，纯数字仓库编码会被误判，进一步增加导入行为与预期不一致的排查成本。
+
+### 解决方案
+
+1. 将导入串行锁从 `warehouseId + collectedAt` 扩大为仅按 `warehouseId`，让同一仓库的多文件导入直接排队执行。
+2. `grain_temp_record` 写入从多值 `upsertBatch` 降为单条 `upsert`，并在命中 deadlock 时做有限次短暂重试，缩短单次持锁窗口。
+3. 在进入写库前继续保留同批去重与稳定排序，保证“冲突时以导入的最后一条为准”。
+4. 仓库引用解析改为 `warehouseCode` 优先、`warehouseId` 兼容回退，避免数字型仓库编码被误认成主键。
+
+### 当前状态
+
+- 代码侧已完成第二轮修复，涉及：
+  - `backend/src/main/java/com/grain/platform/service/GrainTempImportService.java`
+  - `backend/src/main/java/com/grain/platform/mapper/GrainTempRecordMapper.java`
+  - `backend/src/main/resources/mapper/GrainTempRecordMapper.xml`
+- 静态验证已通过：`backend/` 执行 `mvn -q -DskipTests compile` 成功。
+- 运行态并发复测仍待用户在真实“6 个 Excel 同仓库导入”场景下确认，因此当前结论是“根因已进一步收紧，代码已落地，运行态回归待确认”。
+
+### 关联
+
+- **代码：** `backend/src/main/java/com/grain/platform/service/GrainTempImportService.java`、`backend/src/main/java/com/grain/platform/mapper/GrainTempRecordMapper.java`、`backend/src/main/resources/mapper/GrainTempRecordMapper.xml`
+- **表结构：** `backend/src/main/resources/db/schema.sql`（`grain_temp_record`、`grain_temp_point`）
+- **经验：** `.devflow/grain-platform-bootstrap/learnings.md`（2026-04-20 条目）
+
