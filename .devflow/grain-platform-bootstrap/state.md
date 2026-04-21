@@ -1,7 +1,7 @@
 # 当前状态
 
 ## 当前阶段
-- Apply / Verify completed: all-warehouse demo data in `schema.sql` expanded through `2026-04-25`; ready to continue
+- Pause-ready after prediction actual-backfill compare and chart connectNulls
 
 ## 已确认的事实
 - 用户要求使用 `devflow` 记录过程。
@@ -33,6 +33,13 @@
   - `grain_temp_summary` 已为每仓补齐 `115` 天汇总；3 号仓保持 `MAINTENANCE` 状态但保留完整历史数据
   - `prediction_task` / `prediction_result` 已补齐为每仓至少 1 条温度预测任务与未来结果
   - 已新增 3 号仓、5 号仓管理员演示账号：`manager_b01`、`manager_c01`
+- 已完成 2026-04-21 预测页真实值回填对照收口：
+  - `backend/src/main/java/com/grain/platform/service/PredictionService.java` 已将“任务训练样本”和“任务详情展示样本”分离
+  - 历史任务详情取数不再只截到 `trainEndTime`，而是延伸到 `forecastEndTime`，可回填预测区间内后来录入的真实值
+  - `resultList` 已改为统一时间轴合并：同一任务下的训练区间真实值、预测区间真实值、预测结果共用一套时间线
+  - `frontend/src/views/PredictionView.vue` 已补充页面说明文案，明确预测区间内新录入真实值会自动回填
+  - 静态验证已通过：`backend/` `mvn -q -DskipTests compile`、`frontend/` `npm run build`
+  - 运行态验证已通过：临时在 `18082` 启动新后端后，请求 `/api/predictions/tasks/1` 能看到 `2026-04-27 08:40:00` 的真实值回填进旧任务结果序列
 - 已完成第一轮数据库优先 MVP 改造：
   - 后端预测链已切到 `grain_temp_summary + prediction_task + prediction_result`
   - 新增粮温导入/汇总查询接口：`/api/grain-temp/import`、`/api/grain-temp/summaries`
@@ -186,6 +193,7 @@
 - 旧版 PRD、数据库定稿、旧接口设计已归档；历史 handoff/checkpoint 中仍保留旧文件名，属于历史上下文，不应作为当前真相源。
 - 粮温多 Excel 并发导入 deadlock 已完成第二轮代码收口，但真实运行态尚未完成最终复测；若仍报 deadlock，需要进一步判断是否存在多实例后端或数据库侧其他并发写入链路。
 - 当前 `schema.sql` 已完成全仓完整演示数据补齐；若后续还要增强答辩口径，更可能是继续微调故事线与文案，而不是再补基础数据覆盖率。
+- 若本地页面仍看不到预测区间内新真实值，优先检查是否仍在使用旧的 `8081` 后端进程；本轮运行态验证是在新启动的 `18082` 进程上完成的。
 
 ## 下一步
 - 优先让用户复测“同仓库多 Excel 并发导入”场景，确认 `grain_temp_record` deadlock 是否已被仓库级串行 + 单条 `upsert` 收口。
@@ -194,6 +202,7 @@
 - 如继续写论文，可直接以已更新的 PRD、数据库设计、接口设计文档为材料基线，再补章节化描述或截图。
 - 可选：扩展验收脚本与回归清单（粮温筛选）；按需 `git push`；初始化 GSD 时保持与 devflow 分工。
 - 若继续优化演示库，可优先考虑补文档说明或进一步细化 6 个仓库的业务故事线，而不是再扩大时间跨度。
+- 若继续收口预测页，可再评估是否要把 demo 任务的 `prediction_result.result_time` 从 `00:00:00` 同步到与真实粮温一致的 `08:40:00`，减少“同一天两种时刻”带来的视觉割裂。
 - 如需在沙箱环境里重复跑脚本，可优先使用 `-SkipStaticChecks`，静态命令单独执行。
 
 ## 当前参考计划
@@ -211,13 +220,13 @@
 - `.devflow/grain-platform-bootstrap/plans/2026-04-10-usersview-and-screen-display-unification.md`
 
 ## 最新 handoff
-- `.devflow/grain-platform-bootstrap/handoffs/2026-04-11-023-doc-sync-and-thesis-materials-ready.md`
+- `.devflow/grain-platform-bootstrap/handoffs/2026-04-21-024-pause-ready-after-prediction-backfill-and-chart-connect.md`
 
 ## 最小活跃上下文摘要
-- **Git**：`16cabbc` 已提交（布局 + 粮温筛选 + devflow 文档）。需同步远端时本地 `git push`。
-- **恢复**：`state.md` + handoff **023** + 根目录 `NEXT-SESSION-PROMPT-DEVFLOW.md`。本轮文档同步计划见 `plans/2026-04-11-gsd-devflow-prd-database-doc-sync.md`。
-- **开放**：验收脚本扩展断言、回归清单补粮温筛选步骤、论文正文章节化展开与截图整理，可在 023 handoff 基础上继续。
-- 新需求默认先对齐再编码（`project-zh.mdc` §3）；沙箱跑验收可 `-SkipStaticChecks`。
+- **Git**：`b852b72` 已提交（全仓演示数据补齐 + 截止到 4 月 25 日）。本轮尚有未提交改动：预测任务真实值回填、图表 `connectNulls`、最新 devflow handoff / prompt。
+- **恢复**：`state.md` + handoff **024** + 根目录 `NEXT-SESSION-PROMPT-DEVFLOW.md`。预测页相关计划见 `plans/2026-04-21-prediction-task-actual-backfill-compare.md`。
+- **已完成**：历史预测任务详情支持预测区间内真实值回填；双线图已启用 `connectNulls`；SQL 已改为整库重置并补齐 6 仓完整数据。
+- **开放**：demo 预测点仍偏稀疏且时间为 `00:00:00`；若本地页面还未体现回填效果，需先重启 `8081` 后端；deadlock 真实并发复测、验收脚本补断言、文档/论文进一步收口仍可继续。
 
 
 

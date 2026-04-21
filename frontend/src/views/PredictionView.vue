@@ -478,6 +478,7 @@ function renderChart() {
         name: "实际值",
         type: "line",
         smooth: true,
+        connectNulls: true,
         data: chartRows.map((item) => item.actualValue),
         lineStyle: { color: "#a855f7" },
         itemStyle: { color: "#a855f7" }
@@ -486,6 +487,7 @@ function renderChart() {
         name: "预测值",
         type: "line",
         smooth: true,
+        connectNulls: true,
         data: chartRows.map((item) => item.predictedValue),
         lineStyle: { color: "#ea580c" },
         itemStyle: { color: "#ea580c" },
@@ -657,7 +659,7 @@ onBeforeUnmount(() => {
           <div class="panel-header">
             <div>
               <div class="panel-title">实际值 / 预测值双线图</div>
-              <div class="panel-subtitle">对应上方「任务摘要」中的当前任务；默认展示最近 7 天窗口，清空后可回看完整时间线</div>
+              <div class="panel-subtitle">对应上方「任务摘要」中的当前任务；预测区间内若已录入新的真实值，会自动回填到图中做对照。默认展示最近 7 天窗口，清空后可回看完整时间线</div>
             </div>
             <div class="chart-card-toolbar">
               <el-date-picker

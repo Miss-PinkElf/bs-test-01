@@ -2,11 +2,12 @@
 
 ## 最新 handoff
 
-- [2026-04-11-023-doc-sync-and-thesis-materials-ready](.devflow/grain-platform-bootstrap/handoffs/2026-04-11-023-doc-sync-and-thesis-materials-ready.md)
+- [2026-04-21-024-pause-ready-after-prediction-backfill-and-chart-connect](.devflow/grain-platform-bootstrap/handoffs/2026-04-21-024-pause-ready-after-prediction-backfill-and-chart-connect.md)
 
 ## Handoff 列表
 
-- `2026-04-11-023-doc-sync-and-thesis-materials-ready` | 阶段：GSD / devflow / 论文文档同步完成后暂停 | 状态：**latest**
+- `2026-04-21-024-pause-ready-after-prediction-backfill-and-chart-connect` | 阶段：全仓演示数据补齐 + 历史预测任务真实值回填 + 图表断线收口后暂停 | 状态：**latest**
+- `2026-04-11-023-doc-sync-and-thesis-materials-ready` | 阶段：GSD / devflow / 论文文档同步完成后暂停 | 状态：superseded
 - `2026-04-10-022-pause-ready-after-layout-grain-filter-handoff-commit` | 阶段：管理端布局 + 粮温多条件筛选 + devflow 补记 + 提交后暂停 | 状态：superseded
 - `2026-04-10-021-pause-ready-after-table-search-and-cursor-rules` | 阶段：列表搜索 + Cursor 规则强化后暂停 | 状态：superseded
 - `2026-04-09-020-pause-ready-after-user-crud-and-acceptance-smoke` | 阶段：用户 CRUD + 验收脚本完成后暂停 | 状态：superseded

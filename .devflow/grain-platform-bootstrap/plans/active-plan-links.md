@@ -6,6 +6,7 @@
 - 恢复时先读 `state.md` 与最新 handoff，再按需读取下列计划。
 
 ## 当前有效计划
+- `.devflow/grain-platform-bootstrap/plans/2026-04-21-prediction-task-actual-backfill-compare.md`
 - `.devflow/grain-platform-bootstrap/plans/2026-04-21-full-demo-data-through-0425-for-all-warehouses.md`
 - `.devflow/grain-platform-bootstrap/plans/2026-04-16-frontend-copy-cleanup-and-screen-rename.md`
 - `.devflow/grain-platform-bootstrap/plans/2026-04-12-windows-powershell-startup-script-compatibility.md`

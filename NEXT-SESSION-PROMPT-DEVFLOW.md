@@ -10,54 +10,76 @@
 2. `zzz-docs/任务书.md`
 3. `zzz-docs/开题报告.md`
 4. `.devflow/grain-platform-bootstrap/state.md`
-5. `.devflow/grain-platform-bootstrap/handoffs/2026-04-10-022-pause-ready-after-layout-grain-filter-handoff-commit.md`
+5. `.devflow/grain-platform-bootstrap/handoffs/2026-04-21-024-pause-ready-after-prediction-backfill-and-chart-connect.md`
 6. 按需读取：
    - `.devflow/grain-platform-bootstrap/handoffs/index.md`
    - `.devflow/grain-platform-bootstrap/plans/active-plan-links.md`
-   - `.devflow/grain-platform-bootstrap/plans/2026-04-10-console-layout-scroll-and-scrollbar.md`
-   - `.devflow/grain-platform-bootstrap/plans/2026-04-10-grain-temp-records-filter-toolbar.md`
-   - `.devflow/grain-platform-bootstrap/plans/2026-04-09-acceptance-smoke-script.md`
+   - `.devflow/grain-platform-bootstrap/plans/2026-04-21-full-demo-data-through-0425-for-all-warehouses.md`
+   - `.devflow/grain-platform-bootstrap/plans/2026-04-21-prediction-task-actual-backfill-compare.md`
+   - `.devflow/grain-platform-bootstrap/checkpoints.md`
    - `zzz-docs/验证/数据库优先MVP-回归验证清单.md`
 
 【当前主线与口径】
 - 过程记录走 `devflow`，真相源在 `.devflow/grain-platform-bootstrap/`
 - `.explore/grain-platform-bootstrap/` 仅历史快照
-- 本期「数据库优先 MVP」；不做「预测 -> 修正 -> 再预测」必做入口（字段可保留）
-- 预测归档：`prediction_task + prediction_result`
+- 本期仍是「数据库优先 MVP」
+- 不做「预测 -> 修正 -> 再预测」必做入口（字段可保留）
+- 预测归档继续使用：`prediction_task + prediction_result`
 - 正式前端：`frontend/`；`frontend-next/` 仅静态原型参考
 
-【020 以来已完成（恢复时不必重做）】
-1. 用户页 + 答辩大屏：角色说明与 `/screen` 说明/预警区已表格化；`styles.css` 含 `.screen-data-table`
-2. 列表模糊搜索：
-   - 工具：`frontend/src/utils/fuzzyText.js`
-   - 前端过滤：用户/仓库/粮温汇总表/预测两表/首页三块列表
-   - 后端分页：`GET /api/grain-temp/records`、`GET /api/sensor-data` 支持可选 `keyword`（LIKE）
-3. 协作规则：`.cursor/rules/project-zh.mdc` 已加强「实现前对齐」
-4. 管理端布局（2026-04-10）：`ConsoleLayout` 视口限高 + 侧栏/主区 `el-scrollbar`，见 devflow plan `2026-04-10-console-layout-scroll-and-scrollbar.md`
-5. 粮温原始测点记录多条件筛选（2026-04-10）：
-   - 后端：`GET /api/grain-temp/records` 可选 `pointNo`、`tempMin`、`tempMax`；`GET /api/grain-temp/records/filter-options`
-   - 前端：`DataView.vue` 粮温模式工具栏（区域/层号/点位、温度区间、采集时间、应用筛选/重置、关键词防抖）
-   - 见 plan `2026-04-10-grain-temp-records-filter-toolbar.md`
-6. Git：`shuowang/dev2.0` 已提交 `16cabbc`（上述体验优化 + devflow 文档）；**未**将 `.codex/`、`.cursor/` 下大量未跟踪 GSD 工具文件纳入该提交
-7. 静态验证曾执行：`backend` mvn compile、`frontend` npm run build（恢复后重大改动请再跑）
+【这轮已完成（恢复时不必重做）】
+1. `backend/src/main/resources/db/schema.sql`
+   - 已改成“先删库再建库”，可以直接作为重置数据库真相源
+   - 6 个仓库都补齐了完整的温度、湿度、二氧化碳历史数据
+   - 历史数据统一截止到 `2026-04-25`
+   - 3 号仓保持 `MAINTENANCE`，但保留完整历史数据和预测归档
+2. 历史预测任务详情
+   - `backend/src/main/java/com/grain/platform/service/PredictionService.java`
+   - 已支持“预测区间内后续真实值回填”
+   - 旧任务不再只显示执行当时训练快照
+   - 运行态已在临时 `18082` 新后端进程验证：一号仓旧任务能看到 `2026-04-27 08:40:00` 的真实值
+3. 预测页折线图
+   - `frontend/src/views/PredictionView.vue`
+   - 已补页面说明文案
+   - 已给“实际值”“预测值”两条线加 `connectNulls: true`
+   - 中间空值不会再把折线视觉断开
+4. 静态验证已通过
+   - `backend/`：`mvn -q -DskipTests compile`
+   - `frontend/`：`npm run build`
 
-【未完成 / 未讨论完 / 可选】
-1. 答辩前再扫 `zzz-docs/设计文档/` 非归档文档，补「数据库优先 MVP」文首提示
-2. `run-acceptance-smoke.ps1`：未专门断言带 `keyword` 的分页；亦未断言粮温记录带 `pointNo`/`tempMin`/`tempMax` 或 `filter-options`（可选轻量 smoke）
-3. `zzz-docs/验证/数据库优先MVP-回归验证清单.md` 可补充「粮温多条件筛选」手工步骤（答辩演示用）
-4. 用户/仓库若数据量很大，是否改为后端 `keyword`（尚未拍板）
-5. `/screen` 大屏表格未加本地筛选（可选）
-6. 沙箱内脚本嵌套前端构建仍可能 `esbuild spawn EPERM` → 使用 `./scripts/run-acceptance-smoke.ps1 -SkipStaticChecks`
-7. worktree 内与课题无关路径（如 `.codex/`、`.claude/`）可能有独立变更，**勿误提交**；GSD 拟用于后续优化时，`.planning/` 尚未初始化，初始化前勿整包提交 GSD 工具目录
-8. 若需同步远端：本地对 `16cabbc` 及后续提交执行 `git push`（handoff 022 后若有新 commit 一并推送）
+【本轮未完成 / 未讨论完 / 开放问题】
+1. **本地 `8081` 后端可能还是旧进程**
+   - 如果页面还看不到“预测区间内真实值回填”或折线连线效果，先重启本地 `8081` 后端再刷新前端
+   - 本轮运行态验证是在临时 `18082` 新后端进程上做的
+2. **demo 预测结果仍偏稀疏**
+   - 目前 `schema.sql` 中 demo 任务的 `prediction_result` 仍是 `step 1 / 5 / 10`
+   - 还没有改成按 `forecastDays` 每天一条
+3. **demo 预测点时间仍不统一**
+   - demo `prediction_result.result_time` 仍是 `00:00:00`
+   - 真实粮温汇总通常是 `08:40:00`
+   - 这会导致同一天真实值与预测值时刻不一致，图上仍有一点割裂感
+4. **粮温导入 deadlock 真实复测**
+   - 第二轮止血代码已完成
+   - 但“同仓库多 Excel 并发导入”真实场景还没最终确认彻底收口
+5. **验收脚本可选增强**
+   - `run-acceptance-smoke.ps1` 还没专门断言 `keyword` 分页
+   - 还没专门断言 `pointNo` / `tempMin` / `tempMax` / `filter-options`
+6. **答辩文档可选增强**
+   - 可补充“当前演示历史数据统一截止到 `2026-04-25`”说明
+   - 可继续整理论文截图、ER 图和预测页口径说明
 
 【下次从这里继续】
-1. 新需求：Mini Align → plan（若需要）→ 实施；默认遵守 `project-zh.mdc` §3
-2. 验收：`./scripts/run-acceptance-smoke.ps1` 或 `-SkipStaticChecks`
-3. 文档冲突：以 `state.md` + 最新 handoff **022** 为准
-4. GSD：后续优化波次可用 `/gsd-new-project`（可选先 `/gsd-map-codebase`）；与 devflow 并行，PROJECT 中可引用 `state.md` 作毕设真相源
+1. 先确认本地 `8081` 是否已重启
+   - 若未重启，先重启后端，再检查预测页回填效果是否正常
+2. 若继续优化预测页，优先按 Mini Align 讨论：
+   - 是否把 demo 任务未来预测点改成每天一条
+   - 是否把 demo 预测点时间统一到 `08:40:00`
+3. 若继续联调数据导入，优先复测并发导入 deadlock
+4. 若转去答辩材料，直接从 `state.md` + handoff **024** + 两个 2026-04-21 plan 抽取内容
 
 【本地环境】
-- 联调端口：`8081`；前端默认 API `http://localhost:8081`
-- 占端口时先清理旧 Java 进程；库重置：`scripts/reset-demo-db.ps1`
+- 联调端口：`8081`
+- 前端默认 API：`http://localhost:8081`
+- 占端口时先清理旧 Java 进程
+- 库重置：`scripts/reset-demo-db.ps1`
 ```

@@ -26,6 +26,7 @@ import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Locale;
 import java.util.Objects;
+import java.util.TreeMap;
 import java.util.UUID;
 
 @Service
@@ -185,7 +186,7 @@ public class PredictionService {
                 task,
                 requireWarehouse(task.getWarehouseId()),
                 metricService.getMetric(task.getMetricCode()),
-                loadActualSeries(task),
+                loadDisplayActualSeries(task),
                 predictionResultMapper.selectByTaskId(task.getId())
         );
     }
@@ -243,18 +244,21 @@ public class PredictionService {
                 .toList();
     }
 
-    private List<PredictionPointDto> loadActualSeries(PredictionTask task) {
+    private List<PredictionPointDto> loadDisplayActualSeries(PredictionTask task) {
+        LocalDateTime displayEndTime = task.getForecastEndTime() == null
+                ? task.getTrainEndTime()
+                : task.getForecastEndTime();
         if ("temperature".equals(task.getMetricCode())) {
             return grainTempService.listPredictionSeries(
                     task.getWarehouseId(),
                     task.getTrainStartTime(),
-                    task.getTrainEndTime(),
+                    displayEndTime,
                     task.getTargetType()
             );
         }
         return sensorDataService.list(task.getWarehouseId(), task.getMetricCode()).stream()
                 .filter(item -> task.getTrainStartTime() == null || !item.getCollectedAt().isBefore(task.getTrainStartTime()))
-                .filter(item -> task.getTrainEndTime() == null || !item.getCollectedAt().isAfter(task.getTrainEndTime()))
+                .filter(item -> displayEndTime == null || !item.getCollectedAt().isAfter(displayEndTime))
                 .map(item -> new PredictionPointDto(item.getCollectedAt(), item.getMetricValue()))
                 .toList();
     }
@@ -290,39 +294,7 @@ public class PredictionService {
                                               SensorMetric metric,
                                               List<PredictionPointDto> actualSeries,
                                               List<PredictionResult> forecastResults) {
-        List<PredictionResultItemDto> merged = new ArrayList<>();
-        int actualStep = 0;
-        // 把真实序列和未来预测结果拼成同一条时间线，前端可以直接按 resultList 渲染折线与摘要。
-        for (PredictionPointDto item : actualSeries) {
-            merged.add(new PredictionResultItemDto(
-                    null,
-                    "ACTUAL",
-                    ++actualStep,
-                    format(item.time()),
-                    item.value(),
-                    null,
-                    null,
-                    null,
-                    null,
-                    false,
-                    null,
-                    false
-            ));
-        }
-        merged.addAll(forecastResults.stream().map(item -> new PredictionResultItemDto(
-                item.getId(),
-                item.getPhaseType(),
-                item.getStepIndex(),
-                format(item.getResultTime()),
-                item.getActualValue() == null ? null : item.getActualValue().doubleValue(),
-                item.getPredictedValue() == null ? null : item.getPredictedValue().doubleValue(),
-                item.getErrorValue() == null ? null : item.getErrorValue().doubleValue(),
-                item.getErrorRate() == null ? null : item.getErrorRate().doubleValue(),
-                item.getWarningLevel(),
-                Boolean.TRUE.equals(item.getWarningFlag()),
-                item.getWarningMessage(),
-                Boolean.TRUE.equals(item.getIsCorrected())
-        )).toList());
+        List<PredictionResultItemDto> merged = mergeTimeline(actualSeries, forecastResults);
 
         return new PredictionTaskResponse(
                 task.getId(),
@@ -352,6 +324,49 @@ public class PredictionService {
                 format(task.getCompletedAt()),
                 task.getSummary(),
                 merged
+        );
+    }
+
+    private List<PredictionResultItemDto> mergeTimeline(List<PredictionPointDto> actualSeries,
+                                                        List<PredictionResult> forecastResults) {
+        TreeMap<LocalDateTime, TimelineEntry> timeline = new TreeMap<>();
+        int actualStep = 0;
+
+        for (PredictionPointDto item : actualSeries.stream()
+                .sorted(Comparator.comparing(PredictionPointDto::time))
+                .toList()) {
+            TimelineEntry entry = timeline.computeIfAbsent(item.time(), TimelineEntry::new);
+            entry.setActualValue(item.value());
+            entry.setActualStepIndex(++actualStep);
+        }
+
+        for (PredictionResult item : forecastResults.stream()
+                .sorted(Comparator.comparing(PredictionResult::getResultTime).thenComparing(PredictionResult::getStepIndex))
+                .toList()) {
+            TimelineEntry entry = timeline.computeIfAbsent(item.getResultTime(), TimelineEntry::new);
+            entry.setPredictionResult(item);
+        }
+
+        return timeline.values().stream()
+                .map(this::toTimelineItem)
+                .toList();
+    }
+
+    private PredictionResultItemDto toTimelineItem(TimelineEntry entry) {
+        PredictionResult forecast = entry.getPredictionResult();
+        return new PredictionResultItemDto(
+                forecast == null ? null : forecast.getId(),
+                forecast == null ? "ACTUAL" : forecast.getPhaseType(),
+                forecast == null ? entry.getActualStepIndex() : forecast.getStepIndex(),
+                format(entry.getTime()),
+                entry.getActualValue(),
+                forecast == null || forecast.getPredictedValue() == null ? null : forecast.getPredictedValue().doubleValue(),
+                forecast == null || forecast.getErrorValue() == null ? null : forecast.getErrorValue().doubleValue(),
+                forecast == null || forecast.getErrorRate() == null ? null : forecast.getErrorRate().doubleValue(),
+                forecast == null ? null : forecast.getWarningLevel(),
+                forecast != null && Boolean.TRUE.equals(forecast.getWarningFlag()),
+                forecast == null ? null : forecast.getWarningMessage(),
+                forecast != null && Boolean.TRUE.equals(forecast.getIsCorrected())
         );
     }
 
@@ -415,6 +430,45 @@ public class PredictionService {
     }
 
     private record WarningInfo(String level, boolean flag, String message) {
+    }
+
+    private static final class TimelineEntry {
+        private final LocalDateTime time;
+        private Integer actualStepIndex;
+        private Double actualValue;
+        private PredictionResult predictionResult;
+
+        private TimelineEntry(LocalDateTime time) {
+            this.time = time;
+        }
+
+        public LocalDateTime getTime() {
+            return time;
+        }
+
+        public Integer getActualStepIndex() {
+            return actualStepIndex;
+        }
+
+        public void setActualStepIndex(Integer actualStepIndex) {
+            this.actualStepIndex = actualStepIndex;
+        }
+
+        public Double getActualValue() {
+            return actualValue;
+        }
+
+        public void setActualValue(Double actualValue) {
+            this.actualValue = actualValue;
+        }
+
+        public PredictionResult getPredictionResult() {
+            return predictionResult;
+        }
+
+        public void setPredictionResult(PredictionResult predictionResult) {
+            this.predictionResult = predictionResult;
+        }
     }
 }
 
