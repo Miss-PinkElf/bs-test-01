@@ -1,22 +1,10 @@
-CREATE DATABASE IF NOT EXISTS grain_env_predict
+DROP DATABASE IF EXISTS grain_env_predict;
+
+CREATE DATABASE grain_env_predict
     DEFAULT CHARACTER SET utf8mb4
     COLLATE utf8mb4_general_ci;
 
 USE grain_env_predict;
-
-SET FOREIGN_KEY_CHECKS = 0;
-DROP TABLE IF EXISTS prediction_result;
-DROP TABLE IF EXISTS prediction_task;
-DROP TABLE IF EXISTS grain_temp_summary;
-DROP TABLE IF EXISTS grain_temp_record;
-DROP TABLE IF EXISTS grain_temp_point;
-DROP TABLE IF EXISTS sensor_data;
-DROP TABLE IF EXISTS sensor_metric;
-DROP TABLE IF EXISTS sys_user_role;
-DROP TABLE IF EXISTS sys_user;
-DROP TABLE IF EXISTS sys_role;
-DROP TABLE IF EXISTS warehouse;
-SET FOREIGN_KEY_CHECKS = 1;
 
 CREATE TABLE warehouse (
     id BIGINT PRIMARY KEY AUTO_INCREMENT COMMENT '主键',
@@ -248,8 +236,10 @@ VALUES
     (2, 'manager_a01', '123456', '东一区管理员', '13800001001', 1, 'ACTIVE'),
     (3, 'viewer_demo', '123456', '演示查看者', '13800001002', NULL, 'ACTIVE'),
     (4, 'manager_a02', '123456', '东二区管理员', '13800001003', 2, 'ACTIVE'),
-    (5, 'manager_b02', '123456', '西二区管理员', '13800001004', 4, 'ACTIVE'),
-    (6, 'manager_c02', '123456', '南二区管理员', '13800001005', 6, 'ACTIVE');
+    (5, 'manager_b01', '123456', '西一区管理员', '13800001004', 3, 'ACTIVE'),
+    (6, 'manager_b02', '123456', '西二区管理员', '13800001005', 4, 'ACTIVE'),
+    (7, 'manager_c01', '123456', '南一区管理员', '13800001006', 5, 'ACTIVE'),
+    (8, 'manager_c02', '123456', '南二区管理员', '13800001007', 6, 'ACTIVE');
 
 INSERT INTO sys_user_role (user_id, role_id)
 VALUES
@@ -258,7 +248,9 @@ VALUES
     (3, 3),
     (4, 2),
     (5, 2),
-    (6, 2);
+    (6, 2),
+    (7, 2),
+    (8, 2);
 
 INSERT INTO sensor_metric (id, metric_code, metric_name, unit, min_threshold, max_threshold, status)
 VALUES
@@ -286,12 +278,18 @@ SELECT
                 CASE warehouse_cfg.warehouse_id
                     WHEN 1 THEN 53.20 + day.day_offset * 0.045 + (MOD(day.day_offset, 6) - 2) * 0.18
                     WHEN 2 THEN 56.10 + day.day_offset * 0.070 + (MOD(day.day_offset, 5) - 2) * 0.24
-                    ELSE 54.80 + day.day_offset * 0.055 + (MOD(day.day_offset, 8) - 4) * 0.16
+                    WHEN 3 THEN 54.40 + day.day_offset * 0.038 + (MOD(day.day_offset, 7) - 3) * 0.15
+                    WHEN 4 THEN 52.60 + day.day_offset * 0.050 + (MOD(day.day_offset, 6) - 3) * 0.17
+                    WHEN 5 THEN 51.80 + day.day_offset * 0.042 + (MOD(day.day_offset, 8) - 4) * 0.14
+                    ELSE 55.00 + day.day_offset * 0.058 + (MOD(day.day_offset, 7) - 3) * 0.20
                 END
             WHEN 'co2' THEN
                 CASE warehouse_cfg.warehouse_id
                     WHEN 1 THEN 515.00 + day.day_offset * 1.25 + (MOD(day.day_offset, 7) - 3) * 6
                     WHEN 2 THEN 620.00 + day.day_offset * 2.10 + (MOD(day.day_offset, 6) - 3) * 9
+                    WHEN 3 THEN 540.00 + day.day_offset * 1.15 + (MOD(day.day_offset, 8) - 4) * 5
+                    WHEN 4 THEN 575.00 + day.day_offset * 1.40 + (MOD(day.day_offset, 7) - 3) * 6
+                    WHEN 5 THEN 498.00 + day.day_offset * 1.05 + (MOD(day.day_offset, 9) - 4) * 4
                     ELSE 560.00 + day.day_offset * 1.65 + (MOD(day.day_offset, 10) - 5) * 7
                 END
         END,
@@ -299,11 +297,11 @@ SELECT
     ) AS metric_value,
     day.collected_at_sensor,
     'IMPORT',
-    CONCAT('PHASE11-SENSOR-', warehouse_cfg.story_code),
+    CONCAT('DEMO-0425-SENSOR-', warehouse_cfg.story_code),
     'NORMAL',
     CASE metric_cfg.metric_code
-        WHEN 'humidity' THEN CONCAT(warehouse_cfg.story_name, '河南春季湿度基线')
-        ELSE CONCAT(warehouse_cfg.story_name, '通风二氧化碳基线')
+        WHEN 'humidity' THEN CONCAT(warehouse_cfg.story_name, '截止 4 月 25 日湿度基线')
+        ELSE CONCAT(warehouse_cfg.story_name, '截止 4 月 25 日二氧化碳基线')
     END,
     warehouse_cfg.created_by
 FROM (
@@ -328,15 +326,21 @@ FROM (
                 SELECT 0 AS n UNION ALL SELECT 1
             ) hundreds
         ) seq
-        WHERE seq.n < 120
-    ) phase11_sensor_days
+        WHERE seq.n < 115
+    ) demo_sensor_days
 ) day
 CROSS JOIN (
     SELECT 1 AS warehouse_id, 2 AS created_by, 'stable' AS story_code, '稳定仓' AS story_name
     UNION ALL
     SELECT 2, 4, 'risk', '风险仓'
     UNION ALL
-    SELECT 6, 6, 'contrast', '对比仓'
+    SELECT 3, 5, 'maintenance', '维护仓'
+    UNION ALL
+    SELECT 4, 6, 'routine', '日常仓'
+    UNION ALL
+    SELECT 5, 7, 'lowwave', '低波动仓'
+    UNION ALL
+    SELECT 6, 8, 'contrast', '对比仓'
 ) warehouse_cfg
 CROSS JOIN (
     SELECT 'humidity' AS metric_code
@@ -345,56 +349,57 @@ CROSS JOIN (
 ) metric_cfg
 ORDER BY warehouse_cfg.warehouse_id, metric_cfg.metric_code, day.collected_at_sensor;
 
-INSERT INTO grain_temp_point (id, warehouse_id, probe_code, zone_code, layer_no, point_no, point_name, status, remark)
-VALUES
-    (1, 1, 'CABLE-A', 'A', 1, 1, 'A-1-1测点', 'ACTIVE', NULL),
-    (2, 1, 'CABLE-A', 'A', 1, 2, 'A-1-2测点', 'ACTIVE', NULL),
-    (3, 1, 'CABLE-A', 'A', 1, 3, 'A-1-3测点', 'ACTIVE', NULL),
-    (4, 1, 'CABLE-A', 'A', 1, 4, 'A-1-4测点', 'ACTIVE', NULL),
-    (5, 1, 'CABLE-A', 'A', 2, 1, 'A-2-1测点', 'ACTIVE', NULL),
-    (6, 1, 'CABLE-A', 'A', 2, 2, 'A-2-2测点', 'ACTIVE', NULL),
-    (7, 1, 'CABLE-A', 'A', 2, 3, 'A-2-3测点', 'ACTIVE', NULL),
-    (8, 1, 'CABLE-A', 'A', 2, 4, 'A-2-4测点', 'ACTIVE', NULL),
-    (9, 1, 'CABLE-A', 'A', 3, 1, 'A-3-1测点', 'ACTIVE', NULL),
-    (10, 1, 'CABLE-A', 'A', 3, 2, 'A-3-2测点', 'ACTIVE', NULL),
-    (11, 1, 'CABLE-A', 'A', 3, 3, 'A-3-3测点', 'ACTIVE', NULL),
-    (12, 1, 'CABLE-A', 'A', 3, 4, 'A-3-4测点', 'ACTIVE', NULL),
-    (13, 1, 'CABLE-A', 'A', 4, 1, 'A-4-1测点', 'ACTIVE', NULL),
-    (14, 1, 'CABLE-A', 'A', 4, 2, 'A-4-2测点', 'ACTIVE', NULL),
-    (15, 1, 'CABLE-A', 'A', 4, 3, 'A-4-3测点', 'ACTIVE', NULL),
-    (16, 1, 'CABLE-A', 'A', 4, 4, 'A-4-4测点', 'ACTIVE', NULL),
-    (17, 2, 'CABLE-B', 'A', 1, 1, 'A-1-1测点', 'ACTIVE', NULL),
-    (18, 2, 'CABLE-B', 'A', 1, 2, 'A-1-2测点', 'ACTIVE', NULL),
-    (19, 2, 'CABLE-B', 'A', 1, 3, 'A-1-3测点', 'ACTIVE', NULL),
-    (20, 2, 'CABLE-B', 'A', 1, 4, 'A-1-4测点', 'ACTIVE', NULL),
-    (21, 2, 'CABLE-B', 'A', 2, 1, 'A-2-1测点', 'ACTIVE', NULL),
-    (22, 2, 'CABLE-B', 'A', 2, 2, 'A-2-2测点', 'ACTIVE', NULL),
-    (23, 2, 'CABLE-B', 'A', 2, 3, 'A-2-3测点', 'ACTIVE', NULL),
-    (24, 2, 'CABLE-B', 'A', 2, 4, 'A-2-4测点', 'ACTIVE', NULL),
-    (25, 2, 'CABLE-B', 'A', 3, 1, 'A-3-1测点', 'ACTIVE', NULL),
-    (26, 2, 'CABLE-B', 'A', 3, 2, 'A-3-2测点', 'ACTIVE', NULL),
-    (27, 2, 'CABLE-B', 'A', 3, 3, 'A-3-3测点', 'ACTIVE', NULL),
-    (28, 2, 'CABLE-B', 'A', 3, 4, 'A-3-4测点', 'ACTIVE', NULL),
-    (29, 2, 'CABLE-B', 'A', 4, 1, 'A-4-1测点', 'ACTIVE', NULL),
-    (30, 2, 'CABLE-B', 'A', 4, 2, 'A-4-2测点', 'ACTIVE', NULL),
-    (31, 2, 'CABLE-B', 'A', 4, 3, 'A-4-3测点', 'ACTIVE', NULL),
-    (32, 2, 'CABLE-B', 'A', 4, 4, 'A-4-4测点', 'ACTIVE', NULL),
-    (33, 6, 'CABLE-C', 'B', 1, 1, 'B-1-1测点', 'ACTIVE', NULL),
-    (34, 6, 'CABLE-C', 'B', 1, 2, 'B-1-2测点', 'ACTIVE', NULL),
-    (35, 6, 'CABLE-C', 'B', 1, 3, 'B-1-3测点', 'ACTIVE', NULL),
-    (36, 6, 'CABLE-C', 'B', 1, 4, 'B-1-4测点', 'ACTIVE', NULL),
-    (37, 6, 'CABLE-C', 'B', 2, 1, 'B-2-1测点', 'ACTIVE', NULL),
-    (38, 6, 'CABLE-C', 'B', 2, 2, 'B-2-2测点', 'ACTIVE', NULL),
-    (39, 6, 'CABLE-C', 'B', 2, 3, 'B-2-3测点', 'ACTIVE', NULL),
-    (40, 6, 'CABLE-C', 'B', 2, 4, 'B-2-4测点', 'ACTIVE', NULL),
-    (41, 6, 'CABLE-C', 'B', 3, 1, 'B-3-1测点', 'ACTIVE', NULL),
-    (42, 6, 'CABLE-C', 'B', 3, 2, 'B-3-2测点', 'ACTIVE', NULL),
-    (43, 6, 'CABLE-C', 'B', 3, 3, 'B-3-3测点', 'ACTIVE', NULL),
-    (44, 6, 'CABLE-C', 'B', 3, 4, 'B-3-4测点', 'ACTIVE', NULL),
-    (45, 6, 'CABLE-C', 'B', 4, 1, 'B-4-1测点', 'ACTIVE', NULL),
-    (46, 6, 'CABLE-C', 'B', 4, 2, 'B-4-2测点', 'ACTIVE', NULL),
-    (47, 6, 'CABLE-C', 'B', 4, 3, 'B-4-3测点', 'ACTIVE', NULL),
-    (48, 6, 'CABLE-C', 'B', 4, 4, 'B-4-4测点', 'ACTIVE', NULL);
+INSERT INTO grain_temp_point (
+    warehouse_id,
+    probe_code,
+    zone_code,
+    layer_no,
+    point_no,
+    point_name,
+    status,
+    remark
+)
+SELECT
+    warehouse_cfg.warehouse_id,
+    warehouse_cfg.probe_code,
+    warehouse_cfg.zone_code,
+    layer_cfg.layer_no,
+    point_cfg.point_no,
+    CONCAT(warehouse_cfg.zone_code, '-', layer_cfg.layer_no, '-', point_cfg.point_no, '测点'),
+    'ACTIVE',
+    warehouse_cfg.point_remark
+FROM (
+    SELECT 1 AS warehouse_id, 'CABLE-A' AS probe_code, 'A' AS zone_code, '稳定仓标准测点' AS point_remark
+    UNION ALL
+    SELECT 2, 'CABLE-B', 'A', '风险仓标准测点'
+    UNION ALL
+    SELECT 3, 'CABLE-M', 'C', '维护仓标准测点'
+    UNION ALL
+    SELECT 4, 'CABLE-D', 'D', '日常仓标准测点'
+    UNION ALL
+    SELECT 5, 'CABLE-E', 'E', '低波动仓标准测点'
+    UNION ALL
+    SELECT 6, 'CABLE-C', 'B', '对比仓标准测点'
+) warehouse_cfg
+CROSS JOIN (
+    SELECT 1 AS layer_no
+    UNION ALL
+    SELECT 2
+    UNION ALL
+    SELECT 3
+    UNION ALL
+    SELECT 4
+) layer_cfg
+CROSS JOIN (
+    SELECT 1 AS point_no
+    UNION ALL
+    SELECT 2
+    UNION ALL
+    SELECT 3
+    UNION ALL
+    SELECT 4
+) point_cfg
+ORDER BY warehouse_cfg.warehouse_id, layer_cfg.layer_no, point_cfg.point_no;
 
 INSERT INTO grain_temp_record (
     warehouse_id,
@@ -415,8 +420,22 @@ SELECT
         CASE point.warehouse_id
             WHEN 1 THEN 16.20 + day.day_offset * 0.034 + (point.layer_no - 2.5) * 0.20 + (point.point_no - 2.5) * 0.06
                 + (MOD(day.day_offset, 7) - 3) * 0.03
-            WHEN 2 THEN 19.00 + day.day_offset * 0.060 + (point.layer_no - 2.5) * 0.36 + (point.point_no - 2.5) * 0.08
+            WHEN 2 THEN 19.10 + day.day_offset * 0.061 + (point.layer_no - 2.5) * 0.36 + (point.point_no - 2.5) * 0.08
                 + (MOD(day.day_offset, 6) - 3) * 0.05
+            WHEN 3 THEN 17.40 + day.day_offset * 0.030 + (point.layer_no - 2.5) * 0.16 + (point.point_no - 2.5) * 0.05
+                + CASE
+                    WHEN MOD(day.day_offset, 8) IN (0, 1, 2) THEN 0.08
+                    WHEN MOD(day.day_offset, 8) IN (5, 6, 7) THEN -0.05
+                    ELSE 0.02
+                END
+            WHEN 4 THEN 18.10 + day.day_offset * 0.040 + (point.layer_no - 2.5) * 0.22 + (point.point_no - 2.5) * 0.06
+                + (MOD(day.day_offset, 7) - 3) * 0.04
+            WHEN 5 THEN 16.90 + day.day_offset * 0.033 + (point.layer_no - 2.5) * 0.18 + (point.point_no - 2.5) * 0.05
+                + CASE
+                    WHEN MOD(day.day_offset, 10) IN (0, 1, 2) THEN 0.06
+                    WHEN MOD(day.day_offset, 10) IN (7, 8, 9) THEN -0.04
+                    ELSE 0.01
+                END
             ELSE 17.20 + day.day_offset * 0.050 + (point.layer_no - 2.5) * 0.25 + (point.point_no - 2.5) * 0.10
                 + CASE
                     WHEN MOD(day.day_offset, 9) IN (0, 1, 2) THEN 0.14
@@ -428,20 +447,29 @@ SELECT
     ) AS temperature_value,
     'IMPORT',
     CASE point.warehouse_id
-        WHEN 1 THEN 'PHASE11-GRAIN-STABLE'
-        WHEN 2 THEN 'PHASE11-GRAIN-RISK'
-        ELSE 'PHASE11-GRAIN-CONTRAST'
+        WHEN 1 THEN 'DEMO-0425-GRAIN-STABLE'
+        WHEN 2 THEN 'DEMO-0425-GRAIN-RISK'
+        WHEN 3 THEN 'DEMO-0425-GRAIN-MAINTENANCE'
+        WHEN 4 THEN 'DEMO-0425-GRAIN-ROUTINE'
+        WHEN 5 THEN 'DEMO-0425-GRAIN-LOWWAVE'
+        ELSE 'DEMO-0425-GRAIN-CONTRAST'
     END,
     'NORMAL',
     CASE point.warehouse_id
-        WHEN 1 THEN '稳定仓河南 1-4 月粮温基线'
-        WHEN 2 THEN '风险仓河南 1-4 月粮温基线'
-        ELSE '对比仓河南 1-4 月粮温基线'
+        WHEN 1 THEN '稳定仓截止 4 月 25 日粮温基线'
+        WHEN 2 THEN '风险仓截止 4 月 25 日粮温基线'
+        WHEN 3 THEN '维护仓截止 4 月 25 日粮温基线'
+        WHEN 4 THEN '日常仓截止 4 月 25 日粮温基线'
+        WHEN 5 THEN '低波动仓截止 4 月 25 日粮温基线'
+        ELSE '对比仓截止 4 月 25 日粮温基线'
     END,
     CASE point.warehouse_id
         WHEN 1 THEN 2
         WHEN 2 THEN 4
-        ELSE 6
+        WHEN 3 THEN 5
+        WHEN 4 THEN 6
+        WHEN 5 THEN 7
+        ELSE 8
     END
 FROM (
     SELECT
@@ -461,9 +489,9 @@ FROM (
             SELECT 0 AS n UNION ALL SELECT 1
         ) hundreds
     ) seq
-    WHERE seq.n < 120
+    WHERE seq.n < 115
 ) day
-JOIN grain_temp_point point ON point.warehouse_id IN (1, 2, 6)
+JOIN grain_temp_point point ON point.warehouse_id BETWEEN 1 AND 6
 ORDER BY point.warehouse_id, day.day_offset, point.id;
 
 INSERT INTO grain_temp_summary (
@@ -493,29 +521,33 @@ SELECT
     ROUND(AVG(CASE WHEN point.layer_no = 3 THEN record.temperature_value END), 2) AS layer_3_avg,
     ROUND(AVG(CASE WHEN point.layer_no = 4 THEN record.temperature_value END), 2) AS layer_4_avg,
     CASE
-        WHEN record.warehouse_id = 2 AND MAX(record.temperature_value) >= 26.70 THEN 'ATTENTION'
-        WHEN record.warehouse_id = 6 AND record.collected_at >= '2026-04-20 08:40:00' AND MAX(record.temperature_value) >= 23.80 THEN 'ATTENTION'
+        WHEN record.warehouse_id = 2 AND MAX(record.temperature_value) >= 26.45 THEN 'ATTENTION'
+        WHEN record.warehouse_id = 6 AND record.collected_at >= '2026-04-18 08:40:00' AND MAX(record.temperature_value) >= 23.20 THEN 'ATTENTION'
         ELSE 'NORMAL'
     END AS warning_level,
     CASE
-        WHEN record.warehouse_id = 2 AND MAX(record.temperature_value) >= 26.70 THEN 1
-        WHEN record.warehouse_id = 6 AND record.collected_at >= '2026-04-20 08:40:00' AND MAX(record.temperature_value) >= 23.80 THEN 1
+        WHEN record.warehouse_id = 2 AND MAX(record.temperature_value) >= 26.45 THEN 1
+        WHEN record.warehouse_id = 6 AND record.collected_at >= '2026-04-18 08:40:00' AND MAX(record.temperature_value) >= 23.20 THEN 1
         ELSE 0
     END AS warning_flag,
     CASE
-        WHEN record.warehouse_id = 2 AND MAX(record.temperature_value) >= 26.70 THEN '四月末仓温逼近阈值，建议答辩时强调提前通风与重点巡检。'
-        WHEN record.warehouse_id = 6 AND record.collected_at >= '2026-04-20 08:40:00' AND MAX(record.temperature_value) >= 23.80 THEN '对比仓出现轻微抬升，可用于说明波动仓与风险仓的差异。'
+        WHEN record.warehouse_id = 2 AND MAX(record.temperature_value) >= 26.45 THEN '风险仓在 4 月下旬已逼近阈值，建议答辩时强调提前通风与重点巡检。'
+        WHEN record.warehouse_id = 6 AND record.collected_at >= '2026-04-18 08:40:00' AND MAX(record.temperature_value) >= 23.20 THEN '对比仓在 4 月下旬出现轻微抬升，可用于说明波动仓与风险仓的差异。'
         ELSE NULL
     END AS warning_message,
     CASE
-        WHEN record.warehouse_id = 2 AND MAX(record.temperature_value) >= 26.70 THEN '粮温关注'
-        WHEN record.warehouse_id = 6 AND record.collected_at >= '2026-04-20 08:40:00' AND MAX(record.temperature_value) >= 23.80 THEN '轻微波动'
+        WHEN record.warehouse_id = 2 AND MAX(record.temperature_value) >= 26.45 THEN '粮温关注'
+        WHEN record.warehouse_id = 6 AND record.collected_at >= '2026-04-18 08:40:00' AND MAX(record.temperature_value) >= 23.20 THEN '轻微波动'
+        WHEN record.warehouse_id = 3 THEN '维护观察'
         ELSE '粮温正常'
     END AS analysis_result,
     CASE record.warehouse_id
-        WHEN 1 THEN '稳定仓：1-4 月温升平缓，适合展示低风险基线。'
-        WHEN 2 THEN '风险仓：进入 4 月后升温更快，用于展示接近阈值的预警故事线。'
-        ELSE '对比仓：保留一定波动，但不再沿用旧 9 月高温修正叙事。'
+        WHEN 1 THEN '稳定仓：截止 4 月 25 日温升平缓，适合展示低风险基线。'
+        WHEN 2 THEN '风险仓：4 月下旬升温更快，用于展示接近阈值的预警故事线。'
+        WHEN 3 THEN '维护仓：当前状态为维护中，但保留完整历史数据用于展示停用状态下的可追溯记录。'
+        WHEN 4 THEN '日常仓：作为活跃运营仓样本，展示正常运营下的平稳温升。'
+        WHEN 5 THEN '低波动仓：整体趋势平缓，可作为低风险活跃仓对照。'
+        ELSE '对比仓：保留一定波动，用于展示与风险仓不同的升温节奏。'
     END AS analysis_remark
 FROM grain_temp_record record
 JOIN grain_temp_point point ON point.id = record.point_id
@@ -551,7 +583,34 @@ INSERT INTO prediction_task (
 )
 VALUES
     (
-        'TASK-PHASE11-RISK-001',
+        'TASK-DEMO-WH-A01-001',
+        NULL,
+        1,
+        1,
+        'temperature',
+        'GRAIN_TEMP_SUMMARY',
+        'AVG_TEMP',
+        'LINEAR_REGRESSION',
+        '线性回归',
+        '2026-01-01 00:00:00',
+        '2026-04-25 23:59:59',
+        '2026-04-26 00:00:00',
+        '2026-05-05 23:59:59',
+        '2026-04-25 23:59:59',
+        10,
+        115,
+        'INITIAL',
+        'UNADJUSTED',
+        'SUCCESS',
+        'NORMAL',
+        2,
+        '2026-04-25 09:20:00',
+        '2026-04-25 09:20:08',
+        '稳定仓 4 月 25 日后的短期预测保持低风险，用于答辩时对照展示',
+        '0425 全仓完整演示基线'
+    ),
+    (
+        'TASK-DEMO-WH-A02-001',
         NULL,
         1,
         2,
@@ -561,51 +620,105 @@ VALUES
         'WEIGHTED_MOVING_AVERAGE',
         '加权移动平均',
         '2026-01-01 00:00:00',
-        '2026-04-30 23:59:59',
-        '2026-05-01 00:00:00',
-        '2026-05-31 23:59:59',
-        '2026-04-30 23:59:59',
-        31,
-        120,
+        '2026-04-25 23:59:59',
+        '2026-04-26 00:00:00',
+        '2026-05-05 23:59:59',
+        '2026-04-25 23:59:59',
+        10,
+        115,
         'INITIAL',
         'UNADJUSTED',
         'SUCCESS',
         'ATTENTION',
         4,
-        '2026-04-30 10:15:00',
-        '2026-04-30 10:15:12',
-        '基于河南 1-4 月整仓平均温度预测风险仓 5 月走势',
-        'Phase 11 风险仓演示基线'
+        '2026-04-25 09:45:00',
+        '2026-04-25 09:45:10',
+        '风险仓在 4 月 25 日后的短期预测仍维持高位，是主要风险样本',
+        '0425 全仓完整演示基线'
     ),
     (
-        'TASK-PHASE11-STABLE-001',
+        'TASK-DEMO-WH-B01-001',
         NULL,
         1,
-        1,
+        3,
         'temperature',
         'GRAIN_TEMP_SUMMARY',
         'AVG_TEMP',
         'LINEAR_REGRESSION',
         '线性回归',
         '2026-01-01 00:00:00',
-        '2026-04-30 23:59:59',
-        '2026-05-01 00:00:00',
-        '2026-05-15 23:59:59',
-        '2026-04-30 23:59:59',
-        15,
-        120,
+        '2026-04-25 23:59:59',
+        '2026-04-26 00:00:00',
+        '2026-05-05 23:59:59',
+        '2026-04-25 23:59:59',
+        10,
+        115,
         'INITIAL',
         'UNADJUSTED',
         'SUCCESS',
         'NORMAL',
-        2,
-        '2026-04-30 09:40:00',
-        '2026-04-30 09:40:08',
-        '稳定仓 5 月预测保持低风险，用于答辩时对照展示',
-        'Phase 11 稳定仓演示基线'
+        5,
+        '2026-04-25 10:05:00',
+        '2026-04-25 10:05:07',
+        '维护仓保留完整预测归档，用于展示维护状态下的历史可追溯数据',
+        '0425 全仓完整演示基线'
     ),
     (
-        'TASK-PHASE11-CONTRAST-001',
+        'TASK-DEMO-WH-B02-001',
+        NULL,
+        1,
+        4,
+        'temperature',
+        'GRAIN_TEMP_SUMMARY',
+        'AVG_TEMP',
+        'WEIGHTED_MOVING_AVERAGE',
+        '加权移动平均',
+        '2026-01-01 00:00:00',
+        '2026-04-25 23:59:59',
+        '2026-04-26 00:00:00',
+        '2026-05-05 23:59:59',
+        '2026-04-25 23:59:59',
+        10,
+        115,
+        'INITIAL',
+        'UNADJUSTED',
+        'SUCCESS',
+        'NORMAL',
+        6,
+        '2026-04-25 10:20:00',
+        '2026-04-25 10:20:09',
+        '日常仓维持平稳走势，用于展示普通活跃仓的预测归档',
+        '0425 全仓完整演示基线'
+    ),
+    (
+        'TASK-DEMO-WH-C01-001',
+        NULL,
+        1,
+        5,
+        'temperature',
+        'GRAIN_TEMP_SUMMARY',
+        'AVG_TEMP',
+        'LINEAR_REGRESSION',
+        '线性回归',
+        '2026-01-01 00:00:00',
+        '2026-04-25 23:59:59',
+        '2026-04-26 00:00:00',
+        '2026-05-05 23:59:59',
+        '2026-04-25 23:59:59',
+        10,
+        115,
+        'INITIAL',
+        'UNADJUSTED',
+        'SUCCESS',
+        'NORMAL',
+        7,
+        '2026-04-25 10:35:00',
+        '2026-04-25 10:35:07',
+        '低波动仓预测保持低风险，便于和风险仓、对比仓同时展示',
+        '0425 全仓完整演示基线'
+    ),
+    (
+        'TASK-DEMO-WH-C02-001',
         NULL,
         1,
         6,
@@ -615,21 +728,21 @@ VALUES
         'LINEAR_REGRESSION',
         '线性回归',
         '2026-01-01 00:00:00',
-        '2026-04-30 23:59:59',
-        '2026-05-01 00:00:00',
-        '2026-05-21 23:59:59',
-        '2026-04-30 23:59:59',
-        21,
-        120,
+        '2026-04-25 23:59:59',
+        '2026-04-26 00:00:00',
+        '2026-05-05 23:59:59',
+        '2026-04-25 23:59:59',
+        10,
+        115,
         'INITIAL',
         'UNADJUSTED',
         'SUCCESS',
         'ATTENTION',
-        6,
-        '2026-04-30 11:05:00',
-        '2026-04-30 11:05:10',
-        '对比仓 5 月预测保留一定波动，用于展示与风险仓不同的升温节奏',
-        'Phase 11 对比仓演示基线'
+        8,
+        '2026-04-25 10:50:00',
+        '2026-04-25 10:50:08',
+        '对比仓在 4 月 25 日后的预测保留轻微波动，用于展示与风险仓不同的升温节奏',
+        '0425 全仓完整演示基线'
     );
 
 INSERT INTO prediction_result (
@@ -663,28 +776,40 @@ SELECT
     seed.remark
 FROM prediction_task task
 JOIN (
-    SELECT 'TASK-PHASE11-RISK-001' AS task_no, 'FUTURE' AS phase_type, 1 AS step_index, '2026-05-01 00:00:00' AS result_time, NULL AS actual_value, 26.55 AS predicted_value, NULL AS error_value, NULL AS error_rate, 'ATTENTION' AS warning_level, 1 AS warning_flag, '5 月初风险仓继续缓慢抬升，仍需重点巡检。' AS warning_message, 0 AS is_corrected, 'Phase 11 风险仓未来预测点' AS remark
+    SELECT 'TASK-DEMO-WH-A01-001' AS task_no, 'FUTURE' AS phase_type, 1 AS step_index, '2026-04-26 00:00:00' AS result_time, NULL AS actual_value, 20.10 AS predicted_value, NULL AS error_value, NULL AS error_rate, 'NORMAL' AS warning_level, 0 AS warning_flag, NULL AS warning_message, 0 AS is_corrected, '稳定仓未来预测点' AS remark
     UNION ALL
-    SELECT 'TASK-PHASE11-RISK-001', 'FUTURE', 8, '2026-05-08 00:00:00', NULL, 26.72, NULL, NULL, 'ATTENTION', 1, '进入 5 月第二周后接近阈值，建议预留通风窗口。', 0, 'Phase 11 风险仓未来预测点'
+    SELECT 'TASK-DEMO-WH-A01-001', 'FUTURE', 5, '2026-04-30 00:00:00', NULL, 20.18, NULL, NULL, 'NORMAL', 0, NULL, 0, '稳定仓未来预测点'
     UNION ALL
-    SELECT 'TASK-PHASE11-RISK-001', 'FUTURE', 15, '2026-05-15 00:00:00', NULL, 26.88, NULL, NULL, 'ATTENTION', 1, '月中仍维持高位，是答辩里的重点风险样本。', 0, 'Phase 11 风险仓未来预测点'
+    SELECT 'TASK-DEMO-WH-A01-001', 'FUTURE', 10, '2026-05-05 00:00:00', NULL, 20.28, NULL, NULL, 'NORMAL', 0, NULL, 0, '稳定仓未来预测点'
     UNION ALL
-    SELECT 'TASK-PHASE11-RISK-001', 'FUTURE', 22, '2026-05-22 00:00:00', NULL, 27.02, NULL, NULL, 'ATTENTION', 1, '5 月下旬预计逼近高温阈值，需持续关注。', 0, 'Phase 11 风险仓未来预测点'
+    SELECT 'TASK-DEMO-WH-A02-001', 'FUTURE', 1, '2026-04-26 00:00:00', NULL, 26.48, NULL, NULL, 'ATTENTION', 1, '风险仓 4 月末后仍维持高位，建议保持重点巡检。', 0, '风险仓未来预测点'
     UNION ALL
-    SELECT 'TASK-PHASE11-RISK-001', 'FUTURE', 31, '2026-05-31 00:00:00', NULL, 27.16, NULL, NULL, 'ATTENTION', 1, '月底仍处高位，延续风险仓升温叙事。', 0, 'Phase 11 风险仓未来预测点'
+    SELECT 'TASK-DEMO-WH-A02-001', 'FUTURE', 5, '2026-04-30 00:00:00', NULL, 26.62, NULL, NULL, 'ATTENTION', 1, '进入 4 月与 5 月交界后继续逼近阈值，可作为主要风险样本。', 0, '风险仓未来预测点'
     UNION ALL
-    SELECT 'TASK-PHASE11-STABLE-001', 'FUTURE', 1, '2026-05-01 00:00:00', NULL, 20.36, NULL, NULL, 'NORMAL', 0, NULL, 0, 'Phase 11 稳定仓未来预测点'
+    SELECT 'TASK-DEMO-WH-A02-001', 'FUTURE', 10, '2026-05-05 00:00:00', NULL, 26.78, NULL, NULL, 'ATTENTION', 1, '5 月上旬仍维持高位，是答辩中的重点风险走势。', 0, '风险仓未来预测点'
     UNION ALL
-    SELECT 'TASK-PHASE11-STABLE-001', 'FUTURE', 7, '2026-05-07 00:00:00', NULL, 20.44, NULL, NULL, 'NORMAL', 0, NULL, 0, 'Phase 11 稳定仓未来预测点'
+    SELECT 'TASK-DEMO-WH-B01-001', 'FUTURE', 1, '2026-04-26 00:00:00', NULL, 20.85, NULL, NULL, 'NORMAL', 0, NULL, 0, '维护仓未来预测点'
     UNION ALL
-    SELECT 'TASK-PHASE11-STABLE-001', 'FUTURE', 15, '2026-05-15 00:00:00', NULL, 20.55, NULL, NULL, 'NORMAL', 0, NULL, 0, 'Phase 11 稳定仓未来预测点'
+    SELECT 'TASK-DEMO-WH-B01-001', 'FUTURE', 5, '2026-04-30 00:00:00', NULL, 20.93, NULL, NULL, 'NORMAL', 0, NULL, 0, '维护仓未来预测点'
     UNION ALL
-    SELECT 'TASK-PHASE11-CONTRAST-001', 'FUTURE', 1, '2026-05-01 00:00:00', NULL, 23.22, NULL, NULL, 'NORMAL', 0, NULL, 0, 'Phase 11 对比仓未来预测点'
+    SELECT 'TASK-DEMO-WH-B01-001', 'FUTURE', 10, '2026-05-05 00:00:00', NULL, 21.02, NULL, NULL, 'NORMAL', 0, NULL, 0, '维护仓未来预测点'
     UNION ALL
-    SELECT 'TASK-PHASE11-CONTRAST-001', 'FUTURE', 7, '2026-05-07 00:00:00', NULL, 23.38, NULL, NULL, 'NORMAL', 0, NULL, 0, 'Phase 11 对比仓未来预测点'
+    SELECT 'TASK-DEMO-WH-B02-001', 'FUTURE', 1, '2026-04-26 00:00:00', NULL, 22.55, NULL, NULL, 'NORMAL', 0, NULL, 0, '日常仓未来预测点'
     UNION ALL
-    SELECT 'TASK-PHASE11-CONTRAST-001', 'FUTURE', 14, '2026-05-14 00:00:00', NULL, 23.51, NULL, NULL, 'ATTENTION', 1, '对比仓保持轻微波动，可与风险仓形成对照。', 0, 'Phase 11 对比仓未来预测点'
+    SELECT 'TASK-DEMO-WH-B02-001', 'FUTURE', 5, '2026-04-30 00:00:00', NULL, 22.67, NULL, NULL, 'NORMAL', 0, NULL, 0, '日常仓未来预测点'
     UNION ALL
-    SELECT 'TASK-PHASE11-CONTRAST-001', 'FUTURE', 21, '2026-05-21 00:00:00', NULL, 23.66, NULL, NULL, 'ATTENTION', 1, '5 月下旬仍有轻微抬升，但整体弱于风险仓。', 0, 'Phase 11 对比仓未来预测点'
+    SELECT 'TASK-DEMO-WH-B02-001', 'FUTURE', 10, '2026-05-05 00:00:00', NULL, 22.80, NULL, NULL, 'NORMAL', 0, NULL, 0, '日常仓未来预测点'
+    UNION ALL
+    SELECT 'TASK-DEMO-WH-C01-001', 'FUTURE', 1, '2026-04-26 00:00:00', NULL, 20.66, NULL, NULL, 'NORMAL', 0, NULL, 0, '低波动仓未来预测点'
+    UNION ALL
+    SELECT 'TASK-DEMO-WH-C01-001', 'FUTURE', 5, '2026-04-30 00:00:00', NULL, 20.74, NULL, NULL, 'NORMAL', 0, NULL, 0, '低波动仓未来预测点'
+    UNION ALL
+    SELECT 'TASK-DEMO-WH-C01-001', 'FUTURE', 10, '2026-05-05 00:00:00', NULL, 20.83, NULL, NULL, 'NORMAL', 0, NULL, 0, '低波动仓未来预测点'
+    UNION ALL
+    SELECT 'TASK-DEMO-WH-C02-001', 'FUTURE', 1, '2026-04-26 00:00:00', NULL, 23.12, NULL, NULL, 'NORMAL', 0, NULL, 0, '对比仓未来预测点'
+    UNION ALL
+    SELECT 'TASK-DEMO-WH-C02-001', 'FUTURE', 5, '2026-04-30 00:00:00', NULL, 23.28, NULL, NULL, 'ATTENTION', 1, '对比仓保持轻微抬升，可与风险仓形成对照。', 0, '对比仓未来预测点'
+    UNION ALL
+    SELECT 'TASK-DEMO-WH-C02-001', 'FUTURE', 10, '2026-05-05 00:00:00', NULL, 23.46, NULL, NULL, 'ATTENTION', 1, '5 月上旬仍有轻微抬升，但整体弱于风险仓。', 0, '对比仓未来预测点'
 ) seed ON seed.task_no = task.task_no;
 

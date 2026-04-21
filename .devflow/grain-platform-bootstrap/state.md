@@ -1,7 +1,7 @@
 # 当前状态
 
 ## 当前阶段
-- Apply / Verify completed: frontend copy cleanup and `/screen` renamed to 数据大屏; ready to continue
+- Apply / Verify completed: all-warehouse demo data in `schema.sql` expanded through `2026-04-25`; ready to continue
 
 ## 已确认的事实
 - 用户要求使用 `devflow` 记录过程。
@@ -25,6 +25,14 @@
   - `backend/src/main/resources/application.yml` 已改为 `spring.sql.init.mode=never`
   - 已新增显式重置入口：`scripts/reset-demo-db.ps1`
   - 当前默认启动不会自动重建演示库；需要重置时手工执行脚本
+- 已完成 2026-04-21 演示库种子数据补齐：
+  - `backend/src/main/resources/db/schema.sql` 已从“仅 1 / 2 / 6 号仓具备完整样本”扩展为 6 个仓库全覆盖
+  - 全部历史监测数据已统一截止到 `2026-04-25`
+  - `sensor_data` 中 6 个仓库均已具备湿度与二氧化碳数据，每仓 `230` 条（2 指标 * 115 天）
+  - `grain_temp_point` 已为 6 个仓库各补齐 `16` 个测点；`grain_temp_record` 已为每仓补齐 `1840` 条原始记录（16 测点 * 115 天）
+  - `grain_temp_summary` 已为每仓补齐 `115` 天汇总；3 号仓保持 `MAINTENANCE` 状态但保留完整历史数据
+  - `prediction_task` / `prediction_result` 已补齐为每仓至少 1 条温度预测任务与未来结果
+  - 已新增 3 号仓、5 号仓管理员演示账号：`manager_b01`、`manager_c01`
 - 已完成第一轮数据库优先 MVP 改造：
   - 后端预测链已切到 `grain_temp_summary + prediction_task + prediction_result`
   - 新增粮温导入/汇总查询接口：`/api/grain-temp/import`、`/api/grain-temp/summaries`
@@ -177,6 +185,7 @@
 - 归档目录、历史 handoff（`.explore/`、`zzz-docs/Archive/` 等）仍可能含旧主线表述，检索时以本 `state.md` 与最新 PRD 为准。
 - 旧版 PRD、数据库定稿、旧接口设计已归档；历史 handoff/checkpoint 中仍保留旧文件名，属于历史上下文，不应作为当前真相源。
 - 粮温多 Excel 并发导入 deadlock 已完成第二轮代码收口，但真实运行态尚未完成最终复测；若仍报 deadlock，需要进一步判断是否存在多实例后端或数据库侧其他并发写入链路。
+- 当前 `schema.sql` 已完成全仓完整演示数据补齐；若后续还要增强答辩口径，更可能是继续微调故事线与文案，而不是再补基础数据覆盖率。
 
 ## 下一步
 - 优先让用户复测“同仓库多 Excel 并发导入”场景，确认 `grain_temp_record` deadlock 是否已被仓库级串行 + 单条 `upsert` 收口。
@@ -184,6 +193,7 @@
 - 如继续联调：可先处理 `8081` 端口占用与沙箱内 Node `spawn EPERM`；两者均属于本次 PowerShell 解析 bug 之后的新独立阻塞。
 - 如继续写论文，可直接以已更新的 PRD、数据库设计、接口设计文档为材料基线，再补章节化描述或截图。
 - 可选：扩展验收脚本与回归清单（粮温筛选）；按需 `git push`；初始化 GSD 时保持与 devflow 分工。
+- 若继续优化演示库，可优先考虑补文档说明或进一步细化 6 个仓库的业务故事线，而不是再扩大时间跨度。
 - 如需在沙箱环境里重复跑脚本，可优先使用 `-SkipStaticChecks`，静态命令单独执行。
 
 ## 当前参考计划
