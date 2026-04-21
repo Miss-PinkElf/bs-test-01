@@ -43,6 +43,7 @@ const summaryLoading = ref(false);
 const recordLoading = ref(false);
 const importLoadingCount = ref(0);
 const importLoading = computed(() => importLoadingCount.value > 0);
+const submitLoading = ref(false);
 const dialogVisible = ref(false);
 const mode = ref("grain");
 const warehouses = ref([]);
@@ -97,6 +98,7 @@ const currentRecordPageState = computed(() => (mode.value === "grain" ? grainRec
 
 function formatDateTime(value) { return value ? String(value).replace("T", " ") : "-"; }
 function formatTemperatureValue(value) { return value == null || value === "" ? "-" : Number(value).toFixed(2); }
+function normalizeDateTimeInput(value) { return value ? String(value).replace("T", " ") : ""; }
 function getInitialEnvMetricCode() { return envMetricOptions.value[0]?.value || "humidity"; }
 function resolveWarehouseScope(warehouseId) {
   if (isWarehouseManager.value) {
@@ -170,7 +172,7 @@ function resetGrainForm(row = null) {
   grainForm.zoneCode = row?.zoneCode || "A";
   grainForm.layerNo = row?.layerNo || 1;
   grainForm.pointNo = row?.pointNo || 1;
-  grainForm.collectedAt = row?.collectedAt || "";
+  grainForm.collectedAt = normalizeDateTimeInput(row?.collectedAt);
   grainForm.temperatureValue = row?.temperatureValue ?? 24.5;
   grainForm.probeCode = row?.probeCode || "";
   grainForm.remark = row?.remark || "";
@@ -179,7 +181,7 @@ function resetEnvForm(row = null) {
   envForm.warehouseId = resolveWarehouseScope(row?.warehouseId || visibleWarehouses.value[0]?.id || "");
   envForm.metricCode = row?.metricCode || getInitialEnvMetricCode();
   envForm.metricValue = row?.metricValue ?? 58.2;
-  envForm.collectedAt = row?.collectedAt || "";
+  envForm.collectedAt = normalizeDateTimeInput(row?.collectedAt);
 }
 function openManualDialog() {
   editingId.value = null;
@@ -292,19 +294,83 @@ async function reloadCurrentModeData() {
   }
   await loadEnvData();
 }
-async function submit() {
-  if (mode.value === "grain") {
-    const payload = { warehouseId: resolveWarehouseScope(grainForm.warehouseId), zoneCode: grainForm.zoneCode, layerNo: grainForm.layerNo, pointNo: grainForm.pointNo, collectedAt: grainForm.collectedAt, temperatureValue: grainForm.temperatureValue, probeCode: grainForm.probeCode, remark: grainForm.remark };
-    if (isEditing.value) { await updateGrainTempRecord(editingId.value, payload); ElMessage.success("粮温原始记录已更新，汇总与真实预警已联动重算"); }
-    else { await createGrainTempRecord(payload); ElMessage.success("粮温原始记录已写入数据库"); }
-  } else {
-    const payload = { warehouseId: resolveWarehouseScope(envForm.warehouseId), metricCode: envForm.metricCode, metricValue: envForm.metricValue, collectedAt: envForm.collectedAt };
-    if (isEditing.value) { await updateSensorData(editingId.value, payload); ElMessage.success("环境数据已更新"); }
-    else { await createSensorData(payload); ElMessage.success("环境数据已写入数据库"); }
+function validateGrainForm() {
+  if (!resolveWarehouseScope(grainForm.warehouseId)) {
+    throw new Error("请选择仓库");
   }
-  dialogVisible.value = false;
-  editingId.value = null;
-  await reloadCurrentModeData();
+  if (!grainForm.zoneCode?.trim()) {
+    throw new Error("请输入区域");
+  }
+  if (grainForm.layerNo == null) {
+    throw new Error("请输入层号");
+  }
+  if (grainForm.pointNo == null) {
+    throw new Error("请输入点位");
+  }
+  if (grainForm.temperatureValue == null || Number.isNaN(Number(grainForm.temperatureValue))) {
+    throw new Error("请输入温度值");
+  }
+}
+function validateEnvForm() {
+  if (!resolveWarehouseScope(envForm.warehouseId)) {
+    throw new Error("请选择仓库");
+  }
+  if (!envForm.metricCode) {
+    throw new Error("请选择指标");
+  }
+  if (envForm.metricValue == null || Number.isNaN(Number(envForm.metricValue))) {
+    throw new Error("请输入采样值");
+  }
+}
+async function submit() {
+  if (submitLoading.value) {
+    return;
+  }
+  submitLoading.value = true;
+  try {
+    if (mode.value === "grain") {
+      validateGrainForm();
+      const payload = {
+        warehouseId: resolveWarehouseScope(grainForm.warehouseId),
+        zoneCode: grainForm.zoneCode,
+        layerNo: grainForm.layerNo,
+        pointNo: grainForm.pointNo,
+        collectedAt: normalizeDateTimeInput(grainForm.collectedAt) || undefined,
+        temperatureValue: grainForm.temperatureValue,
+        probeCode: grainForm.probeCode,
+        remark: grainForm.remark
+      };
+      if (isEditing.value) {
+        await updateGrainTempRecord(editingId.value, payload);
+        ElMessage.success("粮温原始记录已更新，汇总与真实预警已联动重算");
+      } else {
+        await createGrainTempRecord(payload);
+        ElMessage.success("粮温原始记录已写入数据库");
+      }
+    } else {
+      validateEnvForm();
+      const payload = {
+        warehouseId: resolveWarehouseScope(envForm.warehouseId),
+        metricCode: envForm.metricCode,
+        metricValue: envForm.metricValue,
+        collectedAt: normalizeDateTimeInput(envForm.collectedAt) || undefined
+      };
+      if (isEditing.value) {
+        await updateSensorData(editingId.value, payload);
+        ElMessage.success("环境数据已更新");
+      } else {
+        await createSensorData(payload);
+        ElMessage.success("环境数据已写入数据库");
+      }
+    }
+    dialogVisible.value = false;
+    editingId.value = null;
+    await reloadCurrentModeData();
+  } catch (error) {
+    ElMessage.error(error.message || "保存失败");
+  } finally {
+    submitLoading.value = false;
+  }
 }
 async function handleDelete(row) {
   const label = mode.value === "grain" ? "粮温原始记录" : "环境数据";
@@ -726,8 +792,8 @@ onBeforeUnmount(() => { clearTimeout(recordKeywordTimer); if (chart) chart.dispo
 
       <template #footer>
         <div class="dialog-footer">
-          <el-button @click="dialogVisible = false">取消</el-button>
-          <el-button type="primary" @click="submit">{{ isEditing ? "保存修改" : "提交数据" }}</el-button>
+          <el-button :disabled="submitLoading" @click="dialogVisible = false">取消</el-button>
+          <el-button type="primary" :loading="submitLoading" @click="submit">{{ isEditing ? "保存修改" : "提交数据" }}</el-button>
         </div>
       </template>
     </el-dialog>

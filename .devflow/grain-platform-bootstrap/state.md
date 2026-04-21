@@ -40,6 +40,13 @@
   - `frontend/src/views/PredictionView.vue` 已补充页面说明文案，明确预测区间内新录入真实值会自动回填
   - 静态验证已通过：`backend/` `mvn -q -DskipTests compile`、`frontend/` `npm run build`
   - 运行态验证已通过：临时在 `18082` 启动新后端后，请求 `/api/predictions/tasks/1` 能看到 `2026-04-27 08:40:00` 的真实值回填进旧任务结果序列
+- 已完成 2026-04-21 普通环境数据保存反馈修复：
+  - `frontend/src/views/DataView.vue` 的弹窗提交链路已补 `try/catch/finally`，保存失败不再静默中断
+  - 普通环境数据与粮温数据的提交按钮均已补 loading 与防重复点击
+  - 弹窗提交前已补最小前端校验：仓库、指标/区域、采样值/温度值缺失时会直接提示
+  - 编辑态表单回填的 ISO 时间（如 `2026-04-25T08:00:00`）已统一归一化为 `yyyy-MM-dd HH:mm:ss`，避免 `LocalDateTime` 反序列化报错
+  - 仅在保存成功后才关闭弹窗并刷新列表；失败时保留弹窗并显示错误消息
+  - 静态验证已通过：`frontend/` `npm run build`
 - 已完成 2026-04-21 普通环境趋势图图例收口：
   - `frontend/src/views/DataView.vue` 的普通环境模式趋势图已改为根据当前指标动态显示图例与系列名称，当前查询湿度时显示“湿度”，查询二氧化碳时显示“二氧化碳浓度”
   - 环境模式图表更新已改为非合并更新，避免从粮温模式切换后残留“最高温”等旧图例或系列
