@@ -91,6 +91,7 @@ const dialogTitle = computed(() => (mode.value === "grain"
   : (isEditing.value ? "编辑普通环境数据" : "手工录入普通环境数据")));
 const latestGrainSummary = computed(() => grainSummarySeriesRows.value.at(-1) || null);
 const grainSummaryTargetLabel = computed(() => GRAIN_SUMMARY_TARGET_OPTIONS.find((item) => item.value === grainSummaryTarget.value)?.label || "整仓均温");
+const currentEnvMetricLabel = computed(() => envMetricOptions.value.find((item) => item.value === filters.metricCode)?.label || "环境值");
 // 不同模式共用分页组件时按当前主线切换状态源，避免 grain/env 两套页码互相污染。
 const currentRecordPageState = computed(() => (mode.value === "grain" ? grainRecordPageState : envRecordPageState));
 
@@ -432,13 +433,38 @@ function renderChart() {
     }, true);
     return;
   }
+  const envMetricLabel = currentEnvMetricLabel.value;
+  const envXAxisData = envTrendRows.value.map((item) => formatDateTime(item.time));
+  const denseAxis = envXAxisData.length > MAX_CHART_AXIS_LABELS;
   chart.setOption({
     tooltip: { trigger: "axis" },
-    grid: { left: 32, right: 18, top: 30, bottom: 28 },
-    xAxis: { type: "category", data: envTrendRows.value.map((item) => formatDateTime(item.time)) },
+    legend: { data: [envMetricLabel] },
+    grid: { left: 32, right: 18, top: 36, bottom: denseAxis ? 88 : 56 },
+    xAxis: {
+      type: "category",
+      boundaryGap: false,
+      data: envXAxisData,
+      axisTick: { alignWithLabel: true },
+      axisLabel: {
+        interval: getChartAxisLabelInterval(envXAxisData.length),
+        rotate: denseAxis ? 32 : 0,
+        hideOverlap: true,
+        formatter: (value) => formatChartAxisLabel(value)
+      }
+    },
     yAxis: { type: "value" },
-    series: [{ name: "环境值", type: "line", smooth: true, data: envTrendRows.value.map((item) => item.value), lineStyle: { color: "#0b7a75" }, itemStyle: { color: "#0b7a75" }, areaStyle: { color: "rgba(11, 122, 117, 0.12)" } }]
-  });
+    dataZoom: [
+      { type: "inside", filterMode: "none" },
+      {
+        type: "slider",
+        filterMode: "none",
+        height: 18,
+        bottom: 16,
+        show: denseAxis
+      }
+    ],
+    series: [{ name: envMetricLabel, type: "line", smooth: true, data: envTrendRows.value.map((item) => item.value), lineStyle: { color: "#0b7a75" }, itemStyle: { color: "#0b7a75" }, areaStyle: { color: "rgba(11, 122, 117, 0.12)" } }]
+  }, true);
 }
 onMounted(async () => {
   await loadMetricOptions();

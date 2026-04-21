@@ -40,6 +40,11 @@
   - `frontend/src/views/PredictionView.vue` 已补充页面说明文案，明确预测区间内新录入真实值会自动回填
   - 静态验证已通过：`backend/` `mvn -q -DskipTests compile`、`frontend/` `npm run build`
   - 运行态验证已通过：临时在 `18082` 启动新后端后，请求 `/api/predictions/tasks/1` 能看到 `2026-04-27 08:40:00` 的真实值回填进旧任务结果序列
+- 已完成 2026-04-21 普通环境趋势图图例收口：
+  - `frontend/src/views/DataView.vue` 的普通环境模式趋势图已改为根据当前指标动态显示图例与系列名称，当前查询湿度时显示“湿度”，查询二氧化碳时显示“二氧化碳浓度”
+  - 环境模式图表更新已改为非合并更新，避免从粮温模式切换后残留“最高温”等旧图例或系列
+  - 环境趋势图横轴已补齐与粮温趋势图一致的稠密标签处理和缩放条，长时间序列下可读性更稳定
+  - 静态验证已通过：`frontend/` 执行 `npm run build` 成功
 - 已完成第一轮数据库优先 MVP 改造：
   - 后端预测链已切到 `grain_temp_summary + prediction_task + prediction_result`
   - 新增粮温导入/汇总查询接口：`/api/grain-temp/import`、`/api/grain-temp/summaries`
