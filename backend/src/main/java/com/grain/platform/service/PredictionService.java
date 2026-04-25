@@ -30,6 +30,7 @@ import java.util.TreeMap;
 import java.util.UUID;
 
 @Service
+// 负责把真实历史序列转换成“可归档、可回放、可展示”的预测任务和结果时间线。
 public class PredictionService {
 
     private static final DateTimeFormatter FORMATTER = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
@@ -69,6 +70,7 @@ public class PredictionService {
             throw new IllegalArgumentException("可用于预测的真实历史数据不足");
         }
 
+        // 预测算法要求时间升序输入，因此先把历史样本统一排好序。
         actualSeries = actualSeries.stream().sorted(Comparator.comparing(PredictionPointDto::time)).toList();
         List<PredictionPointDto> forecastSeries = forecastService.predictDaily(actualSeries, request.forecastDays());
 
@@ -248,6 +250,7 @@ public class PredictionService {
         LocalDateTime displayEndTime = task.getForecastEndTime() == null
                 ? task.getTrainEndTime()
                 : task.getForecastEndTime();
+        // 任务详情展示允许把预测区间内后来录入的真实值回填回来，但不改变任务当时的训练样本。
         if ("temperature".equals(task.getMetricCode())) {
             return grainTempService.listPredictionSeries(
                     task.getWarehouseId(),
@@ -294,6 +297,7 @@ public class PredictionService {
                                               SensorMetric metric,
                                               List<PredictionPointDto> actualSeries,
                                               List<PredictionResult> forecastResults) {
+        // 前端只消费一个 resultList：这里先把真实值和预测值并到同一时间轴上。
         List<PredictionResultItemDto> merged = mergeTimeline(actualSeries, forecastResults);
 
         return new PredictionTaskResponse(
@@ -347,6 +351,7 @@ public class PredictionService {
             entry.setPredictionResult(item);
         }
 
+        // TreeMap 保证结果天然按时间排序，前端可以直接画表格和折线图。
         return timeline.values().stream()
                 .map(this::toTimelineItem)
                 .toList();

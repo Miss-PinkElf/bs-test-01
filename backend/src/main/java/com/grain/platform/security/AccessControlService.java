@@ -11,6 +11,7 @@ import org.springframework.util.StringUtils;
 import java.util.List;
 
 @Service
+// 统一收口“当前是谁、能看哪个仓、能不能写”这三类权限判断。
 public class AccessControlService {
 
     private static final String ROLE_ADMIN = "ADMIN";
@@ -72,6 +73,7 @@ public class AccessControlService {
     }
 
     public Long resolveWarehouseScope(CurrentUserContext user, Long requestedWarehouseId) {
+        // 仓库管理员不能自由切仓，查询范围必须自动收口到自己绑定的仓库。
         if (isWarehouseManager(user)) {
             if (user.warehouseId() == null) {
                 throw new ForbiddenException("当前仓库管理员未绑定仓库");
@@ -83,6 +85,7 @@ public class AccessControlService {
     }
 
     public void assertWarehouseWriteAccess(CurrentUserContext user, Long targetWarehouseId) {
+        // 写操作比读操作更严格：查看者一律禁止，仓库管理员也只能操作自己的仓库。
         if (isAdmin(user)) {
             return;
         }

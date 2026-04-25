@@ -7,6 +7,7 @@ const route = useRoute();
 const router = useRouter();
 const authStore = useAuthStore();
 
+// 左侧导航直接从路由表生成，这样新增页面时只需要维护路由配置，不必再手写菜单。
 const navItems = computed(() => router.getRoutes()
   .filter((item) => item.meta?.showInNav)
   .filter((item) => authStore.canAccessRoute(item.meta?.allowedRoles))
@@ -25,6 +26,7 @@ function openScreen() {
   router.push("/screen");
 }
 
+// 退出时同步清掉前端保存的会话，再回登录页，避免旧身份残留。
 function handleLogout() {
   authStore.logout();
   router.push("/login");

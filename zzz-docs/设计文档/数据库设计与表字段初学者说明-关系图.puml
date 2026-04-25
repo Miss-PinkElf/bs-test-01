@@ -1,0 +1,53 @@
+@startuml
+title 粮仓环境数据预测管理平台数据库关系图
+
+hide circle
+skinparam linetype ortho
+skinparam shadowing false
+
+entity "warehouse\n仓库档案" as warehouse
+entity "sys_user\n用户" as sys_user
+entity "sys_role\n角色" as sys_role
+entity "sys_user_role\n用户角色关联" as sys_user_role
+entity "sensor_metric\n指标字典" as sensor_metric
+entity "sensor_data\n普通环境数据" as sensor_data
+entity "grain_temp_point\n粮温测点定义" as grain_temp_point
+entity "grain_temp_record\n粮温原始记录" as grain_temp_record
+entity "grain_temp_summary\n粮温汇总" as grain_temp_summary
+entity "prediction_task\n预测任务" as prediction_task
+entity "prediction_result\n预测结果" as prediction_result
+
+warehouse ||--o{ sys_user : "所属仓库"
+sys_user ||--o{ sys_user_role : "拥有"
+sys_role ||--o{ sys_user_role : "被分配"
+
+warehouse ||--o{ sensor_data : "产生"
+sensor_metric ||--o{ sensor_data : "定义"
+
+warehouse ||--o{ grain_temp_point : "定义测点"
+warehouse ||--o{ grain_temp_record : "产生记录"
+grain_temp_point ||--o{ grain_temp_record : "对应"
+warehouse ||--o{ grain_temp_summary : "汇总结果"
+
+warehouse ||--o{ prediction_task : "发起预测"
+sensor_metric ||--o{ prediction_task : "预测指标"
+prediction_task ||--o{ prediction_result : "输出结果"
+prediction_task ||--o| prediction_task : "父子任务扩展"
+
+note bottom of sensor_data
+轻建模：
+湿度、二氧化碳等单值时序
+end note
+
+note bottom of grain_temp_record
+深建模：
+按区域/层号/点位保存原始测点
+end note
+
+note bottom of prediction_result
+归档层：
+保存每个预测时间点的预测值、
+真实回填值和预测预警
+end note
+
+@enduml

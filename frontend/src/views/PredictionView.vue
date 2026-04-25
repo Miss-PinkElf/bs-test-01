@@ -24,6 +24,7 @@ let summaryFlashTimer = null;
 let chart;
 
 const authStore = useAuthStore();
+// 当前页同时维护三块状态：预测表单、当前选中的任务摘要、历史任务分页表格。
 const loading = ref(false);
 const historyLoading = ref(false);
 const warehouses = ref([]);
@@ -320,6 +321,7 @@ async function runPrediction() {
       payload.trainEndTime = trainRange.value[1];
     }
 
+    // 执行预测后，页面主视觉立刻切到新任务，并刷新下方历史归档表。
     prediction.value = await predictMetric(payload);
     syncPredictionChartRange(prediction.value.resultList);
     selectedTaskId.value = prediction.value.taskId;
@@ -513,6 +515,7 @@ function renderChart() {
 }
 
 onMounted(async () => {
+  // 页面首次进入时优先回显已有归档；如果还没有历史任务，再自动跑一轮默认预测。
   await loadWarehouses();
   await loadPredictionHistoryPage();
 

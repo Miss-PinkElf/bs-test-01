@@ -70,6 +70,7 @@ let chart;
 let recordKeywordTimer;
 
 const authStore = useAuthStore();
+// 数据页把“查询条件、图表、汇总表、原始记录表、录入弹窗”放在同一页里统一联动。
 const filters = reactive({ warehouseId: "", metricCode: "humidity" });
 const grainForm = reactive({ warehouseId: "", zoneCode: "A", layerNo: 1, pointNo: 1, collectedAt: "", temperatureValue: 24.5, probeCode: "", remark: "" });
 const envForm = reactive({ warehouseId: "", metricCode: "humidity", metricValue: 58.2, collectedAt: "" });
@@ -289,6 +290,7 @@ async function loadEnvData() {
 }
 async function reloadCurrentModeData() {
   if (mode.value === "grain") {
+    // 粮温模式下，图表、汇总表、原始记录表共享同一个仓库主线，需要一起刷新。
     await Promise.all([loadGrainSummarySeries(), loadGrainSummaryTable(), loadGrainRecords()]);
     return;
   }
@@ -439,6 +441,7 @@ async function handleModeChange() {
     await loadEnvData();
     return;
   }
+  // 切回粮温模式时要同时恢复默认时间窗口和筛选项，避免沿用普通环境模式的查询态。
   resetGrainForm();
   ensureDefaultGrainSummaryRange();
   grainRecordPageState.pageNum = 1;
@@ -462,6 +465,7 @@ function renderChart() {
   if (!chartRef.value) return;
   if (!chart) chart = echarts.init(chartRef.value);
   if (mode.value === "grain") {
+    // 粮温图看的是汇总趋势，普通环境图看的是单值时序，两种模式共用同一个图容器。
     const grainChartRows = grainSummarySeriesRows.value;
     const grainXAxisData = grainChartRows.map((item) => formatDateTime(item.collectedAt));
     const denseAxis = grainXAxisData.length > MAX_CHART_AXIS_LABELS;
@@ -533,6 +537,7 @@ function renderChart() {
   }, true);
 }
 onMounted(async () => {
+  // 默认先进入粮温主线，因为它是当前毕业设计 MVP 的核心展示路径。
   await loadMetricOptions();
   await loadWarehouses();
   resetGrainForm();

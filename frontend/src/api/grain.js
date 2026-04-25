@@ -10,6 +10,7 @@ const metricNameMap = {
 
 const DEFAULT_METRIC_CODE = "temperature";
 
+// 当前项目用演示用户名请求头告诉后端“当前是谁”，便于在不接完整鉴权体系时先完成联调。
 function createDemoUsernameHeaders(baseHeaders = {}) {
   const session = getSession();
 
@@ -35,6 +36,7 @@ function downloadBlobFile(blob, filename) {
   window.URL.revokeObjectURL(objectUrl);
 }
 
+// API 层负责把后端返回值收口成页面真正需要的结构，而不是把原始响应直接扔给视图层。
 // 统一兼容后端可能返回的角色字段，避免页面各自判断 role / roleCodes。
 function normalizeRoleCodes(raw) {
   if (Array.isArray(raw?.roleCodes)) {

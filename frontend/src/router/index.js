@@ -13,6 +13,7 @@ import { getSession } from "../utils/session";
 const CONSOLE_ALLOWED_ROLES = ["ADMIN", "WAREHOUSE_MANAGER", "VIEWER"];
 const ADMIN_ONLY_ROLES = ["ADMIN"];
 
+// 管理端页面在这里统一注册，路由 meta 既是页面说明，也是导航和权限配置的真相源。
 const routes = [
   {
     path: "/login",
@@ -98,6 +99,7 @@ const router = createRouter({
   routes
 });
 
+// 路由守卫只做三件事：校验登录态、按角色挑默认首页、拦住越权访问。
 router.beforeEach((to) => {
   const session = getSession();
   const defaultRoute = resolveDefaultRouteByRoleCodes(session?.roleCodes);

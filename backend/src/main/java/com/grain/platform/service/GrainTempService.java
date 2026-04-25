@@ -28,6 +28,7 @@ import java.util.Objects;
 import java.util.stream.Collectors;
 
 @Service
+// 粮温主线的核心服务：原始测点记录、汇总结果、预测输入序列都从这里经过。
 public class GrainTempService {
 
     private final GrainTempPointMapper grainTempPointMapper;
@@ -186,6 +187,7 @@ public class GrainTempService {
         record.setRemark(request.remark());
         record.setCreatedBy(operatorUserId);
         grainTempRecordMapper.insert(record);
+        // 原始记录是事实层，新增后立刻重算汇总，首页和预测页才能看到最新状态。
         rebuildSummary(request.warehouseId(), request.collectedAt());
         return new IdVO(record.getId());
     }
@@ -229,6 +231,7 @@ public class GrainTempService {
                                                          LocalDateTime startTime,
                                                          LocalDateTime endTime,
                                                          String targetType) {
+        // 预测页不直接读原始测点，而是读汇总表，避免算法层重复承担测点聚合逻辑。
         List<GrainTempSummary> rows = grainTempSummaryMapper.selectSeriesByTarget(warehouseId, startTime, endTime, targetType);
         return rows.stream()
                 .map(item -> new PredictionPointDto(item.getCollectedAt(), selectTargetValue(item, targetType)))
@@ -284,6 +287,7 @@ public class GrainTempService {
     private void rebuildSummary(Long warehouseId, LocalDateTime collectedAt) {
         List<GrainTempRecordItemDto> records = grainTempRecordMapper.selectByWarehouseAndCollectedAt(warehouseId, collectedAt);
         if (records.isEmpty()) {
+            // 这个时间点已经没有原始测点时，要把对应汇总也删掉，避免留下脏的“孤儿汇总”。
             grainTempSummaryMapper.deleteByWarehouseAndCollectedAt(warehouseId, collectedAt);
             return;
         }

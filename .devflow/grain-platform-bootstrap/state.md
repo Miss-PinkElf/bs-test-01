@@ -1,7 +1,7 @@
 # 当前状态
 
 ## 当前阶段
-- Pause-ready after prediction actual-backfill compare and chart connectNulls
+- Pause-ready after beginner comments and architecture/database guides
 
 ## 已确认的事实
 - 用户要求使用 `devflow` 记录过程。
@@ -40,6 +40,14 @@
   - `frontend/src/views/PredictionView.vue` 已补充页面说明文案，明确预测区间内新录入真实值会自动回填
   - 静态验证已通过：`backend/` `mvn -q -DskipTests compile`、`frontend/` `npm run build`
   - 运行态验证已通过：临时在 `18082` 启动新后端后，请求 `/api/predictions/tasks/1` 能看到 `2026-04-27 08:40:00` 的真实值回填进旧任务结果序列
+- 已完成 2026-04-25 初学者注释与讲解文档补充：
+  - 已新增计划：`.devflow/grain-platform-bootstrap/plans/2026-04-25-beginner-comments-and-architecture-database-guides.md`
+  - 已为前后端关键入口和核心服务补充简短注释，重点覆盖路由、布局、API 归一化、权限收口、粮温主线、预测归档和首页聚合
+  - 已新增初学者文档：`zzz-docs/设计文档/项目整体架构与前后端初学者说明.md`
+  - 已新增初学者文档：`zzz-docs/设计文档/数据库设计与表字段初学者说明.md`
+  - 已新增 PlantUML 图：`zzz-docs/设计文档/项目整体架构与前后端初学者说明-架构图.puml`
+  - 已新增 PlantUML 图：`zzz-docs/设计文档/数据库设计与表字段初学者说明-关系图.puml`
+  - 静态验证已通过：`backend/` `mvn -q -DskipTests compile`、`frontend/` `npm run build`
 - 已完成 2026-04-21 普通环境数据保存反馈修复：
   - `frontend/src/views/DataView.vue` 的弹窗提交链路已补 `try/catch/finally`，保存失败不再静默中断
   - 普通环境数据与粮温数据的提交按钮均已补 loading 与防重复点击
@@ -208,6 +216,7 @@
 - 若本地页面仍看不到预测区间内新真实值，优先检查是否仍在使用旧的 `8081` 后端进程；本轮运行态验证是在新启动的 `18082` 进程上完成的。
 
 ## 下一步
+- 如继续收口答辩或交接材料，可优先复用两份初学者文档与 PlantUML 图，再按论文口径做裁剪。
 - 优先让用户复测“同仓库多 Excel 并发导入”场景，确认 `grain_temp_record` deadlock 是否已被仓库级串行 + 单条 `upsert` 收口。
 - 若仍复现 deadlock，下一步要先确认是否存在多实例后端、数据库事件/脚本或其他同时写 `grain_temp_record` 的链路，而不是继续在当前单实例假设下盲目调 SQL。
 - 如继续联调：可先处理 `8081` 端口占用与沙箱内 Node `spawn EPERM`；两者均属于本次 PowerShell 解析 bug 之后的新独立阻塞。
@@ -218,6 +227,7 @@
 - 如需在沙箱环境里重复跑脚本，可优先使用 `-SkipStaticChecks`，静态命令单独执行。
 
 ## 当前参考计划
+- `.devflow/grain-platform-bootstrap/plans/2026-04-25-beginner-comments-and-architecture-database-guides.md`
 - `.devflow/grain-platform-bootstrap/plans/2026-04-16-frontend-copy-cleanup-and-screen-rename.md`
 - `.devflow/grain-platform-bootstrap/plans/2026-04-11-gsd-devflow-prd-database-doc-sync.md`
 - `.devflow/grain-platform-bootstrap/plans/active-plan-links.md`
@@ -232,12 +242,13 @@
 - `.devflow/grain-platform-bootstrap/plans/2026-04-10-usersview-and-screen-display-unification.md`
 
 ## 最新 handoff
-- `.devflow/grain-platform-bootstrap/handoffs/2026-04-21-024-pause-ready-after-prediction-backfill-and-chart-connect.md`
+- `.devflow/grain-platform-bootstrap/handoffs/2026-04-25-025-pause-ready-after-beginner-docs-and-comment-guides.md`
 
 ## 最小活跃上下文摘要
 - **Git**：`b852b72` 已提交（全仓演示数据补齐 + 截止到 4 月 25 日）。本轮尚有未提交改动：预测任务真实值回填、图表 `connectNulls`、最新 devflow handoff / prompt。
 - **恢复**：`state.md` + handoff **024** + 根目录 `NEXT-SESSION-PROMPT-DEVFLOW.md`。预测页相关计划见 `plans/2026-04-21-prediction-task-actual-backfill-compare.md`。
 - **已完成**：历史预测任务详情支持预测区间内真实值回填；双线图已启用 `connectNulls`；SQL 已改为整库重置并补齐 6 仓完整数据。
+- **本轮补充**：已新增两份面向初学者的中文讲解文档与两张 PlantUML 图，并为关键前后端代码补了简短注释。
 - **开放**：demo 预测点仍偏稀疏且时间为 `00:00:00`；若本地页面还未体现回填效果，需先重启 `8081` 后端；deadlock 真实并发复测、验收脚本补断言、文档/论文进一步收口仍可继续。
 
 

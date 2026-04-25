@@ -19,6 +19,7 @@ import java.util.Locale;
 import java.util.stream.Stream;
 
 @Service
+// 首页和大屏都走这里做聚合，页面层只关心“展示什么”，不直接拼装底层数据。
 public class DashboardService {
 
     private static final int DEFAULT_PAGE_SIZE = 5;
@@ -118,6 +119,7 @@ public class DashboardService {
     public ScreenDashboardResponse getScreenDashboard(Long warehouseId,
                                                       LocalDateTime startTime,
                                                       LocalDateTime endTime) {
+        // 大屏不是单独维护一套口径，而是复用首页这套真实统计和预警聚合。
         DashboardOverviewResponse overview = buildOverview(
                 dashboardMapper.countScreenWarehouses(warehouseId),
                 dashboardMapper.countScreenGrainSummaryCount(warehouseId, startTime, endTime),
@@ -157,6 +159,7 @@ public class DashboardService {
                                                     List<DashboardAlertItemResponse> predictionAlerts,
                                                     List<DashboardLatestSummaryResponse> latestGrainSummaries,
                                                     List<DashboardWarehouseHealthResponse> warehouseHealthList) {
+        // 首页只展示最近几条重点预警，因此这里先合并真实/预测预警，再统一排序截断。
         List<DashboardAlertItemResponse> alerts = Stream.concat(
                         realAlerts.stream(),
                         predictionAlerts.stream()

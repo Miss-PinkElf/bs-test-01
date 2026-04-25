@@ -1,0 +1,75 @@
+@startuml
+title 粮仓环境数据预测管理平台整体架构图
+
+skinparam componentStyle rectangle
+skinparam shadowing false
+skinparam linetype ortho
+
+actor "管理员 / 仓库管理员 / 查看者" as User
+
+rectangle "frontend/\nVue 3 + Element Plus + ECharts" as Frontend {
+  component "LoginView\n登录页" as Login
+  component "DashboardView\n仪表盘" as Dashboard
+  component "DataView\n环境数据页" as DataView
+  component "PredictionView\n温度预测页" as PredictionView
+  component "UsersView / WarehouseView\n后台管理页" as AdminViews
+  component "BigScreenView\n数据大屏" as Screen
+  component "api/grain.js\nAPI 归一化层" as ApiLayer
+}
+
+rectangle "backend/\nSpring Boot + MyBatis" as Backend {
+  component "AuthController" as AuthController
+  component "DashboardController / Service" as DashboardModule
+  component "GrainTempController / Service" as GrainModule
+  component "PredictionController / Service" as PredictionModule
+  component "User / Warehouse / Sensor\nController / Service" as CrudModule
+  component "AccessControlService\n权限收口" as AccessModule
+  component "Mapper XML / Mapper 接口" as MapperLayer
+}
+
+database "MySQL\ngrain_env_predict" as DB
+
+User --> Login
+User --> Dashboard
+User --> DataView
+User --> PredictionView
+User --> AdminViews
+User --> Screen
+
+Login --> ApiLayer
+Dashboard --> ApiLayer
+DataView --> ApiLayer
+PredictionView --> ApiLayer
+AdminViews --> ApiLayer
+Screen --> ApiLayer
+
+ApiLayer --> AuthController
+ApiLayer --> DashboardModule
+ApiLayer --> GrainModule
+ApiLayer --> PredictionModule
+ApiLayer --> CrudModule
+
+DashboardModule --> AccessModule
+GrainModule --> AccessModule
+PredictionModule --> AccessModule
+CrudModule --> AccessModule
+
+DashboardModule --> MapperLayer
+GrainModule --> MapperLayer
+PredictionModule --> MapperLayer
+CrudModule --> MapperLayer
+
+MapperLayer --> DB
+
+note right of GrainModule
+粮温主线：
+原始测点记录 -> 汇总分析 -> 真实预警
+end note
+
+note right of PredictionModule
+预测主线：
+读取粮温汇总 -> 创建 prediction_task
+-> 写入 prediction_result -> 前端双线图展示
+end note
+
+@enduml
