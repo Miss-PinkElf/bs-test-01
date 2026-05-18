@@ -55,6 +55,11 @@
   - 编辑态表单回填的 ISO 时间（如 `2026-04-25T08:00:00`）已统一归一化为 `yyyy-MM-dd HH:mm:ss`，避免 `LocalDateTime` 反序列化报错
   - 仅在保存成功后才关闭弹窗并刷新列表；失败时保留弹窗并显示错误消息
   - 静态验证已通过：`frontend/` `npm run build`
+- 已完成 2026-05-18 普通环境模板 `collectedAt` 导入兼容修复：
+  - 问题现象：切换到“普通环境数据”后直接导入模板，页面提示第 2 行 `collectedAt` 时间格式错误
+  - 问题原因：普通环境模板是 CSV，Excel 打开或保存后可能把 `2026-04-07 08:00:00` 改写成 `2026/4/7 8:00` 等格式，而后端原先只接受严格 `yyyy-MM-dd HH:mm:ss`
+  - 解决方案：`SensorDataImportService` 兼容 Excel 常见日期时间文本格式；普通环境模板示例收口为 `humidity` / `co2`；新增 `SensorDataImportServiceTest`
+  - 验证已通过：`backend/` `mvn -q test -Dtest=SensorDataImportServiceTest`、`mvn -q -DskipTests compile`
 - 已完成 2026-04-21 普通环境趋势图图例收口：
   - `frontend/src/views/DataView.vue` 的普通环境模式趋势图已改为根据当前指标动态显示图例与系列名称，当前查询湿度时显示“湿度”，查询二氧化碳时显示“二氧化碳浓度”
   - 环境模式图表更新已改为非合并更新，避免从粮温模式切换后残留“最高温”等旧图例或系列
@@ -216,6 +221,7 @@
 - 若本地页面仍看不到预测区间内新真实值，优先检查是否仍在使用旧的 `8081` 后端进程；本轮运行态验证是在新启动的 `18082` 进程上完成的。
 
 ## 下一步
+- 若要确认本次普通环境模板导入修复的页面效果，先重启本地 `8081` 后端，再在“普通环境数据”模式下载模板并上传验证。
 - 如继续收口答辩或交接材料，可优先复用两份初学者文档与 PlantUML 图，再按论文口径做裁剪。
 - 优先让用户复测“同仓库多 Excel 并发导入”场景，确认 `grain_temp_record` deadlock 是否已被仓库级串行 + 单条 `upsert` 收口。
 - 若仍复现 deadlock，下一步要先确认是否存在多实例后端、数据库事件/脚本或其他同时写 `grain_temp_record` 的链路，而不是继续在当前单实例假设下盲目调 SQL。
@@ -227,6 +233,7 @@
 - 如需在沙箱环境里重复跑脚本，可优先使用 `-SkipStaticChecks`，静态命令单独执行。
 
 ## 当前参考计划
+- `.devflow/grain-platform-bootstrap/plans/2026-05-18-sensor-data-template-collected-at-import-fix.md`
 - `.devflow/grain-platform-bootstrap/plans/2026-04-25-beginner-comments-and-architecture-database-guides.md`
 - `.devflow/grain-platform-bootstrap/plans/2026-04-16-frontend-copy-cleanup-and-screen-rename.md`
 - `.devflow/grain-platform-bootstrap/plans/2026-04-11-gsd-devflow-prd-database-doc-sync.md`
@@ -242,14 +249,14 @@
 - `.devflow/grain-platform-bootstrap/plans/2026-04-10-usersview-and-screen-display-unification.md`
 
 ## 最新 handoff
-- `.devflow/grain-platform-bootstrap/handoffs/2026-04-25-025-pause-ready-after-beginner-docs-and-comment-guides.md`
+- `.devflow/grain-platform-bootstrap/handoffs/2026-05-18-026-pause-ready-after-sensor-template-date-import-fix.md`
 
 ## 最小活跃上下文摘要
-- **Git**：`b852b72` 已提交（全仓演示数据补齐 + 截止到 4 月 25 日）。本轮尚有未提交改动：预测任务真实值回填、图表 `connectNulls`、最新 devflow handoff / prompt。
-- **恢复**：`state.md` + handoff **024** + 根目录 `NEXT-SESSION-PROMPT-DEVFLOW.md`。预测页相关计划见 `plans/2026-04-21-prediction-task-actual-backfill-compare.md`。
-- **已完成**：历史预测任务详情支持预测区间内真实值回填；双线图已启用 `connectNulls`；SQL 已改为整库重置并补齐 6 仓完整数据。
-- **本轮补充**：已新增两份面向初学者的中文讲解文档与两张 PlantUML 图，并为关键前后端代码补了简短注释。
-- **开放**：demo 预测点仍偏稀疏且时间为 `00:00:00`；若本地页面还未体现回填效果，需先重启 `8081` 后端；deadlock 真实并发复测、验收脚本补断言、文档/论文进一步收口仍可继续。
+- **恢复**：`state.md` + handoff **026** + 根目录 `NEXT-SESSION-PROMPT-DEVFLOW.md`。普通环境模板修复计划见 `plans/2026-05-18-sensor-data-template-collected-at-import-fix.md`。
+- **已完成**：普通环境 CSV 模板示例收口为 `humidity` / `co2`；后端导入解析兼容 Excel 常见日期时间文本；新增 `SensorDataImportServiceTest`。
+- **验证**：`backend/` 已通过 `mvn -q test -Dtest=SensorDataImportServiceTest` 与 `mvn -q -DskipTests compile`。
+- **仍需人工复测**：浏览器页面完整链路“下载普通环境模板 -> Excel 打开/保存 -> 上传导入”尚未执行；复测前先确保 `8081` 后端是新进程。
+- **开放**：demo 预测点仍偏稀疏且时间为 `00:00:00`；deadlock 真实并发复测、验收脚本补断言、文档/论文进一步收口仍可继续。
 
 
 

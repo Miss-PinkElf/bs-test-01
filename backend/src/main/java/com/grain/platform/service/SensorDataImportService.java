@@ -28,8 +28,15 @@ import java.util.Locale;
 public class SensorDataImportService {
 
     private static final DateTimeFormatter DATE_TIME_FORMATTER = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
+    private static final DateTimeFormatter[] SUPPORTED_DATE_TIME_FORMATTERS = {
+            DATE_TIME_FORMATTER,
+            DateTimeFormatter.ofPattern("yyyy-M-d H:mm:ss"),
+            DateTimeFormatter.ofPattern("yyyy-M-d H:mm"),
+            DateTimeFormatter.ofPattern("yyyy/MM/dd HH:mm:ss"),
+            DateTimeFormatter.ofPattern("yyyy/M/d H:mm:ss"),
+            DateTimeFormatter.ofPattern("yyyy/M/d H:mm")
+    };
     private static final String CSV_TEMPLATE = "warehouseId,metricCode,metricValue,collectedAt,remark\n"
-            + "1,temperature,24.8,2026-04-07 08:00:00,早间巡检录入\n"
             + "1,humidity,58.2,2026-04-07 08:00:00,早间巡检录入\n"
             + "2,co2,640,2026-04-07 08:00:00,通风后复测\n";
     private static final String UTF8_BOM = "\uFEFF";
@@ -138,11 +145,21 @@ public class SensorDataImportService {
     }
 
     private LocalDateTime parseDateTime(String raw, int rowIndex, String fieldName) {
-        try {
-            return LocalDateTime.parse(raw.trim(), DATE_TIME_FORMATTER);
-        } catch (DateTimeParseException ex) {
-            throw new IllegalArgumentException("第 " + rowIndex + " 行字段 " + fieldName + " 时间格式错误，应为 yyyy-MM-dd HH:mm:ss");
+        String normalizedRaw = raw == null ? "" : raw.trim();
+        if (normalizedRaw.isEmpty()) {
+            throw new IllegalArgumentException("第 " + rowIndex + " 行字段 " + fieldName + " 不能为空");
         }
+
+        // 普通环境模板是 CSV，用户用 Excel 打开后可能会把日期改写成 2026/4/7 8:00 一类文本。
+        for (DateTimeFormatter formatter : SUPPORTED_DATE_TIME_FORMATTERS) {
+            try {
+                return LocalDateTime.parse(normalizedRaw, formatter);
+            } catch (DateTimeParseException ignored) {
+                // 继续尝试下一个兼容格式。
+            }
+        }
+
+        throw new IllegalArgumentException("第 " + rowIndex + " 行字段 " + fieldName + " 时间格式错误，应为 yyyy-MM-dd HH:mm:ss，或 Excel 常见日期时间格式");
     }
 
     private LocalDateTime parseDateTimeCell(Cell cell, DataFormatter formatter, int rowIndex) {

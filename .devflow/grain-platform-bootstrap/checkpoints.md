@@ -544,4 +544,29 @@
 - 可以从活跃上下文移除的内容：
   - 本轮为区分旧进程 / 新进程而做的临时 `18082` 验证命令。
 
+## 2026-05-18-024
+- 当前阶段：Apply / Verify completed，Pause-ready
+- 本轮完成内容：
+  - 恢复 `grain-platform-bootstrap` devflow 上下文，确认当前主线仍为数据库优先 MVP。
+  - 定位普通环境数据模板直接导入时报 `collectedAt` 时间格式错误的问题。
+  - 新增计划：`.devflow/grain-platform-bootstrap/plans/2026-05-18-sensor-data-template-collected-at-import-fix.md`。
+  - 修改 `SensorDataImportService`，兼容 Excel 常见日期时间文本格式。
+  - 普通环境 CSV 模板示例收口为 `humidity` / `co2`。
+  - 新增 `SensorDataImportServiceTest`，覆盖模板原始格式、Excel 改写格式和非法格式。
+  - 更新 `bug-log.md`、`state.md`、`handoffs/index.md` 与根目录 `NEXT-SESSION-PROMPT-DEVFLOW.md`。
+  - 新增 handoff：`2026-05-18-026-pause-ready-after-sensor-template-date-import-fix.md`。
+- 本轮决策与原因：
+  - 采用后端解析兼容方案，而不是要求用户手工修模板时间格式，因为 Excel 自动改写 CSV 时间是高频真实使用场景。
+  - 不改前端上传链路，因为本轮证据表明问题集中在后端 `collectedAt` 解析。
+- 本轮沉淀经验：
+  - CSV 模板如果面向 Excel 用户，后端解析不能只接受单一标准格式；否则模板本身在被 Excel 打开后就可能变成“非法数据”。
+- 待解决问题：
+  - 尚未做浏览器页面“下载模板 -> Excel 打开/保存 -> 上传导入”的完整人工复测。
+  - 预测点稀疏、预测时间统一、粮温并发导入 deadlock 真实复测、验收脚本增强仍是开放项。
+- 下一步：
+  - 若继续联调，先重启本地 `8081` 后端，再从普通环境模板导入页面实测开始。
+  - 若继续优化预测页，先讨论 demo 预测点频率和时间口径。
+- 可以从活跃上下文移除的内容：
+  - 本轮对普通环境导入解析的中间排查输出。
+
 

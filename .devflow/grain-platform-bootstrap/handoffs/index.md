@@ -2,11 +2,12 @@
 
 ## 最新 handoff
 
-- [2026-04-25-025-pause-ready-after-beginner-docs-and-comment-guides](.devflow/grain-platform-bootstrap/handoffs/2026-04-25-025-pause-ready-after-beginner-docs-and-comment-guides.md)
+- [2026-05-18-026-pause-ready-after-sensor-template-date-import-fix](.devflow/grain-platform-bootstrap/handoffs/2026-05-18-026-pause-ready-after-sensor-template-date-import-fix.md)
 
 ## Handoff 列表
 
-- `2026-04-25-025-pause-ready-after-beginner-docs-and-comment-guides` | 阶段：初学者注释补充 + 架构/数据库讲解文档图文结合收口后暂停 | 状态：**latest**
+- `2026-05-18-026-pause-ready-after-sensor-template-date-import-fix` | 阶段：普通环境数据模板时间导入修复后暂停 | 状态：**latest**
+- `2026-04-25-025-pause-ready-after-beginner-docs-and-comment-guides` | 阶段：初学者注释补充 + 架构/数据库讲解文档图文结合收口后暂停 | 状态：superseded
 - `2026-04-21-024-pause-ready-after-prediction-backfill-and-chart-connect` | 阶段：全仓演示数据补齐 + 历史预测任务真实值回填 + 图表断线收口后暂停 | 状态：superseded
 - `2026-04-11-023-doc-sync-and-thesis-materials-ready` | 阶段：GSD / devflow / 论文文档同步完成后暂停 | 状态：superseded
 - `2026-04-10-022-pause-ready-after-layout-grain-filter-handoff-commit` | 阶段：管理端布局 + 粮温多条件筛选 + devflow 补记 + 提交后暂停 | 状态：superseded

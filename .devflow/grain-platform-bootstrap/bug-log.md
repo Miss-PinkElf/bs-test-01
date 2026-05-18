@@ -147,3 +147,41 @@
 - **表结构：** `backend/src/main/resources/db/schema.sql`（`grain_temp_record`、`grain_temp_point`）
 - **经验：** `.devflow/grain-platform-bootstrap/learnings.md`（2026-04-20 条目）
 
+---
+
+## BUG-2026-05-18-005：普通环境数据模板直接导入时报 `collectedAt` 时间格式错误
+
+### 问题现象
+
+- 在数据管理页切换到“普通环境数据”后，下载普通环境数据导入模板并直接导入，页面提示：
+  - `第 2 行字段 collectedAt 时间格式错误，应为 yyyy-MM-dd HH:mm:ss`
+- 错误出现在模板示例数据行，用户没有手工构造异常数据。
+
+### 问题原因
+
+1. 普通环境模板当前是 CSV 文件，模板原始文本中的 `collectedAt` 是 `2026-04-07 08:00:00`。
+2. 用户用 Excel 打开或保存 CSV 后，Excel 可能自动把时间文本改写成 `2026/4/7 8:00`、`2026-4-7 8:00:00` 等常见格式。
+3. 后端 `SensorDataImportService` 原先只接受严格的 `yyyy-MM-dd HH:mm:ss`，导致“直接使用模板”在 Excel 改写后也可能被导入校验拦截。
+4. 普通环境模板还包含 `temperature` 示例行，容易与当前粮温主线口径混淆。
+
+### 解决方案
+
+1. `SensorDataImportService` 的时间解析保留 `yyyy-MM-dd HH:mm:ss` 作为标准格式，同时兼容 Excel 常见日期时间文本：
+   - `yyyy-M-d H:mm:ss`
+   - `yyyy-M-d H:mm`
+   - `yyyy/MM/dd HH:mm:ss`
+   - `yyyy/M/d H:mm:ss`
+   - `yyyy/M/d H:mm`
+2. 普通环境 CSV 模板示例只保留 `humidity` 与 `co2`，不再放入 `temperature` 示例。
+3. 新增 `SensorDataImportServiceTest`，覆盖模板原始格式、Excel 常见改写格式和非法格式。
+
+### 验证结果
+
+- `backend/` 执行 `mvn -q test -Dtest=SensorDataImportServiceTest` 通过。
+- `backend/` 执行 `mvn -q -DskipTests compile` 通过。
+
+### 关联
+
+- **代码：** `backend/src/main/java/com/grain/platform/service/SensorDataImportService.java`
+- **测试：** `backend/src/test/java/com/grain/platform/service/SensorDataImportServiceTest.java`
+- **计划：** `.devflow/grain-platform-bootstrap/plans/2026-05-18-sensor-data-template-collected-at-import-fix.md`
