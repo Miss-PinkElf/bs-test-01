@@ -17,6 +17,8 @@ public record PredictionRequest(
         LocalDateTime trainStartTime,
         @JsonFormat(pattern = "yyyy-MM-dd'T'HH:mm:ss")
         LocalDateTime trainEndTime,
+        @JsonFormat(pattern = "yyyy-MM-dd'T'HH:mm:ss")
+        LocalDateTime forecastStartTime,
         @Min(value = 1, message = "预测天数至少为 1")
         int forecastDays
 ) {

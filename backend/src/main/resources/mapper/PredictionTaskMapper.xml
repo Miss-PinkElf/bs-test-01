@@ -138,6 +138,15 @@
         limit 1
     </select>
 
+    <select id="selectIdsByScope" resultType="long">
+        select id
+        from prediction_task
+        where warehouse_id = #{warehouseId}
+          and metric_code = #{metricCode}
+          and target_type = #{targetType}
+        order by id desc
+    </select>
+
     <delete id="deleteById">
         delete from prediction_task
         where id = #{id}

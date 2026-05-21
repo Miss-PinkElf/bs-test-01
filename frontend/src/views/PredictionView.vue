@@ -72,6 +72,7 @@ const targetOptions = [
 const form = reactive({
   warehouseId: "",
   targetType: "AVG_TEMP",
+  forecastStartTime: "",
   forecastDays: 7
 });
 const trainRange = ref(null);
@@ -222,6 +223,10 @@ function clearTrainRange() {
   trainRange.value = null;
 }
 
+function clearForecastStartTime() {
+  form.forecastStartTime = "";
+}
+
 function buildDefaultPredictionChartRange(resultList) {
   const validTimes = resultList
     .map((item) => parseDateTimeValue(item.resultTime))
@@ -313,6 +318,7 @@ async function runPrediction() {
       warehouseId: resolveWarehouseScope(form.warehouseId),
       metricCode: "temperature",
       targetType: form.targetType,
+      forecastStartTime: form.forecastStartTime || undefined,
       forecastDays: form.forecastDays
     };
 
@@ -579,6 +585,20 @@ onBeforeUnmount(() => {
 
             <el-form-item label="预测天数">
               <el-input-number v-model="form.forecastDays" :min="1" :max="30" />
+            </el-form-item>
+
+            <el-form-item label="预测开始">
+              <el-date-picker
+                v-model="form.forecastStartTime"
+                type="datetime"
+                placeholder="留空则自动顺延"
+                value-format="YYYY-MM-DDTHH:mm:ss"
+                class="prediction-start-picker"
+              />
+            </el-form-item>
+
+            <el-form-item>
+              <el-button text type="primary" @click="clearForecastStartTime">清空开始时间</el-button>
             </el-form-item>
 
             <el-form-item>

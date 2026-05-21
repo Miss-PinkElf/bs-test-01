@@ -536,6 +536,11 @@ body {
   max-width: 100%;
 }
 
+.prediction-start-picker {
+  width: 210px;
+  max-width: 100%;
+}
+
 .prediction-train-range-picker {
   width: 100%;
   max-width: 440px;

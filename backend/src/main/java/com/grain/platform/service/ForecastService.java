@@ -12,6 +12,12 @@ import java.util.List;
 public class ForecastService {
 
     public List<PredictionPointDto> predictDaily(List<PredictionPointDto> history, int forecastDays) {
+        return predictDaily(history, forecastDays, null);
+    }
+
+    public List<PredictionPointDto> predictDaily(List<PredictionPointDto> history,
+                                                 int forecastDays,
+                                                 LocalDateTime forecastStartTime) {
         List<PredictionPointDto> sorted = history.stream()
                 .sorted(Comparator.comparing(PredictionPointDto::time))
                 .toList();
@@ -23,11 +29,12 @@ public class ForecastService {
         double slope = calculateSlope(sorted);
         double base = sorted.get(sorted.size() - 1).value();
         LocalDateTime lastTime = sorted.get(sorted.size() - 1).time();
+        LocalDateTime startTime = forecastStartTime == null ? lastTime.plusDays(1) : forecastStartTime;
         List<PredictionPointDto> result = new ArrayList<>();
 
         for (int step = 1; step <= forecastDays; step++) {
             result.add(new PredictionPointDto(
-                    lastTime.plusDays(step),
+                    startTime.plusDays(step - 1L),
                     round(base + slope * step)
             ));
         }

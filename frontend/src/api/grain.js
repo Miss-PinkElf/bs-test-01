@@ -738,6 +738,7 @@ export async function predictMetric(payload) {
       targetType: payload.targetType || "AVG_TEMP",
       trainStartTime: payload.trainStartTime || undefined,
       trainEndTime: payload.trainEndTime || undefined,
+      forecastStartTime: payload.forecastStartTime || undefined,
       forecastDays: Number(payload.forecastDays)
     }
   });

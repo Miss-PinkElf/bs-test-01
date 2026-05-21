@@ -20,5 +20,9 @@ public interface PredictionTaskMapper {
 
     PredictionTask selectById(Long id);
 
+    List<Long> selectIdsByScope(@Param("warehouseId") Long warehouseId,
+                                @Param("metricCode") String metricCode,
+                                @Param("targetType") String targetType);
+
     int deleteById(Long id);
 }

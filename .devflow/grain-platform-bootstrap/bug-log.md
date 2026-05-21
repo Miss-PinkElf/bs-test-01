@@ -223,3 +223,41 @@
 - **代码：** `frontend/src/views/UsersView.vue`、`backend/src/main/java/com/grain/platform/service/UserService.java`
 - **测试：** `backend/src/test/java/com/grain/platform/service/UserServiceTest.java`
 - **计划：** `.devflow/grain-platform-bootstrap/plans/2026-05-21-admin-role-assignment-guard.md`
+
+---
+
+## BUG-2026-05-21-007：预测开始时间不可选且同口径旧预测继续保留
+
+### 问题现象
+
+- 预测页只能填写“预测天数”，不能选择预测开始时间。
+- 用户希望数据库中的预测数据以最后一次预测为准，但当前每次预测都会新增一条 `prediction_task`，旧预测仍会保留在预测记录中。
+
+### 问题原因
+
+1. 前端 `PredictionView.vue` 只提交 `forecastDays`，没有提交预测开始时间。
+2. 后端 `PredictionRequest` 不包含 `forecastStartTime`。
+3. `ForecastService.predictDaily` 固定从训练样本最后一条时间 `plusDays(1)` 开始生成预测点。
+4. `PredictionService.predict` 每次直接新增 `prediction_task` / `prediction_result`，没有按 `warehouse_id + metric_code + target_type` 清理旧预测。
+
+### 解决方案
+
+1. 前端预测参数区新增“预测开始”日期时间选择器，留空时继续使用原自动顺延逻辑。
+2. `PredictionRequest` 增加 `forecastStartTime`。
+3. `ForecastService` 支持从指定 `forecastStartTime` 连续生成预测点。
+4. `PredictionService.predict` 增加事务；新预测入库前删除同仓库、同指标、同预测对象下的旧 `prediction_result` 与 `prediction_task`，数据库只保留最后一次预测。
+5. 新增 `PredictionServiceTest` 覆盖指定预测开始时间和同口径旧预测覆盖规则。
+6. 复测发现选择历史预测开始时间时，未设置高级训练区间会误把后续真实值也纳入训练样本；已改为请求携带 `forecastStartTime` 时，训练样本默认自动截到 `forecastStartTime` 之前。
+7. 复测发现 `00:00:00` 预测点与 `08:40:00` 真实粮温点会造成同日断点；已改为预测开始时间为午夜时自动对齐到真实样本采样时刻。
+
+### 验证结果
+
+- `backend/` 执行 `mvn -q test -Dtest=PredictionServiceTest` 通过。
+- `backend/` 执行 `mvn -q -DskipTests compile` 通过。
+- `frontend/` 执行 `npm run build` 通过。
+
+### 关联
+
+- **代码：** `frontend/src/views/PredictionView.vue`、`frontend/src/api/grain.js`、`backend/src/main/java/com/grain/platform/service/PredictionService.java`、`backend/src/main/java/com/grain/platform/service/ForecastService.java`
+- **测试：** `backend/src/test/java/com/grain/platform/service/PredictionServiceTest.java`
+- **计划：** `.devflow/grain-platform-bootstrap/plans/2026-05-21-prediction-start-time-and-latest-cover.md`

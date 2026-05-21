@@ -593,4 +593,30 @@
 - 可以从活跃上下文移除的内容：
   - 本轮定位角色下拉和后端 `UserService` 守卫的中间检索输出。
 
+## 2026-05-21-026
+- 当前阶段：Apply / Verify completed
+- 本轮完成内容：
+  - 恢复 `grain-platform-bootstrap` devflow 上下文，确认当前主线仍为数据库优先 MVP。
+  - 按用户反馈收口预测页口径：预测开始时间可选；数据库内同仓库、同指标、同预测对象以最后一次预测为准。
+  - 新增计划： `.devflow/grain-platform-bootstrap/plans/2026-05-21-prediction-start-time-and-latest-cover.md`。
+  - 修改 `frontend/src/views/PredictionView.vue`，新增“预测开始”日期时间选择器；留空时仍自动顺延。
+  - 修改 `frontend/src/api/grain.js`，预测请求新增 `forecastStartTime`。
+  - 修改 `backend/src/main/java/com/grain/platform/dto/prediction/PredictionRequest.java`、`ForecastService.java`、`PredictionService.java` 和 `PredictionTaskMapper`，支持指定预测开始时间，并在新预测入库前删除同口径旧预测任务及结果。
+  - 根据页面复测反馈修正训练样本边界：请求携带 `forecastStartTime` 时，训练数据默认自动截到预测开始时间之前，避免已有后续真实值导致误报“预测开始时间应晚于训练样本最后时间”。
+  - 根据图表复测反馈修正时间点对齐：预测开始时间为 `00:00:00` 时，后端自动对齐到真实样本采样时刻，避免同一天真实值 `08:40:00` 与预测值 `00:00:00` 分裂成两个横轴点。
+  - 新增 `backend/src/test/java/com/grain/platform/service/PredictionServiceTest.java`，覆盖指定开始时间和旧预测覆盖规则。
+- 本轮决策与原因：
+  - 覆盖旧预测采用“删除同口径旧 `prediction_task` 和 `prediction_result` 后再插入新任务”，因为只覆盖结果表会让旧任务继续出现在预测记录中。
+  - 不改数据库表结构，继续沿用 `prediction_task + prediction_result`，降低对首页、大屏和归档链路的影响。
+- 验证结果：
+  - `backend/` 执行 `mvn -q test -Dtest=PredictionServiceTest` 通过。
+  - `backend/` 执行 `mvn -q -DskipTests compile` 通过。
+  - `frontend/` 执行 `npm run build` 通过。
+- 待解决问题：
+  - 尚未启动页面做人工点击复测；页面复测前需要确认 `8081` 后端已重启到最新代码。
+- 下一步：
+  - 如需看效果，重启 `8081` 后端，进入预测页选择“预测开始”后执行预测，确认预测记录只保留该仓库该预测对象最后一次结果。
+- 可以从活跃上下文移除的内容：
+  - 本轮对预测服务调用链和 Mapper 的中间检索输出。
+
 

@@ -19,6 +19,7 @@ import org.springframework.transaction.annotation.Transactional;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.time.LocalDateTime;
+import java.time.LocalTime;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.Comparator;
@@ -59,6 +60,7 @@ public class PredictionService {
         this.warehouseMapper = warehouseMapper;
     }
 
+    @Transactional
     public PredictionTaskResponse predict(PredictionRequest request, Long operatorUserId) {
         SensorMetric metric = metricService.getMetric(request.metricCode());
         Warehouse warehouse = requireWarehouse(request.warehouseId());
@@ -72,9 +74,15 @@ public class PredictionService {
 
         // 预测算法要求时间升序输入，因此先把历史样本统一排好序。
         actualSeries = actualSeries.stream().sorted(Comparator.comparing(PredictionPointDto::time)).toList();
-        List<PredictionPointDto> forecastSeries = forecastService.predictDaily(actualSeries, request.forecastDays());
+        LocalDateTime forecastStartTime = resolveEffectiveForecastStartTime(request, actualSeries);
+        List<PredictionPointDto> forecastSeries = forecastService.predictDaily(
+                actualSeries,
+                request.forecastDays(),
+                forecastStartTime
+        );
 
         LocalDateTime now = LocalDateTime.now();
+        deleteExistingTasksInScope(request.warehouseId(), request.metricCode(), targetType);
         PredictionTask task = new PredictionTask();
         task.setTaskNo("TASK-" + UUID.randomUUID().toString().substring(0, 8).toUpperCase());
         task.setParentTaskId(null);
@@ -108,7 +116,7 @@ public class PredictionService {
             predictionResultMapper.insertBatch(resultEntities);
         }
 
-        return toResponse(task, warehouse, metric, actualSeries, predictionResultMapper.selectByTaskId(task.getId()));
+        return toResponse(task, warehouse, metric, loadDisplayActualSeries(task), predictionResultMapper.selectByTaskId(task.getId()));
     }
 
     public List<PredictionTaskResponse> listTasks(Long warehouseScope) {
@@ -230,20 +238,49 @@ public class PredictionService {
     }
 
     private List<PredictionPointDto> loadActualSeries(PredictionRequest request, String targetType) {
+        LocalDateTime trainEndTime = resolveEffectiveTrainEndTime(request);
         if ("temperature".equals(request.metricCode())) {
             return grainTempService.listPredictionSeries(
                     request.warehouseId(),
                     request.trainStartTime(),
-                    request.trainEndTime(),
+                    trainEndTime,
                     targetType
             );
         }
         List<SensorDataPointDto> history = sensorDataService.list(request.warehouseId(), request.metricCode());
         return history.stream()
                 .filter(item -> request.trainStartTime() == null || !item.getCollectedAt().isBefore(request.trainStartTime()))
-                .filter(item -> request.trainEndTime() == null || !item.getCollectedAt().isAfter(request.trainEndTime()))
+                .filter(item -> trainEndTime == null || !item.getCollectedAt().isAfter(trainEndTime))
                 .map(item -> new PredictionPointDto(item.getCollectedAt(), item.getMetricValue()))
                 .toList();
+    }
+
+    private LocalDateTime resolveEffectiveTrainEndTime(PredictionRequest request) {
+        LocalDateTime forecastStartTime = request.forecastStartTime();
+        if (forecastStartTime == null) {
+            return request.trainEndTime();
+        }
+
+        LocalDateTime latestAllowedTrainEndTime = forecastStartTime.minusNanos(1);
+        if (request.trainEndTime() == null || !request.trainEndTime().isBefore(forecastStartTime)) {
+            return latestAllowedTrainEndTime;
+        }
+        return request.trainEndTime();
+    }
+
+    private LocalDateTime resolveEffectiveForecastStartTime(PredictionRequest request,
+                                                            List<PredictionPointDto> actualSeries) {
+        LocalDateTime forecastStartTime = request.forecastStartTime();
+        if (forecastStartTime == null || actualSeries.isEmpty()) {
+            return forecastStartTime;
+        }
+
+        if (!LocalTime.MIDNIGHT.equals(forecastStartTime.toLocalTime())) {
+            return forecastStartTime;
+        }
+
+        LocalDateTime lastActualTime = actualSeries.get(actualSeries.size() - 1).time();
+        return forecastStartTime.toLocalDate().atTime(lastActualTime.toLocalTime());
     }
 
     private List<PredictionPointDto> loadDisplayActualSeries(PredictionTask task) {
@@ -264,6 +301,16 @@ public class PredictionService {
                 .filter(item -> displayEndTime == null || !item.getCollectedAt().isAfter(displayEndTime))
                 .map(item -> new PredictionPointDto(item.getCollectedAt(), item.getMetricValue()))
                 .toList();
+    }
+
+    private void deleteExistingTasksInScope(Long warehouseId, String metricCode, String targetType) {
+        List<Long> taskIds = predictionTaskMapper.selectIdsByScope(warehouseId, metricCode, targetType);
+        for (Long taskId : taskIds) {
+            predictionResultMapper.deleteByTaskId(taskId);
+        }
+        for (Long taskId : taskIds) {
+            predictionTaskMapper.deleteById(taskId);
+        }
     }
 
     private List<PredictionResult> buildForecastEntities(Long taskId,

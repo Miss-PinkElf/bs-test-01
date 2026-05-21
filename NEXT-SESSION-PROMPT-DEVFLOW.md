@@ -17,13 +17,13 @@
 3. `zzz-docs/开题报告.md`
 4. `.devflow/grain-platform-bootstrap/state.md`
 5. `.devflow/grain-platform-bootstrap/handoffs/index.md`
-6. `.devflow/grain-platform-bootstrap/handoffs/2026-05-21-027-pause-ready-after-admin-role-assignment-guard.md`
+6. `.devflow/grain-platform-bootstrap/handoffs/2026-05-21-028-pause-ready-after-prediction-start-time-latest-cover.md`
 7. 按需读取：
    - `.devflow/grain-platform-bootstrap/plans/active-plan-links.md`
-   - `.devflow/grain-platform-bootstrap/plans/2026-05-21-admin-role-assignment-guard.md`
+   - `.devflow/grain-platform-bootstrap/plans/2026-05-21-prediction-start-time-and-latest-cover.md`
    - `.devflow/grain-platform-bootstrap/bug-log.md`
    - `.devflow/grain-platform-bootstrap/checkpoints.md`
-   - `.devflow/grain-platform-bootstrap/handoffs/2026-05-18-026-pause-ready-after-sensor-template-date-import-fix.md`
+   - `.devflow/grain-platform-bootstrap/handoffs/2026-05-21-027-pause-ready-after-admin-role-assignment-guard.md`
    - `zzz-docs/验证/数据库优先MVP-回归验证清单.md`
    - `zzz-docs/设计文档/项目整体架构与前后端初学者说明.md`
    - `zzz-docs/设计文档/数据库设计与表字段初学者说明.md`
@@ -36,60 +36,84 @@
 - 正式前端：`frontend/`；`frontend-next/` 仅静态原型参考。
 - `.explore/grain-platform-bootstrap/` 仅历史快照，不作为当前真相源。
 - 权限口径：`ADMIN` 是系统内置总管理员角色，不允许在用户管理里新增分配给普通账号；新增用户只允许选择仓库管理员和参观者。
+- 预测页新口径：支持选择预测开始时间；数据库中同仓库、同指标、同预测对象只保留最后一次预测任务及结果。
 
-【最近一次完成：系统管理员角色分配收口】
+【最近一次完成：预测开始时间可选与最新预测覆盖旧预测】
 1. 问题现象：
-   - 用户管理页点击“新增用户”时，角色下拉中可以选择“管理员（ADMIN）”。
-   - 系统管理员 A 可以新增系统管理员 B。
-   - 一旦存在多个启用管理员，原逻辑只保护“最后一个启用管理员”，B 可能删除或降权 A。
+   - 预测页只能选择预测天数，不能选择预测开始时间。
+   - 多次预测后，旧预测任务仍留在数据库和预测记录里，不符合“以最后一次预测为准”的口径。
+   - 页面复测时，选择历史预测开始时间会报“预测开始时间应晚于训练样本最后时间”。
+   - 图表中同一天实际值和预测值看起来断开，tooltip 在 `08:40:00` 的真实点上显示预测值为空。
 2. 问题原因：
-   - `frontend/src/views/UsersView.vue` 的角色下拉直接展示后端返回的全部角色，没有区分“可分配业务角色”和“系统内置总管理员角色”。
-   - `backend/src/main/java/com/grain/platform/service/UserService.java` 创建 / 编辑用户时只校验角色编码存在，没有禁止新增分配 `ADMIN`。
-   - 删除用户时只做“至少保留一个启用管理员”保护，无法阻止历史误建的第二管理员删除其他管理员。
+   - `frontend/src/views/PredictionView.vue` 只提交 `forecastDays`。
+   - `PredictionRequest` 没有 `forecastStartTime`。
+   - `ForecastService` 固定从训练样本最后时间后一日开始预测。
+   - `PredictionService.predict` 每次新增 `prediction_task + prediction_result`，没有清理同口径旧预测。
+   - 未设置高级训练区间时，后端会把该仓库全部真实粮温汇总纳入训练样本；如果已有后续真实值，就会误判预测开始时间不晚于训练样本最后时间。
+   - 页面选择日期时间时可能提交 `00:00:00`，而真实粮温汇总通常是 `08:40:00`，导致同一天被拆成两个横轴点。
 3. 已完成修复：
-   - `frontend/src/views/UsersView.vue`
-     - 新增 / 编辑普通用户时，角色下拉只展示 `WAREHOUSE_MANAGER` 与 `VIEWER`。
-     - 编辑已有管理员时，保留展示 `ADMIN` 但禁用，避免误删管理员角色。
-   - `backend/src/main/java/com/grain/platform/service/UserService.java`
-     - 创建用户时禁止提交 `ADMIN`。
-     - 编辑非管理员时禁止提权为 `ADMIN`。
-     - 编辑已有管理员时禁止移除 `ADMIN`。
-     - 删除用户时禁止删除带 `ADMIN` 角色的账号。
-   - `backend/src/test/java/com/grain/platform/service/UserServiceTest.java`
-     - 覆盖创建管理员、提权管理员、移除管理员角色、删除管理员四类接口绕过风险。
+   - `frontend/src/views/PredictionView.vue`
+     - 预测参数区新增“预测开始”日期时间选择器。
+     - 留空时仍沿用自动顺延逻辑。
+   - `frontend/src/api/grain.js`
+     - 预测请求新增 `forecastStartTime`。
+   - `frontend/src/styles.css`
+     - 新增预测开始时间选择器 CSS 类，避免行内样式。
+   - `backend/src/main/java/com/grain/platform/dto/prediction/PredictionRequest.java`
+     - 新增 `forecastStartTime`。
+   - `backend/src/main/java/com/grain/platform/service/ForecastService.java`
+     - 支持从指定预测开始时间连续生成预测点。
+   - `backend/src/main/java/com/grain/platform/service/PredictionService.java`
+     - `predict` 改为事务。
+     - 新预测入库前按 `warehouse_id + metric_code + target_type` 删除旧 `prediction_result` 与 `prediction_task`。
+     - 请求携带 `forecastStartTime` 时，训练样本默认自动截到预测开始时间之前。
+     - 预测开始时间为 `00:00:00` 时，自动对齐到训练样本最后一条的采样时刻，例如粮温对齐到当天 `08:40:00`。
+     - 新预测返回结果改走展示链路，预测区间内已有真实值仍会回填到图中做对照。
+   - `backend/src/main/java/com/grain/platform/mapper/PredictionTaskMapper.java`
+   - `backend/src/main/resources/mapper/PredictionTaskMapper.xml`
+     - 新增同口径旧任务 ID 查询。
+   - `backend/src/test/java/com/grain/platform/service/PredictionServiceTest.java`
+     - 覆盖指定预测开始时间、同口径旧预测删除、训练样本自动截断、午夜预测开始时间自动对齐真实样本采样时刻。
    - 已新增 / 更新 devflow 记录：
-     - `.devflow/grain-platform-bootstrap/plans/2026-05-21-admin-role-assignment-guard.md`
+     - `.devflow/grain-platform-bootstrap/plans/2026-05-21-prediction-start-time-and-latest-cover.md`
+     - `.devflow/grain-platform-bootstrap/plans/active-plan-links.md`
      - `.devflow/grain-platform-bootstrap/bug-log.md`
      - `.devflow/grain-platform-bootstrap/state.md`
      - `.devflow/grain-platform-bootstrap/checkpoints.md`
-     - `.devflow/grain-platform-bootstrap/handoffs/2026-05-21-027-pause-ready-after-admin-role-assignment-guard.md`
+     - `.devflow/grain-platform-bootstrap/handoffs/2026-05-21-028-pause-ready-after-prediction-start-time-latest-cover.md`
 4. 已通过验证：
-   - `backend/`：`mvn -q test -Dtest=UserServiceTest`
+   - `backend/`：`mvn -q test -Dtest=PredictionServiceTest`
    - `backend/`：`mvn -q -DskipTests compile`
    - `frontend/`：`npm run build`
+   - `git diff --check` 无格式错误，仅有 CRLF 提示。
 
 【本轮未完成 / 未讨论完 / 开放问题】
-1. **系统管理员角色页面人工复测尚未做**
-   - 单元测试、后端编译和前端构建已通过。
+1. **预测页人工复测尚未在最新后端上完整完成**
+   - 后端单测、后端编译、前端构建已通过。
+   - 需要重启本地 `8081` 后端后再复测页面。
+   - 复测重点：
+     - 选择预测开始时间后执行预测。
+     - 同仓库、同指标、同预测对象只保留最后一次预测记录。
+     - 同一天实际值和预测值不再因为 `00:00:00` / `08:40:00` 分裂成两个横轴点。
+2. **旧数据库中的旧预测任务不会自动迁移**
+   - 已有 `00:00:00` 的旧预测任务不会自动修改。
+   - 重新执行同仓库、同指标、同预测对象预测后，会被新预测覆盖。
+3. **demo 种子预测结果仍偏旧口径**
+   - `backend/src/main/resources/db/schema.sql` 中 demo 任务的 `prediction_result` 仍是 `step 1 / 5 / 10`。
+   - demo `prediction_result.result_time` 仍是 `00:00:00`。
+   - 如果重置演示库后不执行新预测，初始 demo 任务仍会显示旧口径。
+4. **系统管理员角色页面人工复测尚未做**
+   - 已完成单元测试、后端编译和前端构建。
    - 尚未启动页面点击验证：“用户管理 -> 新增用户 -> 角色下拉只剩仓库管理员和参观者”。
    - 复测前先确认本地 `8081` 后端已重启到最新代码。
-2. **后端运行态负向 smoke 可选**
+5. **后端运行态负向 smoke 可选**
    - 可直接调用新增 / 编辑用户接口提交 `ADMIN`，确认后端返回业务错误。
-3. **历史误建管理员账号未自动清理**
-   - 本轮阻止继续新增、提权和删除管理员账号。
+6. **历史误建管理员账号未自动清理**
+   - 已阻止继续新增、提权和删除管理员账号。
    - 如果数据库中已经存在历史误建的第二管理员，本轮不会自动停用或降权；如需要，下次单独讨论处理策略。
-4. **普通环境模板页面实测尚未做**
+7. **普通环境模板页面实测尚未做**
    - 后端解析单测与编译已通过。
    - 还没有做浏览器页面完整链路：“下载普通环境模板 -> Excel 打开/保存 -> 上传导入”。
-   - 复测前先确认本地 `8081` 后端已重启到最新代码。
-5. **本地 `8081` 后端可能还是旧进程**
-   - 如果页面还看不到最新修复效果，先重启后端。
-6. **demo 预测结果仍偏稀疏**
-   - `schema.sql` 中 demo 任务的 `prediction_result` 仍是 `step 1 / 5 / 10`。
-   - 还没有改成按 `forecastDays` 每天一条。
-7. **demo 预测点时间仍不统一**
-   - demo `prediction_result.result_time` 仍是 `00:00:00`。
-   - 真实粮温汇总通常是 `08:40:00`。
 8. **粮温导入 deadlock 真实复测**
    - 第二轮止血代码已完成。
    - 但“同仓库多 Excel 并发导入”真实场景还没最终确认彻底收口。
@@ -101,24 +125,30 @@
    - 可继续整理论文截图、ER 图和预测页口径说明。
 
 【下次从这里继续】
-1. 若继续验证本次管理员角色修复：
+1. 若继续验证预测页修复：
+   - 先重启本地 `8081` 后端。
+   - 进入预测页。
+   - 选择预测开始时间后执行预测。
+   - 确认预测记录只保留该仓库该预测对象最后一次结果。
+   - 确认图表中同一天实际值和预测值落在同一个时间点。
+2. 若要彻底消除重置库后的 demo 旧口径：
+   - 先按 Mini Align 讨论是否更新 `schema.sql` 中 demo `prediction_result`。
+   - 可选方向：按 `forecastDays` 每天一条，并统一到 `08:40:00`。
+3. 若继续验证管理员角色修复：
    - 先重启本地 `8081` 后端。
    - 进入用户管理页。
    - 点击“新增用户”。
    - 确认角色下拉只剩“仓库管理员”和“参观者”，不再可选“管理员”。
    - 可选：用接口提交 `ADMIN` 做后端负向 smoke。
-2. 若继续验证普通环境导入修复：
+4. 若继续验证普通环境导入修复：
    - 先重启本地 `8081` 后端。
    - 进入数据页，切换到“普通环境数据”。
    - 下载普通环境模板。
    - 可用 Excel 打开/保存后上传，确认不再出现第 2 行 `collectedAt` 时间格式错误。
-3. 若继续数据导入联调：
+5. 若继续数据导入联调：
    - 先复测普通环境模板导入。
    - 再复测“同仓库多 Excel 并发导入”粮温 deadlock 场景。
-4. 若继续优化预测页：
-   - 先按 Mini Align 讨论是否把 demo 任务未来预测点改成每天一条。
-   - 再讨论是否把 demo 预测点时间统一到 `08:40:00`。
-5. 若继续写答辩或交接材料：
+6. 若继续写答辩或交接材料：
    - 优先复用两份初学者文档和里面的 PlantUML 图，再按目标场景裁剪。
 
 【本地环境】
