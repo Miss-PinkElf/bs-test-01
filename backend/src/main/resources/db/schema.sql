@@ -531,8 +531,8 @@ SELECT
         ELSE 0
     END AS warning_flag,
     CASE
-        WHEN record.warehouse_id = 2 AND MAX(record.temperature_value) >= 26.45 THEN '风险仓在 4 月下旬已逼近阈值，建议答辩时强调提前通风与重点巡检。'
-        WHEN record.warehouse_id = 6 AND record.collected_at >= '2026-04-18 08:40:00' AND MAX(record.temperature_value) >= 23.20 THEN '对比仓在 4 月下旬出现轻微抬升，可用于说明波动仓与风险仓的差异。'
+        WHEN record.warehouse_id = 2 AND MAX(record.temperature_value) >= 26.45 THEN '最高粮温接近阈值，建议持续关注'
+        WHEN record.warehouse_id = 6 AND record.collected_at >= '2026-04-18 08:40:00' AND MAX(record.temperature_value) >= 23.20 THEN '最高粮温接近阈值，建议持续关注'
         ELSE NULL
     END AS warning_message,
     CASE
@@ -542,12 +542,12 @@ SELECT
         ELSE '粮温正常'
     END AS analysis_result,
     CASE record.warehouse_id
-        WHEN 1 THEN '稳定仓：截止 4 月 25 日温升平缓，适合展示低风险基线。'
-        WHEN 2 THEN '风险仓：4 月下旬升温更快，用于展示接近阈值的预警故事线。'
-        WHEN 3 THEN '维护仓：当前状态为维护中，但保留完整历史数据用于展示停用状态下的可追溯记录。'
-        WHEN 4 THEN '日常仓：作为活跃运营仓样本，展示正常运营下的平稳温升。'
-        WHEN 5 THEN '低波动仓：整体趋势平缓，可作为低风险活跃仓对照。'
-        ELSE '对比仓：保留一定波动，用于展示与风险仓不同的升温节奏。'
+        WHEN 1 THEN '粮温整体平稳'
+        WHEN 2 THEN '粮温接近阈值'
+        WHEN 3 THEN '维护状态历史记录'
+        WHEN 4 THEN '粮温整体平稳'
+        WHEN 5 THEN '粮温整体平稳'
+        ELSE '粮温轻微波动'
     END AS analysis_remark
 FROM grain_temp_record record
 JOIN grain_temp_point point ON point.id = record.point_id
@@ -606,7 +606,7 @@ VALUES
         2,
         '2026-04-25 09:20:00',
         '2026-04-25 09:20:08',
-        '稳定仓 4 月 25 日后的短期预测保持低风险，用于答辩时对照展示',
+        '短期预测保持低风险',
         '0425 全仓完整演示基线'
     ),
     (
@@ -633,7 +633,7 @@ VALUES
         4,
         '2026-04-25 09:45:00',
         '2026-04-25 09:45:10',
-        '风险仓在 4 月 25 日后的短期预测仍维持高位，是主要风险样本',
+        '短期预测粮温接近阈值',
         '0425 全仓完整演示基线'
     ),
     (
@@ -660,7 +660,7 @@ VALUES
         5,
         '2026-04-25 10:05:00',
         '2026-04-25 10:05:07',
-        '维护仓保留完整预测归档，用于展示维护状态下的历史可追溯数据',
+        '维护仓保留完整预测归档',
         '0425 全仓完整演示基线'
     ),
     (
@@ -687,7 +687,7 @@ VALUES
         6,
         '2026-04-25 10:20:00',
         '2026-04-25 10:20:09',
-        '日常仓维持平稳走势，用于展示普通活跃仓的预测归档',
+        '日常仓维持平稳走势',
         '0425 全仓完整演示基线'
     ),
     (
@@ -714,7 +714,7 @@ VALUES
         7,
         '2026-04-25 10:35:00',
         '2026-04-25 10:35:07',
-        '低波动仓预测保持低风险，便于和风险仓、对比仓同时展示',
+        '短期预测保持低风险',
         '0425 全仓完整演示基线'
     ),
     (
@@ -741,7 +741,7 @@ VALUES
         8,
         '2026-04-25 10:50:00',
         '2026-04-25 10:50:08',
-        '对比仓在 4 月 25 日后的预测保留轻微波动，用于展示与风险仓不同的升温节奏',
+        '短期预测粮温轻微波动',
         '0425 全仓完整演示基线'
     );
 
@@ -782,11 +782,11 @@ JOIN (
     UNION ALL
     SELECT 'TASK-DEMO-WH-A01-001', 'FUTURE', 10, '2026-05-05 00:00:00', NULL, 20.28, NULL, NULL, 'NORMAL', 0, NULL, 0, '稳定仓未来预测点'
     UNION ALL
-    SELECT 'TASK-DEMO-WH-A02-001', 'FUTURE', 1, '2026-04-26 00:00:00', NULL, 26.48, NULL, NULL, 'ATTENTION', 1, '风险仓 4 月末后仍维持高位，建议保持重点巡检。', 0, '风险仓未来预测点'
+    SELECT 'TASK-DEMO-WH-A02-001', 'FUTURE', 1, '2026-04-26 00:00:00', NULL, 26.48, NULL, NULL, 'ATTENTION', 1, '预计粮温接近阈值，建议持续关注', 0, '风险仓未来预测点'
     UNION ALL
-    SELECT 'TASK-DEMO-WH-A02-001', 'FUTURE', 5, '2026-04-30 00:00:00', NULL, 26.62, NULL, NULL, 'ATTENTION', 1, '进入 4 月与 5 月交界后继续逼近阈值，可作为主要风险样本。', 0, '风险仓未来预测点'
+    SELECT 'TASK-DEMO-WH-A02-001', 'FUTURE', 5, '2026-04-30 00:00:00', NULL, 26.62, NULL, NULL, 'ATTENTION', 1, '预计粮温接近阈值，建议持续关注', 0, '风险仓未来预测点'
     UNION ALL
-    SELECT 'TASK-DEMO-WH-A02-001', 'FUTURE', 10, '2026-05-05 00:00:00', NULL, 26.78, NULL, NULL, 'ATTENTION', 1, '5 月上旬仍维持高位，是答辩中的重点风险走势。', 0, '风险仓未来预测点'
+    SELECT 'TASK-DEMO-WH-A02-001', 'FUTURE', 10, '2026-05-05 00:00:00', NULL, 26.78, NULL, NULL, 'ATTENTION', 1, '预计粮温接近阈值，建议持续关注', 0, '风险仓未来预测点'
     UNION ALL
     SELECT 'TASK-DEMO-WH-B01-001', 'FUTURE', 1, '2026-04-26 00:00:00', NULL, 20.85, NULL, NULL, 'NORMAL', 0, NULL, 0, '维护仓未来预测点'
     UNION ALL
@@ -808,8 +808,8 @@ JOIN (
     UNION ALL
     SELECT 'TASK-DEMO-WH-C02-001', 'FUTURE', 1, '2026-04-26 00:00:00', NULL, 23.12, NULL, NULL, 'NORMAL', 0, NULL, 0, '对比仓未来预测点'
     UNION ALL
-    SELECT 'TASK-DEMO-WH-C02-001', 'FUTURE', 5, '2026-04-30 00:00:00', NULL, 23.28, NULL, NULL, 'ATTENTION', 1, '对比仓保持轻微抬升，可与风险仓形成对照。', 0, '对比仓未来预测点'
+    SELECT 'TASK-DEMO-WH-C02-001', 'FUTURE', 5, '2026-04-30 00:00:00', NULL, 23.28, NULL, NULL, 'ATTENTION', 1, '预计粮温轻微波动，建议持续关注', 0, '对比仓未来预测点'
     UNION ALL
-    SELECT 'TASK-DEMO-WH-C02-001', 'FUTURE', 10, '2026-05-05 00:00:00', NULL, 23.46, NULL, NULL, 'ATTENTION', 1, '5 月上旬仍有轻微抬升，但整体弱于风险仓。', 0, '对比仓未来预测点'
+    SELECT 'TASK-DEMO-WH-C02-001', 'FUTURE', 10, '2026-05-05 00:00:00', NULL, 23.46, NULL, NULL, 'ATTENTION', 1, '预计粮温轻微波动，建议持续关注', 0, '对比仓未来预测点'
 ) seed ON seed.task_no = task.task_no;
 
