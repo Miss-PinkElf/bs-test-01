@@ -185,3 +185,41 @@
 - **代码：** `backend/src/main/java/com/grain/platform/service/SensorDataImportService.java`
 - **测试：** `backend/src/test/java/com/grain/platform/service/SensorDataImportServiceTest.java`
 - **计划：** `.devflow/grain-platform-bootstrap/plans/2026-05-18-sensor-data-template-collected-at-import-fix.md`
+
+---
+
+## BUG-2026-05-21-006：系统管理员可以继续新增系统管理员并互相删除
+
+### 问题现象
+
+- 在用户管理页点击“新增用户”时，角色下拉中可以选择“管理员（ADMIN）”。
+- 系统管理员 A 可以新增系统管理员 B。
+- 一旦存在多个启用管理员，原有后端逻辑只保护“最后一个启用管理员”，因此 B 可能删除或降权 A，不符合“系统管理员是总管理员”的演示口径。
+
+### 问题原因
+
+1. 前端 `UsersView.vue` 的用户弹窗直接展示后端返回的全部角色选项，没有区分“可分配业务角色”和“内置总管理员角色”。
+2. 后端 `UserService` 创建 / 编辑用户时只校验角色编码是否存在，没有禁止新增分配 `ADMIN`。
+3. 删除用户时只做“至少保留一个启用管理员”保护，无法阻止历史误建的第二管理员删除其他管理员。
+
+### 解决方案
+
+1. 前端用户弹窗只允许普通新增 / 编辑分配 `WAREHOUSE_MANAGER` 与 `VIEWER`；编辑已有管理员时展示但禁用 `ADMIN`，避免误删管理员角色。
+2. 后端新增角色守卫：
+   - 创建用户时禁止提交 `ADMIN`；
+   - 编辑非管理员时禁止提权为 `ADMIN`；
+   - 编辑已有管理员时禁止移除 `ADMIN`；
+   - 删除用户时禁止删除带 `ADMIN` 角色的账号。
+3. 新增 `UserServiceTest` 覆盖创建管理员、提权管理员、移除管理员角色、删除管理员四类绕过风险。
+
+### 验证结果
+
+- `backend/` 执行 `mvn -q test -Dtest=UserServiceTest` 通过。
+- `backend/` 执行 `mvn -q -DskipTests compile` 通过。
+- `frontend/` 执行 `npm run build` 通过。
+
+### 关联
+
+- **代码：** `frontend/src/views/UsersView.vue`、`backend/src/main/java/com/grain/platform/service/UserService.java`
+- **测试：** `backend/src/test/java/com/grain/platform/service/UserServiceTest.java`
+- **计划：** `.devflow/grain-platform-bootstrap/plans/2026-05-21-admin-role-assignment-guard.md`

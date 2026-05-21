@@ -569,4 +569,28 @@
 - 可以从活跃上下文移除的内容：
   - 本轮对普通环境导入解析的中间排查输出。
 
+## 2026-05-21-025
+- 当前阶段：Apply / Verify completed，Pause-ready
+- 本轮完成内容：
+  - 恢复 `grain-platform-bootstrap` devflow 上下文，确认当前主线仍为数据库优先 MVP。
+  - 按用户反馈定位“系统管理员可以继续新增系统管理员，并在多管理员场景下互相删除”的权限口径问题。
+  - 新增计划：`.devflow/grain-platform-bootstrap/plans/2026-05-21-admin-role-assignment-guard.md`。
+  - 修改 `frontend/src/views/UsersView.vue`，新增 / 编辑普通用户时只展示 `WAREHOUSE_MANAGER` 与 `VIEWER`；编辑已有管理员时保留并禁用 `ADMIN`。
+  - 修改 `backend/src/main/java/com/grain/platform/service/UserService.java`，禁止新增分配管理员、禁止提权为管理员、禁止移除已有管理员角色、禁止删除管理员账号。
+  - 新增 `backend/src/test/java/com/grain/platform/service/UserServiceTest.java`，覆盖接口绕过风险。
+  - 更新 `bug-log.md`、`state.md`、`plans/active-plan-links.md`。
+- 本轮决策与原因：
+  - 前端隐藏 `ADMIN` 只是降低误操作，真正的边界必须放在后端，否则可以绕过页面直接调接口。
+  - 删除管理员账号也要禁止，避免历史误建的第二管理员继续删除总管理员。
+- 本轮沉淀经验：
+  - 权限类问题不能只改页面选项，必须同时收口服务端写入边界。
+- 待解决问题：
+  - 本轮已完成静态和单元测试验证，但尚未启动页面做人工点击复测。
+  - 普通环境模板页面完整链路复测、粮温并发导入 deadlock 真实复测、验收脚本增强、预测 demo 点位稀疏/时间口径仍是开放项。
+- 下一步：
+  - 若继续验证本轮问题，先重启 `8081` 后端，再进入用户管理页确认新增用户角色下拉不再出现可选“管理员”。
+  - 可进一步用接口提交 `ADMIN` 做运行态负向 smoke，确认后端返回业务错误。
+- 可以从活跃上下文移除的内容：
+  - 本轮定位角色下拉和后端 `UserService` 守卫的中间检索输出。
+
 

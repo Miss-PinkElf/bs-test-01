@@ -6,6 +6,7 @@
 - 恢复时先读 `state.md` 与最新 handoff，再按需读取下列计划。
 
 ## 当前有效计划
+- `.devflow/grain-platform-bootstrap/plans/2026-05-21-admin-role-assignment-guard.md`
 - `.devflow/grain-platform-bootstrap/plans/2026-05-18-sensor-data-template-collected-at-import-fix.md`
 - `.devflow/grain-platform-bootstrap/plans/2026-04-25-beginner-comments-and-architecture-database-guides.md`
 - `.devflow/grain-platform-bootstrap/plans/2026-04-21-env-data-save-no-feedback-fix.md`

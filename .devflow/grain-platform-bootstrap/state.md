@@ -1,7 +1,7 @@
 # 当前状态
 
 ## 当前阶段
-- Pause-ready after beginner comments and architecture/database guides
+- Pause-ready after 系统管理员角色分配收口
 
 ## 已确认的事实
 - 用户要求使用 `devflow` 记录过程。
@@ -60,6 +60,11 @@
   - 问题原因：普通环境模板是 CSV，Excel 打开或保存后可能把 `2026-04-07 08:00:00` 改写成 `2026/4/7 8:00` 等格式，而后端原先只接受严格 `yyyy-MM-dd HH:mm:ss`
   - 解决方案：`SensorDataImportService` 兼容 Excel 常见日期时间文本格式；普通环境模板示例收口为 `humidity` / `co2`；新增 `SensorDataImportServiceTest`
   - 验证已通过：`backend/` `mvn -q test -Dtest=SensorDataImportServiceTest`、`mvn -q -DskipTests compile`
+- 已完成 2026-05-21 系统管理员角色分配收口：
+  - 问题现象：用户管理新增用户时可选择“管理员（ADMIN）”，系统管理员 A 可新增系统管理员 B，B 在多管理员场景下可能删除或降权 A
+  - 问题原因：前端角色下拉直接展示全部角色；后端创建 / 编辑用户未禁止新增分配 `ADMIN`；删除用户只保护“最后一个启用管理员”
+  - 解决方案：前端新增 / 编辑普通用户只展示 `WAREHOUSE_MANAGER` 与 `VIEWER`，编辑已有管理员时禁用保留 `ADMIN`；后端禁止创建 / 提权为 `ADMIN`、禁止移除已有管理员角色、禁止删除管理员账号；新增 `UserServiceTest`
+  - 验证已通过：`backend/` `mvn -q test -Dtest=UserServiceTest`、`mvn -q -DskipTests compile`；`frontend/` `npm run build`
 - 已完成 2026-04-21 普通环境趋势图图例收口：
   - `frontend/src/views/DataView.vue` 的普通环境模式趋势图已改为根据当前指标动态显示图例与系列名称，当前查询湿度时显示“湿度”，查询二氧化碳时显示“二氧化碳浓度”
   - 环境模式图表更新已改为非合并更新，避免从粮温模式切换后残留“最高温”等旧图例或系列
@@ -208,6 +213,7 @@
 - 后续更像是“以现有项目为基础的半重写”，并以当前新主线作为唯一开发依据。
 
 ## 待解决的问题
+- 系统管理员角色分配已完成前后端收口与单元测试 / 构建验证，但尚未启动页面做人工点击复测；如要看页面效果，先重启 `8081` 后端。
 - 首页与导入链路、后台管理关键链路已补齐一键验收脚本，但当前脚本在本沙箱内直接执行前端构建时仍可能命中 `esbuild spawn EPERM`；仓库内单独执行 `npm run build` 已通过。
 - 验收脚本尚未对带 `keyword` 的分页接口做专门断言（可选补一条轻量 smoke）；粮温记录新增 `pointNo`/`tempMin`/`tempMax`/`filter-options` 亦未纳入脚本断言（可选）。
 - GSD：`.planning/` 已初始化并含 codebase 地图；`.codex/`、`.cursor/` 下部分工具文件仍可能未跟踪，提交课题代码时勿整包纳入无关工具目录。
@@ -221,6 +227,7 @@
 - 若本地页面仍看不到预测区间内新真实值，优先检查是否仍在使用旧的 `8081` 后端进程；本轮运行态验证是在新启动的 `18082` 进程上完成的。
 
 ## 下一步
+- 若要确认本次系统管理员角色修复的页面效果，先重启本地 `8081` 后端，再进入用户管理页确认“新增用户”的角色下拉只剩“仓库管理员”和“参观者”；也可直接调接口提交 `ADMIN` 做后端负向 smoke。
 - 若要确认本次普通环境模板导入修复的页面效果，先重启本地 `8081` 后端，再在“普通环境数据”模式下载模板并上传验证。
 - 如继续收口答辩或交接材料，可优先复用两份初学者文档与 PlantUML 图，再按论文口径做裁剪。
 - 优先让用户复测“同仓库多 Excel 并发导入”场景，确认 `grain_temp_record` deadlock 是否已被仓库级串行 + 单条 `upsert` 收口。
@@ -233,6 +240,7 @@
 - 如需在沙箱环境里重复跑脚本，可优先使用 `-SkipStaticChecks`，静态命令单独执行。
 
 ## 当前参考计划
+- `.devflow/grain-platform-bootstrap/plans/2026-05-21-admin-role-assignment-guard.md`
 - `.devflow/grain-platform-bootstrap/plans/2026-05-18-sensor-data-template-collected-at-import-fix.md`
 - `.devflow/grain-platform-bootstrap/plans/2026-04-25-beginner-comments-and-architecture-database-guides.md`
 - `.devflow/grain-platform-bootstrap/plans/2026-04-16-frontend-copy-cleanup-and-screen-rename.md`
@@ -249,14 +257,14 @@
 - `.devflow/grain-platform-bootstrap/plans/2026-04-10-usersview-and-screen-display-unification.md`
 
 ## 最新 handoff
-- `.devflow/grain-platform-bootstrap/handoffs/2026-05-18-026-pause-ready-after-sensor-template-date-import-fix.md`
+- `.devflow/grain-platform-bootstrap/handoffs/2026-05-21-027-pause-ready-after-admin-role-assignment-guard.md`
 
 ## 最小活跃上下文摘要
-- **恢复**：`state.md` + handoff **026** + 根目录 `NEXT-SESSION-PROMPT-DEVFLOW.md`。普通环境模板修复计划见 `plans/2026-05-18-sensor-data-template-collected-at-import-fix.md`。
-- **已完成**：普通环境 CSV 模板示例收口为 `humidity` / `co2`；后端导入解析兼容 Excel 常见日期时间文本；新增 `SensorDataImportServiceTest`。
-- **验证**：`backend/` 已通过 `mvn -q test -Dtest=SensorDataImportServiceTest` 与 `mvn -q -DskipTests compile`。
-- **仍需人工复测**：浏览器页面完整链路“下载普通环境模板 -> Excel 打开/保存 -> 上传导入”尚未执行；复测前先确保 `8081` 后端是新进程。
-- **开放**：demo 预测点仍偏稀疏且时间为 `00:00:00`；deadlock 真实并发复测、验收脚本补断言、文档/论文进一步收口仍可继续。
+- **恢复**：`state.md` + handoff **027** + 根目录 `NEXT-SESSION-PROMPT-DEVFLOW.md`。本轮管理员角色收口计划见 `plans/2026-05-21-admin-role-assignment-guard.md`。
+- **已完成**：用户管理新增 / 编辑普通用户时不再可分配 `ADMIN`；后端禁止创建 / 提权为管理员、禁止移除管理员角色、禁止删除管理员账号；新增 `UserServiceTest`。
+- **验证**：`backend/` 已通过 `mvn -q test -Dtest=UserServiceTest` 与 `mvn -q -DskipTests compile`；`frontend/` 已通过 `npm run build`。
+- **仍需人工复测**：用户管理页面点击验证尚未执行；复测前先确保 `8081` 后端是新进程。
+- **开放**：普通环境模板页面导入复测、demo 预测点稀疏且时间为 `00:00:00`、deadlock 真实并发复测、验收脚本补断言、文档/论文进一步收口仍可继续。
 
 
 

@@ -75,6 +75,7 @@ public class UserService {
         requireWarehouseIfPresent(warehouseId);
         String status = normalizeStatus(request.status());
         List<SysRole> roles = resolveRoles(request.roleCodes());
+        ensureAdminRoleIsNotAssigned(extractRoleCodes(roles));
 
         SysUser user = new SysUser();
         user.setUsername(request.username().trim());
@@ -99,7 +100,9 @@ public class UserService {
         List<String> existingRoleCodes = roleMapper.selectRoleCodesByUserId(id);
         String nextStatus = normalizeStatus(request.status());
         List<SysRole> roles = resolveRoles(request.roleCodes());
-        ensureNotLastActiveAdmin(existingRoleCodes, user.getStatus(), extractRoleCodes(roles), nextStatus);
+        List<String> nextRoleCodes = extractRoleCodes(roles);
+        ensureAdminRoleIsNotChanged(existingRoleCodes, nextRoleCodes);
+        ensureNotLastActiveAdmin(existingRoleCodes, user.getStatus(), nextRoleCodes, nextStatus);
 
         Long warehouseId = normalizeWarehouseId(request.warehouseId());
         requireWarehouseIfPresent(warehouseId);
@@ -124,6 +127,7 @@ public class UserService {
     public void deleteUser(Long id) {
         SysUser user = requireUser(id);
         List<String> existingRoleCodes = roleMapper.selectRoleCodesByUserId(id);
+        ensureAdminUserIsNotDeleted(existingRoleCodes);
         ensureNotLastActiveAdmin(existingRoleCodes, user.getStatus(), List.of(), DISABLED_STATUS);
 
         if (userMapper.countUserReferences(id) > 0) {
@@ -212,6 +216,31 @@ public class UserService {
         }
     }
 
+    private void ensureAdminRoleIsNotAssigned(List<String> nextRoleCodes) {
+        if (containsAdminRole(nextRoleCodes)) {
+            throw new IllegalArgumentException("系统管理员角色不支持新增分配");
+        }
+    }
+
+    private void ensureAdminRoleIsNotChanged(List<String> existingRoleCodes, List<String> nextRoleCodes) {
+        boolean existingAdmin = containsAdminRole(existingRoleCodes);
+        boolean nextAdmin = containsAdminRole(nextRoleCodes);
+
+        if (!existingAdmin && nextAdmin) {
+            throw new IllegalArgumentException("系统管理员角色不支持新增分配");
+        }
+
+        if (existingAdmin && !nextAdmin) {
+            throw new IllegalArgumentException("系统管理员角色不能在用户管理中移除");
+        }
+    }
+
+    private void ensureAdminUserIsNotDeleted(List<String> existingRoleCodes) {
+        if (containsAdminRole(existingRoleCodes)) {
+            throw new IllegalArgumentException("系统管理员账号不能删除");
+        }
+    }
+
     private void ensureNotLastActiveAdmin(List<String> existingRoleCodes, String existingStatus, List<String> nextRoleCodes, String nextStatus) {
         boolean existingActiveAdmin = isActiveAdmin(existingRoleCodes, existingStatus);
         boolean nextActiveAdmin = isActiveAdmin(nextRoleCodes, nextStatus);
@@ -223,6 +252,10 @@ public class UserService {
     }
 
     private boolean isActiveAdmin(List<String> roleCodes, String status) {
-        return ACTIVE_STATUS.equalsIgnoreCase(status) && roleCodes.stream().anyMatch(ADMIN_ROLE_CODE::equalsIgnoreCase);
+        return ACTIVE_STATUS.equalsIgnoreCase(status) && containsAdminRole(roleCodes);
+    }
+
+    private boolean containsAdminRole(List<String> roleCodes) {
+        return roleCodes != null && roleCodes.stream().anyMatch(ADMIN_ROLE_CODE::equalsIgnoreCase);
     }
 }

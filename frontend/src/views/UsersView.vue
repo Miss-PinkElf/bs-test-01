@@ -26,6 +26,8 @@ const editingUserId = ref(null);
 const passwordTarget = ref(null);
 const userTableKeyword = ref("");
 const roleTableKeyword = ref("");
+const ADMIN_ROLE_CODE = "ADMIN";
+const ASSIGNABLE_ROLE_CODES = ["WAREHOUSE_MANAGER", "VIEWER"];
 const userPageState = reactive({
   pageNum: 1,
   pageSize: 10,
@@ -49,6 +51,19 @@ const userForm = reactive({
   warehouseId: null,
   status: "ACTIVE",
   roleCodes: []
+});
+
+const isEditingAdminUser = computed(() => userForm.roleCodes.includes(ADMIN_ROLE_CODE));
+
+const editableRoleOptions = computed(() => {
+  const assignableRoles = roles.value.filter((role) => ASSIGNABLE_ROLE_CODES.includes(role.roleCode));
+
+  if (!isEditingAdminUser.value) {
+    return assignableRoles;
+  }
+
+  const adminRole = roles.value.find((role) => role.roleCode === ADMIN_ROLE_CODE);
+  return adminRole ? [adminRole, ...assignableRoles] : assignableRoles;
 });
 
 const passwordForm = reactive({
@@ -158,6 +173,11 @@ function buildUserPayload() {
     status: userForm.status,
     roleCodes: userForm.roleCodes
   };
+}
+
+function isRoleOptionDisabled(roleCode) {
+  // 系统管理员是内置总管理员角色，只允许已有管理员保留，不允许在弹窗里新增分配或移除。
+  return roleCode === ADMIN_ROLE_CODE;
 }
 
 async function loadMeta() {
@@ -429,10 +449,11 @@ onMounted(async () => {
         <el-form-item label="角色" class="full-span">
           <el-select v-model="userForm.roleCodes" multiple collapse-tags collapse-tags-tooltip>
             <el-option
-              v-for="item in roles"
+              v-for="item in editableRoleOptions"
               :key="item.roleCode"
               :label="`${item.roleName}（${item.roleCode}）`"
               :value="item.roleCode"
+              :disabled="isRoleOptionDisabled(item.roleCode)"
             />
           </el-select>
         </el-form-item>
