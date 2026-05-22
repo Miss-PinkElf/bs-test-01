@@ -82,7 +82,6 @@ public class PredictionService {
         );
 
         LocalDateTime now = LocalDateTime.now();
-        deleteExistingTasksInScope(request.warehouseId(), request.metricCode(), targetType);
         PredictionTask task = new PredictionTask();
         task.setTaskNo("TASK-" + UUID.randomUUID().toString().substring(0, 8).toUpperCase());
         task.setParentTaskId(null);
@@ -301,16 +300,6 @@ public class PredictionService {
                 .filter(item -> displayEndTime == null || !item.getCollectedAt().isAfter(displayEndTime))
                 .map(item -> new PredictionPointDto(item.getCollectedAt(), item.getMetricValue()))
                 .toList();
-    }
-
-    private void deleteExistingTasksInScope(Long warehouseId, String metricCode, String targetType) {
-        List<Long> taskIds = predictionTaskMapper.selectIdsByScope(warehouseId, metricCode, targetType);
-        for (Long taskId : taskIds) {
-            predictionResultMapper.deleteByTaskId(taskId);
-        }
-        for (Long taskId : taskIds) {
-            predictionTaskMapper.deleteById(taskId);
-        }
     }
 
     private List<PredictionResult> buildForecastEntities(Long taskId,

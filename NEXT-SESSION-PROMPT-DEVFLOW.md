@@ -17,7 +17,7 @@
 3. `zzz-docs/开题报告.md`
 4. `.devflow/grain-platform-bootstrap/state.md`
 5. `.devflow/grain-platform-bootstrap/handoffs/index.md`
-6. `.devflow/grain-platform-bootstrap/handoffs/2026-05-21-028-pause-ready-after-prediction-start-time-latest-cover.md`
+6. `.devflow/grain-platform-bootstrap/handoffs/2026-05-23-029-pause-ready-after-prediction-history-independent-tasks.md`
 7. 按需读取：
    - `.devflow/grain-platform-bootstrap/plans/active-plan-links.md`
    - `.devflow/grain-platform-bootstrap/plans/2026-05-21-prediction-start-time-and-latest-cover.md`
@@ -36,19 +36,19 @@
 - 正式前端：`frontend/`；`frontend-next/` 仅静态原型参考。
 - `.explore/grain-platform-bootstrap/` 仅历史快照，不作为当前真相源。
 - 权限口径：`ADMIN` 是系统内置总管理员角色，不允许在用户管理里新增分配给普通账号；新增用户只允许选择仓库管理员和参观者。
-- 预测页新口径：支持选择预测开始时间；数据库中同仓库、同指标、同预测对象只保留最后一次预测任务及结果。
+- 预测页新口径：支持选择预测开始时间；多次预测的数据独立保存，前端可在历史记录中切换任意一次预测任务查看。
 
-【最近一次完成：预测开始时间可选与最新预测覆盖旧预测】
+【最近一次完成：预测历史任务恢复为独立保存，并保留预测开始时间修复】
 1. 问题现象：
    - 预测页只能选择预测天数，不能选择预测开始时间。
-   - 多次预测后，旧预测任务仍留在数据库和预测记录里，不符合“以最后一次预测为准”的口径。
+   - 2026-05-21 曾误把逻辑改成“后一次预测覆盖前一次”，导致历史预测无法并存回看。
    - 页面复测时，选择历史预测开始时间会报“预测开始时间应晚于训练样本最后时间”。
    - 图表中同一天实际值和预测值看起来断开，tooltip 在 `08:40:00` 的真实点上显示预测值为空。
 2. 问题原因：
    - `frontend/src/views/PredictionView.vue` 只提交 `forecastDays`。
    - `PredictionRequest` 没有 `forecastStartTime`。
    - `ForecastService` 固定从训练样本最后时间后一日开始预测。
-   - `PredictionService.predict` 每次新增 `prediction_task + prediction_result`，没有清理同口径旧预测。
+   - `PredictionService.predict` 原本每次新增 `prediction_task + prediction_result`，2026-05-21 又被误加了“按范围删除旧预测”的逻辑。
    - 未设置高级训练区间时，后端会把该仓库全部真实粮温汇总纳入训练样本；如果已有后续真实值，就会误判预测开始时间不晚于训练样本最后时间。
    - 页面选择日期时间时可能提交 `00:00:00`，而真实粮温汇总通常是 `08:40:00`，导致同一天被拆成两个横轴点。
 3. 已完成修复：
@@ -65,39 +65,35 @@
      - 支持从指定预测开始时间连续生成预测点。
    - `backend/src/main/java/com/grain/platform/service/PredictionService.java`
      - `predict` 改为事务。
-     - 新预测入库前按 `warehouse_id + metric_code + target_type` 删除旧 `prediction_result` 与 `prediction_task`。
      - 请求携带 `forecastStartTime` 时，训练样本默认自动截到预测开始时间之前。
      - 预测开始时间为 `00:00:00` 时，自动对齐到训练样本最后一条的采样时刻，例如粮温对齐到当天 `08:40:00`。
      - 新预测返回结果改走展示链路，预测区间内已有真实值仍会回填到图中做对照。
-   - `backend/src/main/java/com/grain/platform/mapper/PredictionTaskMapper.java`
-   - `backend/src/main/resources/mapper/PredictionTaskMapper.xml`
-     - 新增同口径旧任务 ID 查询。
    - `backend/src/test/java/com/grain/platform/service/PredictionServiceTest.java`
-     - 覆盖指定预测开始时间、同口径旧预测删除、训练样本自动截断、午夜预测开始时间自动对齐真实样本采样时刻。
+     - 覆盖指定预测开始时间、保留历史任务、训练样本自动截断、午夜预测开始时间自动对齐真实样本采样时刻。
+   - `.devflow/grain-platform-bootstrap/plans/2026-05-23-prediction-history-independent-tasks.md`
+     - 记录本次对 2026-05-21 错误口径的纠偏。
    - 已新增 / 更新 devflow 记录：
      - `.devflow/grain-platform-bootstrap/plans/2026-05-21-prediction-start-time-and-latest-cover.md`
      - `.devflow/grain-platform-bootstrap/plans/active-plan-links.md`
      - `.devflow/grain-platform-bootstrap/bug-log.md`
      - `.devflow/grain-platform-bootstrap/state.md`
      - `.devflow/grain-platform-bootstrap/checkpoints.md`
-     - `.devflow/grain-platform-bootstrap/handoffs/2026-05-21-028-pause-ready-after-prediction-start-time-latest-cover.md`
+     - `.devflow/grain-platform-bootstrap/handoffs/2026-05-23-029-pause-ready-after-prediction-history-independent-tasks.md`
 4. 已通过验证：
    - `backend/`：`mvn -q test -Dtest=PredictionServiceTest`
    - `backend/`：`mvn -q -DskipTests compile`
-   - `frontend/`：`npm run build`
-   - `git diff --check` 无格式错误，仅有 CRLF 提示。
 
 【本轮未完成 / 未讨论完 / 开放问题】
 1. **预测页人工复测尚未在最新后端上完整完成**
-   - 后端单测、后端编译、前端构建已通过。
+   - 后端单测、后端编译已通过。
    - 需要重启本地 `8081` 后端后再复测页面。
    - 复测重点：
      - 选择预测开始时间后执行预测。
-     - 同仓库、同指标、同预测对象只保留最后一次预测记录。
+     - 多次预测后历史记录会独立累积保存。
      - 同一天实际值和预测值不再因为 `00:00:00` / `08:40:00` 分裂成两个横轴点。
 2. **旧数据库中的旧预测任务不会自动迁移**
    - 已有 `00:00:00` 的旧预测任务不会自动修改。
-   - 重新执行同仓库、同指标、同预测对象预测后，会被新预测覆盖。
+   - 已经在错误覆盖口径下被删除的历史预测任务，本轮不会自动恢复。
 3. **demo 种子预测结果仍偏旧口径**
    - `backend/src/main/resources/db/schema.sql` 中 demo 任务的 `prediction_result` 仍是 `step 1 / 5 / 10`。
    - demo `prediction_result.result_time` 仍是 `00:00:00`。
@@ -129,7 +125,7 @@
    - 先重启本地 `8081` 后端。
    - 进入预测页。
    - 选择预测开始时间后执行预测。
-   - 确认预测记录只保留该仓库该预测对象最后一次结果。
+   - 确认预测记录会新增独立历史任务，且仍可切换查看任意一次任务。
    - 确认图表中同一天实际值和预测值落在同一个时间点。
 2. 若要彻底消除重置库后的 demo 旧口径：
    - 先按 Mini Align 讨论是否更新 `schema.sql` 中 demo `prediction_result`。

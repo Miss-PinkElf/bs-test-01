@@ -619,4 +619,26 @@
 - 可以从活跃上下文移除的内容：
   - 本轮对预测服务调用链和 Mapper 的中间检索输出。
 
+## 2026-05-23-027
+- 当前阶段：Apply / Verify completed
+- 本轮完成内容：
+  - 恢复 `grain-platform-bootstrap` devflow 上下文，确认 2026-05-21 写入的“最新预测覆盖旧预测”口径与当前真实需求不一致。
+  - 新增计划：`.devflow/grain-platform-bootstrap/plans/2026-05-23-prediction-history-independent-tasks.md`。
+  - 修改 `backend/src/main/java/com/grain/platform/service/PredictionService.java`，移除同仓库、同指标、同预测对象的新预测删旧预测逻辑。
+  - 修改 `backend/src/main/java/com/grain/platform/mapper/PredictionTaskMapper.java` 与 `backend/src/main/resources/mapper/PredictionTaskMapper.xml`，删除仅为覆盖逻辑新增的范围查询。
+  - 调整 `backend/src/test/java/com/grain/platform/service/PredictionServiceTest.java`，改为验证预测开始时间仍生效，且不会删除既有预测任务。
+- 本轮决策与原因：
+  - 只撤销覆盖式删除逻辑，不动 `forecastStartTime`、训练样本自动截断、午夜时间对齐，避免把已经正确的时间修复一起回退。
+  - 当前前端本来就支持从历史表格切换任务展示，因此数据库恢复全量历史后，展示链路不需要额外改造。
+- 验证结果：
+  - `backend/` 执行 `mvn -q test -Dtest=PredictionServiceTest` 通过。
+  - `backend/` 执行 `mvn -q -DskipTests compile` 通过。
+- 待解决问题：
+  - 尚未在重启后的 `8081` 后端上做页面人工复测，需确认预测记录会新增独立历史任务。
+  - 已经在旧口径下被覆盖删除的历史预测任务，本轮不会自动恢复。
+- 下一步：
+  - 若继续联调，先重启 `8081` 后端，再进入预测页执行多次预测，确认历史记录累积保存且仍可切换查看任意一次任务。
+- 可以从活跃上下文移除的内容：
+  - 本轮关于“默认高亮最新一条”展示语义的澄清过程。
+
 

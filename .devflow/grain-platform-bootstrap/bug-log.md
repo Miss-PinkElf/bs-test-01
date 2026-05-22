@@ -261,3 +261,35 @@
 - **代码：** `frontend/src/views/PredictionView.vue`、`frontend/src/api/grain.js`、`backend/src/main/java/com/grain/platform/service/PredictionService.java`、`backend/src/main/java/com/grain/platform/service/ForecastService.java`
 - **测试：** `backend/src/test/java/com/grain/platform/service/PredictionServiceTest.java`
 - **计划：** `.devflow/grain-platform-bootstrap/plans/2026-05-21-prediction-start-time-and-latest-cover.md`
+
+---
+
+## BUG-2026-05-23-008：预测历史被误改成“后一次覆盖前一次”，与原始口径不符
+
+### 问题现象
+
+- 当前再次执行同仓库、同指标、同预测对象预测时，历史预测任务会被新任务覆盖删除。
+- 预测页虽然仍能切换任务查看详情，但数据库里已经只剩最后一次预测，无法回看之前多次预测的独立结果。
+
+### 问题原因
+
+1. 2026-05-21 为满足当时口径，在 `PredictionService.predict` 中新增了“按 `warehouse_id + metric_code + target_type` 删除旧 `prediction_task` / `prediction_result`”逻辑。
+2. 该逻辑把“预测开始时间可选”与“历史预测覆盖”绑定在了一起，导致后续确认真实需求时无法保留多次预测历史。
+
+### 解决方案
+
+1. 保留 `forecastStartTime`、训练样本自动截断、午夜时间对齐三项时间相关修复。
+2. 从 `PredictionService` 中移除同口径旧预测删除逻辑，恢复“每次预测新增一条独立任务”。
+3. 删除仅为覆盖逻辑新增的 `PredictionTaskMapper` 范围查询。
+4. 调整 `PredictionServiceTest`，改为验证“保留历史任务，不执行删除”。
+
+### 验证结果
+
+- `backend/` 执行 `mvn -q test -Dtest=PredictionServiceTest` 通过。
+- `backend/` 执行 `mvn -q -DskipTests compile` 通过。
+
+### 关联
+
+- **代码：** `backend/src/main/java/com/grain/platform/service/PredictionService.java`、`backend/src/main/java/com/grain/platform/mapper/PredictionTaskMapper.java`、`backend/src/main/resources/mapper/PredictionTaskMapper.xml`
+- **测试：** `backend/src/test/java/com/grain/platform/service/PredictionServiceTest.java`
+- **计划：** `.devflow/grain-platform-bootstrap/plans/2026-05-23-prediction-history-independent-tasks.md`

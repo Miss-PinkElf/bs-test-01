@@ -2,11 +2,12 @@
 
 ## 最新 handoff
 
-- [2026-05-21-028-pause-ready-after-prediction-start-time-latest-cover](.devflow/grain-platform-bootstrap/handoffs/2026-05-21-028-pause-ready-after-prediction-start-time-latest-cover.md)
+- [2026-05-23-029-pause-ready-after-prediction-history-independent-tasks](.devflow/grain-platform-bootstrap/handoffs/2026-05-23-029-pause-ready-after-prediction-history-independent-tasks.md)
 
 ## Handoff 列表
 
-- `2026-05-21-028-pause-ready-after-prediction-start-time-latest-cover` | 阶段：预测开始时间可选与最新预测覆盖旧预测后暂停 | 状态：**latest**
+- `2026-05-23-029-pause-ready-after-prediction-history-independent-tasks` | 阶段：预测历史任务恢复为独立保存后暂停 | 状态：**latest**
+- `2026-05-21-028-pause-ready-after-prediction-start-time-latest-cover` | 阶段：预测开始时间可选与最新预测覆盖旧预测后暂停 | 状态：superseded
 - `2026-05-21-027-pause-ready-after-admin-role-assignment-guard` | 阶段：系统管理员角色分配收口后暂停 | 状态：superseded
 - `2026-05-18-026-pause-ready-after-sensor-template-date-import-fix` | 阶段：普通环境数据模板时间导入修复后暂停 | 状态：superseded
 - `2026-04-25-025-pause-ready-after-beginner-docs-and-comment-guides` | 阶段：初学者注释补充 + 架构/数据库讲解文档图文结合收口后暂停 | 状态：superseded

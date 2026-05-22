@@ -26,7 +26,7 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyList;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.doAnswer;
-import static org.mockito.Mockito.inOrder;
+import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
@@ -58,7 +58,7 @@ class PredictionServiceTest {
     private PredictionService predictionService;
 
     @Test
-    void predictUsesSelectedForecastStartTimeAndReplacesOldTasksInScope() {
+    void predictUsesSelectedForecastStartTimeAndKeepsExistingTasks() {
         LocalDateTime actualEndTime = LocalDateTime.of(2026, 4, 25, 8, 40);
         LocalDateTime forecastStartTime = LocalDateTime.of(2026, 5, 1, 8, 40);
         LocalDateTime effectiveTrainEndTime = forecastStartTime.minusNanos(1);
@@ -81,7 +81,6 @@ class PredictionServiceTest {
                 new PredictionPointDto(forecastStartTime, 22.0),
                 new PredictionPointDto(forecastStartTime.plusDays(1), 23.0)
         ));
-        when(predictionTaskMapper.selectIdsByScope(1L, "temperature", "AVG_TEMP")).thenReturn(List.of(8L, 7L));
         doAnswer(invocation -> {
             PredictionTask task = invocation.getArgument(0);
             task.setId(99L);
@@ -103,12 +102,8 @@ class PredictionServiceTest {
         assertThat(response.forecastStartTime()).isEqualTo("2026-05-01 08:40:00");
         assertThat(response.forecastEndTime()).isEqualTo("2026-05-02 08:40:00");
         verify(forecastService).predictDaily(anyList(), eq(2), eq(forecastStartTime));
-
-        InOrder deleteOrder = inOrder(predictionResultMapper, predictionTaskMapper);
-        deleteOrder.verify(predictionResultMapper).deleteByTaskId(8L);
-        deleteOrder.verify(predictionResultMapper).deleteByTaskId(7L);
-        deleteOrder.verify(predictionTaskMapper).deleteById(8L);
-        deleteOrder.verify(predictionTaskMapper).deleteById(7L);
+        verify(predictionResultMapper, never()).deleteByTaskId(any());
+        verify(predictionTaskMapper, never()).deleteById(any());
 
         ArgumentCaptor<List<PredictionResult>> resultCaptor = ArgumentCaptor.forClass(List.class);
         verify(predictionResultMapper).insertBatch(resultCaptor.capture());
@@ -140,7 +135,6 @@ class PredictionServiceTest {
                 new PredictionPointDto(forecastStartTime, 20.0),
                 new PredictionPointDto(forecastStartTime.plusDays(1), 20.0)
         ));
-        when(predictionTaskMapper.selectIdsByScope(1L, "temperature", "AVG_TEMP")).thenReturn(List.of());
         doAnswer(invocation -> {
             PredictionTask task = invocation.getArgument(0);
             task.setId(100L);
@@ -184,7 +178,6 @@ class PredictionServiceTest {
         when(forecastService.predictDaily(anyList(), eq(1), eq(alignedForecastStartTime))).thenReturn(List.of(
                 new PredictionPointDto(alignedForecastStartTime, 16.7)
         ));
-        when(predictionTaskMapper.selectIdsByScope(1L, "temperature", "AVG_TEMP")).thenReturn(List.of());
         doAnswer(invocation -> {
             PredictionTask task = invocation.getArgument(0);
             task.setId(101L);

@@ -1,7 +1,7 @@
 # 当前状态
 
 ## 当前阶段
-- Apply / Verify completed after 预测开始时间可选与最新预测覆盖旧预测
+- Pause-ready after 预测历史任务恢复为独立保存
 
 ## 已确认的事实
 - 用户要求使用 `devflow` 记录过程。
@@ -70,6 +70,11 @@
   - 问题原因：前端预测请求只提交 `forecastDays`；后端 `ForecastService` 固定从训练样本最后时间后一日开始；`PredictionService.predict` 每次新增任务，没有清理同口径旧任务；复测时还发现未设置高级训练区间会把预测开始时间之后的真实值误纳入训练样本，且午夜预测点与 `08:40:00` 真实粮温点会造成同日断点
   - 解决方案：前端新增“预测开始”选择器并提交 `forecastStartTime`；后端支持指定开始时间连续生成预测点；新预测入库前按 `warehouse_id + metric_code + target_type` 删除旧 `prediction_result` 与 `prediction_task`；请求携带 `forecastStartTime` 时训练样本默认自动截到该时间之前；预测开始时间为午夜时自动对齐到真实样本采样时刻
   - 验证已通过：`backend/` `mvn -q test -Dtest=PredictionServiceTest`、`mvn -q -DskipTests compile`；`frontend/` `npm run build`
+- 已完成 2026-05-23 预测历史任务恢复为独立保存：
+  - 问题现象：当前新预测会删除同仓库、同指标、同预测对象的旧预测任务，历史预测无法并存回看。
+  - 问题原因：2026-05-21 的实现把“预测开始时间可选”和“最新预测覆盖旧预测”绑在了一起，在 `PredictionService.predict` 中新增了按范围删除旧任务的逻辑。
+  - 解决方案：撤销同口径旧预测删除逻辑，恢复“每次预测新增一条独立任务”；保留 `forecastStartTime`、训练样本自动截断、午夜预测开始时间对齐三项时间相关修复。
+  - 验证已通过：`backend/` `mvn -q test -Dtest=PredictionServiceTest`、`mvn -q -DskipTests compile`
 - 已完成 2026-04-21 普通环境趋势图图例收口：
   - `frontend/src/views/DataView.vue` 的普通环境模式趋势图已改为根据当前指标动态显示图例与系列名称，当前查询湿度时显示“湿度”，查询二氧化碳时显示“二氧化碳浓度”
   - 环境模式图表更新已改为非合并更新，避免从粮温模式切换后残留“最高温”等旧图例或系列
@@ -218,8 +223,8 @@
 - 后续更像是“以现有项目为基础的半重写”，并以当前新主线作为唯一开发依据。
 
 ## 待解决的问题
-- 预测开始时间可选与最新预测覆盖旧预测已完成单元测试、后端编译和前端构建，但尚未在重启后的 `8081` 后端上做完整页面人工复测。
-- 旧数据库中已有 `00:00:00` 的旧预测任务不会自动迁移；重新执行同仓库、同指标、同预测对象预测后会被新预测覆盖。
+- 预测开始时间可选与“预测历史独立保存”已完成单元测试和后端编译，但尚未在重启后的 `8081` 后端上做完整页面人工复测。
+- 旧数据库中已经被覆盖删除的历史预测任务无法自动恢复；本次修复只保证之后的新预测会独立保存。
 - `schema.sql` 中 demo 任务的 `prediction_result` 仍是 `step 1 / 5 / 10`，且结果时间仍是 `00:00:00`；如果重置演示库后不执行新预测，初始 demo 任务仍会显示旧口径。
 - 系统管理员角色分配已完成前后端收口与单元测试 / 构建验证，但尚未启动页面做人工点击复测；如要看页面效果，先重启 `8081` 后端。
 - 首页与导入链路、后台管理关键链路已补齐一键验收脚本，但当前脚本在本沙箱内直接执行前端构建时仍可能命中 `esbuild spawn EPERM`；仓库内单独执行 `npm run build` 已通过。
@@ -235,7 +240,7 @@
 - 若本地页面仍看不到预测区间内新真实值，优先检查是否仍在使用旧的 `8081` 后端进程；本轮运行态验证是在新启动的 `18082` 进程上完成的。
 
 ## 下一步
-- 若要确认本次预测页修复的页面效果，先重启本地 `8081` 后端，再进入预测页选择预测开始时间并执行预测；确认预测记录只保留同仓库、同预测对象最后一次结果，且同一天实际值和预测值不再因为 `00:00:00` / `08:40:00` 断裂。
+- 若要确认本次预测页修复的页面效果，先重启本地 `8081` 后端，再进入预测页选择预测开始时间并执行预测；确认预测记录会新增独立历史任务，且同一天实际值和预测值不再因为 `00:00:00` / `08:40:00` 断裂。
 - 若要确认本次系统管理员角色修复的页面效果，先重启本地 `8081` 后端，再进入用户管理页确认“新增用户”的角色下拉只剩“仓库管理员”和“参观者”；也可直接调接口提交 `ADMIN` 做后端负向 smoke。
 - 若要确认本次普通环境模板导入修复的页面效果，先重启本地 `8081` 后端，再在“普通环境数据”模式下载模板并上传验证。
 - 如继续收口答辩或交接材料，可优先复用两份初学者文档与 PlantUML 图，再按论文口径做裁剪。
@@ -249,6 +254,7 @@
 - 如需在沙箱环境里重复跑脚本，可优先使用 `-SkipStaticChecks`，静态命令单独执行。
 
 ## 当前参考计划
+- `.devflow/grain-platform-bootstrap/plans/2026-05-23-prediction-history-independent-tasks.md`
 - `.devflow/grain-platform-bootstrap/plans/2026-05-21-prediction-start-time-and-latest-cover.md`
 - `.devflow/grain-platform-bootstrap/plans/2026-05-21-admin-role-assignment-guard.md`
 - `.devflow/grain-platform-bootstrap/plans/2026-05-18-sensor-data-template-collected-at-import-fix.md`
@@ -267,14 +273,14 @@
 - `.devflow/grain-platform-bootstrap/plans/2026-04-10-usersview-and-screen-display-unification.md`
 
 ## 最新 handoff
-- `.devflow/grain-platform-bootstrap/handoffs/2026-05-21-028-pause-ready-after-prediction-start-time-latest-cover.md`
+- `.devflow/grain-platform-bootstrap/handoffs/2026-05-23-029-pause-ready-after-prediction-history-independent-tasks.md`
 
 ## 最小活跃上下文摘要
-- **恢复**：`state.md` + handoff **028** + 根目录 `NEXT-SESSION-PROMPT-DEVFLOW.md`。本轮预测页计划见 `plans/2026-05-21-prediction-start-time-and-latest-cover.md`。
-- **已完成**：预测页支持选择预测开始时间；同仓库、同指标、同预测对象的新预测会覆盖旧预测任务和结果；选择预测开始时间时训练样本自动截到该时间之前；午夜预测开始时间会自动对齐真实粮温采样时刻，避免图表断点。
-- **验证**：`backend/` 已通过 `mvn -q test -Dtest=PredictionServiceTest` 与 `mvn -q -DskipTests compile`；`frontend/` 已通过 `npm run build`。
-- **仍需人工复测**：预测页需要在重启后的 `8081` 后端上完整点击验证；用户管理页面点击验证尚未执行。
-- **开放**：普通环境模板页面导入复测、demo 种子预测点稀疏且时间为 `00:00:00`、deadlock 真实并发复测、验收脚本补断言、文档/论文进一步收口仍可继续。
+- **恢复**：`state.md` + handoff **029** + 根目录 `NEXT-SESSION-PROMPT-DEVFLOW.md`。本轮预测页计划见 `plans/2026-05-23-prediction-history-independent-tasks.md` 与 `plans/2026-05-21-prediction-start-time-and-latest-cover.md`。
+- **已完成**：预测页支持选择预测开始时间；训练样本会在指定预测开始时间前自动截断；午夜预测开始时间会自动对齐真实粮温采样时刻；新预测任务已恢复为独立保存，不再覆盖旧历史任务。
+- **验证**：`backend/` 已通过 `mvn -q test -Dtest=PredictionServiceTest` 与 `mvn -q -DskipTests compile`。
+- **仍需人工复测**：预测页需要在重启后的 `8081` 后端上连续执行多次预测，确认历史记录累积保存；用户管理页面点击验证尚未执行。
+- **开放**：已被错误覆盖删除的历史预测无法自动恢复；普通环境模板页面导入复测、demo 种子预测点稀疏且时间为 `00:00:00`、deadlock 真实并发复测、验收脚本补断言、文档/论文进一步收口仍可继续。
 
 
 
