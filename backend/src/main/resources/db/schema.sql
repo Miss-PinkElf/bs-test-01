@@ -521,23 +521,21 @@ SELECT
     ROUND(AVG(CASE WHEN point.layer_no = 3 THEN record.temperature_value END), 2) AS layer_3_avg,
     ROUND(AVG(CASE WHEN point.layer_no = 4 THEN record.temperature_value END), 2) AS layer_4_avg,
     CASE
-        WHEN record.warehouse_id = 2 AND MAX(record.temperature_value) >= 26.45 THEN 'ATTENTION'
-        WHEN record.warehouse_id = 6 AND record.collected_at >= '2026-04-18 08:40:00' AND MAX(record.temperature_value) >= 23.20 THEN 'ATTENTION'
+        WHEN MAX(record.temperature_value) >= 28.00 THEN 'WARNING'
+        WHEN MAX(record.temperature_value) >= 25.00 THEN 'ATTENTION'
         ELSE 'NORMAL'
     END AS warning_level,
     CASE
-        WHEN record.warehouse_id = 2 AND MAX(record.temperature_value) >= 26.45 THEN 1
-        WHEN record.warehouse_id = 6 AND record.collected_at >= '2026-04-18 08:40:00' AND MAX(record.temperature_value) >= 23.20 THEN 1
+        WHEN MAX(record.temperature_value) >= 25.00 THEN 1
         ELSE 0
     END AS warning_flag,
     CASE
-        WHEN record.warehouse_id = 2 AND MAX(record.temperature_value) >= 26.45 THEN '最高粮温接近阈值，建议持续关注'
-        WHEN record.warehouse_id = 6 AND record.collected_at >= '2026-04-18 08:40:00' AND MAX(record.temperature_value) >= 23.20 THEN '最高粮温接近阈值，建议持续关注'
+        WHEN MAX(record.temperature_value) >= 28.00 THEN '检测到高温点，建议立即排查并通风降温'
+        WHEN MAX(record.temperature_value) >= 25.00 THEN '最高粮温接近阈值，建议持续关注'
         ELSE NULL
     END AS warning_message,
     CASE
-        WHEN record.warehouse_id = 2 AND MAX(record.temperature_value) >= 26.45 THEN '粮温关注'
-        WHEN record.warehouse_id = 6 AND record.collected_at >= '2026-04-18 08:40:00' AND MAX(record.temperature_value) >= 23.20 THEN '轻微波动'
+        WHEN MAX(record.temperature_value) >= 25.00 THEN '粮温关注'
         WHEN record.warehouse_id = 3 THEN '维护观察'
         ELSE '粮温正常'
     END AS analysis_result,

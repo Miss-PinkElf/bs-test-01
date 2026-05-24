@@ -113,8 +113,8 @@ const warehouseComparisonRows = computed(() => {
     warehouseId: item.warehouseId,
     warehouseName: item.warehouseName,
     healthScore: item.healthScore,
-    avgTemp: item.latestAvgTemp,
-    latestForecastValue: item.latestForecastValue,
+    avgTemp: item.historyAvgTemp,
+    latestForecastValue: item.historyMaxTemp,
     riskLevel: item.riskLevel
   }));
 });
@@ -449,7 +449,7 @@ function buildWarehouseComparisonOption() {
         barMaxWidth: 24
       },
       {
-        name: "预测峰值",
+        name: "温度峰值",
         type: "line",
         yAxisIndex: 1,
         smooth: true,
@@ -694,7 +694,7 @@ onUnmounted(() => {
           <div class="panel-header">
             <div>
               <div class="panel-title">重点仓库</div>
-              <div class="panel-subtitle">结合健康分、均温与预测峰值快速查看仓库差异。</div>
+              <div class="panel-subtitle">结合健康分、均温与峰值快速查看仓库差异。</div>
             </div>
           </div>
         </template>
@@ -702,7 +702,7 @@ onUnmounted(() => {
           <div v-for="item in warehouseComparisonRows" :key="item.warehouseId || item.warehouseName" class="screen-list-item screen-warehouse-row">
             <div>
               <strong>{{ item.warehouseName }}</strong>
-              <div class="screen-list-meta">均温 {{ formatTemperature(item.avgTemp) }} · 预测峰值 {{ formatTemperature(item.latestForecastValue) }}</div>
+              <div class="screen-list-meta">均温 {{ formatTemperature(item.avgTemp) }} · 峰值 {{ formatTemperature(item.latestForecastValue) }}</div>
             </div>
             <div class="screen-warehouse-side">
               <div class="screen-warehouse-score">{{ item.healthScore ?? 0 }}</div>

@@ -6,6 +6,7 @@
 - 恢复时先读 `state.md` 与最新 handoff，再按需读取下列计划。
 
 ## 当前有效计划
+- `.devflow/grain-platform-bootstrap/plans/2026-05-24-dashboard-health-and-warning-threshold-fix.md`
 - `.devflow/grain-platform-bootstrap/plans/2026-05-23-prediction-history-independent-tasks.md`
 - `.devflow/grain-platform-bootstrap/plans/2026-05-21-prediction-start-time-and-latest-cover.md`
 - `.devflow/grain-platform-bootstrap/plans/2026-05-21-admin-role-assignment-guard.md`

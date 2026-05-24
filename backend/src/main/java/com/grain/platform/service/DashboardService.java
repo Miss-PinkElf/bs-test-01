@@ -210,8 +210,8 @@ public class DashboardService {
                 item.riskLevel(),
                 item.realWarningLevel(),
                 item.predictionWarningLevel(),
-                item.latestAvgTemp(),
-                item.latestForecastValue());
+                item.historyAvgTemp(),
+                item.historyMaxTemp());
     }
 
     private boolean matchesGrainSummaryKeyword(DashboardLatestSummaryResponse item, String keyword) {

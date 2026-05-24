@@ -7,7 +7,7 @@ public record DashboardWarehouseHealthResponse(
         String riskLevel,
         String realWarningLevel,
         String predictionWarningLevel,
-        Double latestAvgTemp,
-        Double latestForecastValue
+        Double historyAvgTemp,
+        Double historyMaxTemp
 ) {
 }

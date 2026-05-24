@@ -36,9 +36,20 @@
                s.layer_2_avg as layer2Avg,
                s.layer_3_avg as layer3Avg,
                s.layer_4_avg as layer4Avg,
-               s.warning_level as warningLevel,
-               s.warning_flag as warningFlag,
-               s.warning_message as warningMessage,
+               case
+                   when s.max_temp >= 28.00 then 'WARNING'
+                   when s.max_temp >= 25.00 then 'ATTENTION'
+                   else 'NORMAL'
+                   end as warningLevel,
+               case
+                   when s.max_temp >= 25.00 then 1
+                   else 0
+                   end as warningFlag,
+               case
+                   when s.max_temp >= 28.00 then '检测到高温点，建议立即排查并通风降温'
+                   when s.max_temp >= 25.00 then '最高粮温接近阈值，建议持续关注'
+                   else null
+                   end as warningMessage,
                s.analysis_result as analysisResult
     </sql>
 
@@ -48,14 +59,30 @@
         where (#{warehouseId} is null or s.warehouse_id = #{warehouseId})
           and (#{startTime} is null or s.collected_at &gt;= #{startTime})
           and (#{endTime} is null or s.collected_at &lt;= #{endTime})
-          and (#{warningLevel} is null or #{warningLevel} = '' or s.warning_level = #{warningLevel})
+          and (
+            #{warningLevel} is null
+            or #{warningLevel} = ''
+            or case
+                when s.max_temp >= 28.00 then 'WARNING'
+                when s.max_temp >= 25.00 then 'ATTENTION'
+                else 'NORMAL'
+                end = #{warningLevel}
+          )
           and (#{tempMin} is null or s.avg_temp &gt;= #{tempMin})
           and (#{tempMax} is null or s.avg_temp &lt;= #{tempMax})
         <if test="keyword != null and keyword != ''">
           and (
             w.warehouse_name like concat('%', #{keyword}, '%')
-            or ifnull(s.warning_level, '') like concat('%', #{keyword}, '%')
-            or ifnull(s.warning_message, '') like concat('%', #{keyword}, '%')
+            or case
+                when s.max_temp >= 28.00 then 'WARNING'
+                when s.max_temp >= 25.00 then 'ATTENTION'
+                else 'NORMAL'
+                end like concat('%', #{keyword}, '%')
+            or ifnull(case
+                when s.max_temp >= 28.00 then '检测到高温点，建议立即排查并通风降温'
+                when s.max_temp >= 25.00 then '最高粮温接近阈值，建议持续关注'
+                else null
+                end, '') like concat('%', #{keyword}, '%')
             or ifnull(s.analysis_result, '') like concat('%', #{keyword}, '%')
             or cast(s.avg_temp as char) like concat('%', #{keyword}, '%')
             or cast(s.max_temp as char) like concat('%', #{keyword}, '%')

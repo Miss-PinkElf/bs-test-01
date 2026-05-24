@@ -35,6 +35,7 @@ import java.util.UUID;
 public class PredictionService {
 
     private static final DateTimeFormatter FORMATTER = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
+    private static final double TEMPERATURE_ATTENTION_THRESHOLD = 25.0;
 
     private final SensorDataService sensorDataService;
     private final GrainTempService grainTempService;
@@ -438,7 +439,10 @@ public class PredictionService {
         if (peak >= warningThreshold) {
             return "WARNING";
         }
-        if (peak >= warningThreshold * 0.9) {
+        if ("temperature".equals(metric.getMetricCode()) && peak >= TEMPERATURE_ATTENTION_THRESHOLD) {
+            return "ATTENTION";
+        }
+        if (!"temperature".equals(metric.getMetricCode()) && peak >= warningThreshold * 0.9) {
             return "ATTENTION";
         }
         return "NORMAL";
@@ -452,7 +456,10 @@ public class PredictionService {
         if (value >= threshold) {
             return new WarningInfo("WARNING", true, "预计该时间点超过高温阈值");
         }
-        if (value >= threshold * 0.9) {
+        if ("temperature".equals(metric.getMetricCode()) && value >= TEMPERATURE_ATTENTION_THRESHOLD) {
+            return new WarningInfo("ATTENTION", true, "预计该时间点接近高温阈值");
+        }
+        if (!"temperature".equals(metric.getMetricCode()) && value >= threshold * 0.9) {
             return new WarningInfo("ATTENTION", true, "预计该时间点接近高温阈值");
         }
         return new WarningInfo("NORMAL", false, null);

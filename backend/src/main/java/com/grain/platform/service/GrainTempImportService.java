@@ -65,6 +65,8 @@ public class GrainTempImportService {
     private static final int FIXED_TEMPLATE_POINT_COUNT = 4;
     private static final int FIXED_TEMPLATE_LAYER_COUNT = 4;
     private static final int RECORD_UPSERT_MAX_RETRIES = 3;
+    private static final double DEFAULT_WARNING_THRESHOLD = 28.0;
+    private static final double ATTENTION_THRESHOLD = 25.0;
     private static final ConcurrentMap<String, ReentrantLock> IMPORT_LOCKS = new ConcurrentHashMap<>();
 
     private final GrainTempPointMapper grainTempPointMapper;
@@ -382,13 +384,13 @@ public class GrainTempImportService {
         summary.setLayer3Avg(avgForLayer(byLayer.get(3)));
         summary.setLayer4Avg(avgForLayer(byLayer.get(4)));
 
-        double threshold = temperatureMetric.getMaxThreshold() == null ? 28.0
+        double threshold = temperatureMetric.getMaxThreshold() == null ? DEFAULT_WARNING_THRESHOLD
                 : temperatureMetric.getMaxThreshold().doubleValue();
         if (summary.getMaxTemp().doubleValue() >= threshold) {
             summary.setWarningLevel("WARNING");
             summary.setWarningFlag(true);
             summary.setWarningMessage("检测到高温点，建议立即排查并通风降温");
-        } else if (summary.getMaxTemp().doubleValue() >= threshold * 0.9) {
+        } else if (summary.getMaxTemp().doubleValue() >= ATTENTION_THRESHOLD) {
             summary.setWarningLevel("ATTENTION");
             summary.setWarningFlag(true);
             summary.setWarningMessage("最高粮温接近阈值，建议持续关注");

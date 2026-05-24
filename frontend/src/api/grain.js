@@ -163,8 +163,8 @@ function normalizeDashboardWarehouseHealth(item) {
     riskLevel: item.riskLevel || "NORMAL",
     realWarningLevel: item.realWarningLevel || "NORMAL",
     predictionWarningLevel: item.predictionWarningLevel || "NORMAL",
-    latestAvgTemp: item.latestAvgTemp ?? null,
-    latestForecastValue: item.latestForecastValue ?? null
+    historyAvgTemp: item.historyAvgTemp ?? item.latestAvgTemp ?? null,
+    historyMaxTemp: item.historyMaxTemp ?? item.latestForecastValue ?? null
   };
 }
 
@@ -203,8 +203,8 @@ function normalizeScreenWarehouseCompare(item) {
     warehouseId: item?.warehouseId ?? null,
     warehouseName: item?.warehouseName || "-",
     healthScore: item?.healthScore ?? 0,
-    avgTemp: item?.avgTemp ?? null,
-    latestForecastValue: item?.latestForecastValue ?? null,
+    avgTemp: item?.avgTemp ?? item?.historyAvgTemp ?? null,
+    latestForecastValue: item?.latestForecastValue ?? item?.historyMaxTemp ?? null,
     riskLevel: item?.riskLevel || "NORMAL"
   };
 }

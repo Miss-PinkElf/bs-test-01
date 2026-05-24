@@ -82,7 +82,7 @@
         ) latest_summary
                       on latest_summary.warehouse_id = s.warehouse_id
                           and latest_summary.latest_collected_at = s.collected_at
-        where s.warning_flag = 1
+        where s.max_temp >= 25.00
     </select>
 
     <select id="countLatestPredictionAlertCount" resultType="int">
@@ -103,14 +103,22 @@
 
     <select id="selectLatestRealAlerts" resultType="com.grain.platform.dto.dashboard.DashboardAlertItemResponse">
         select concat(w.warehouse_name, ' 实时粮温预警') as title,
-               s.warning_level as level,
+               case
+                   when s.max_temp >= 28.00 then 'WARNING'
+                   when s.max_temp >= 25.00 then 'ATTENTION'
+                   else 'NORMAL'
+                   end as level,
                'REAL' as sourceType,
                w.warehouse_name as warehouseName,
                date_format(s.collected_at, '%Y-%m-%d %H:%i:%s') as eventTime,
                coalesce(
-                       s.warning_message,
-                       concat('整仓均温 ', s.avg_temp, '°C，最高温 ', s.max_temp, '°C')
-               ) as description
+                        case
+                            when s.max_temp >= 28.00 then '检测到高温点，建议立即排查并通风降温'
+                            when s.max_temp >= 25.00 then '最高粮温接近阈值，建议持续关注'
+                            else null
+                            end,
+                        concat('整仓均温 ', s.avg_temp, '°C，最高温 ', s.max_temp, '°C')
+                ) as description
         from grain_temp_summary s
                  join warehouse w on s.warehouse_id = w.id
                  join (
@@ -120,7 +128,7 @@
         ) latest_summary
                       on latest_summary.warehouse_id = s.warehouse_id
                           and latest_summary.latest_collected_at = s.collected_at
-        where s.warning_flag = 1
+        where s.max_temp >= 25.00
         order by s.collected_at desc, s.max_temp desc
         limit 4
     </select>
@@ -157,9 +165,20 @@
                s.max_temp as maxTemp,
                s.min_temp as minTemp,
                date_format(s.collected_at, '%Y-%m-%d %H:%i:%s') as collectedAt,
-               s.warning_level as warningLevel,
-               s.warning_flag as warningFlag,
-               s.warning_message as warningMessage
+               case
+                   when s.max_temp >= 28.00 then 'WARNING'
+                   when s.max_temp >= 25.00 then 'ATTENTION'
+                   else 'NORMAL'
+                   end as warningLevel,
+               case
+                   when s.max_temp >= 25.00 then 1
+                   else 0
+                   end as warningFlag,
+               case
+                   when s.max_temp >= 28.00 then '检测到高温点，建议立即排查并通风降温'
+                   when s.max_temp >= 25.00 then '最高粮温接近阈值，建议持续关注'
+                   else null
+                   end as warningMessage
         from grain_temp_summary s
                  join warehouse w on s.warehouse_id = w.id
                  join (
@@ -169,7 +188,7 @@
         ) latest_summary
                       on latest_summary.warehouse_id = s.warehouse_id
                           and latest_summary.latest_collected_at = s.collected_at
-        order by s.warning_flag desc, s.collected_at desc, s.max_temp desc
+        order by case when s.max_temp >= 25.00 then 1 else 0 end desc, s.collected_at desc, s.max_temp desc
         limit 6
     </select>
 
@@ -198,16 +217,16 @@
                    when 2 then 'ATTENTION'
                    else 'NORMAL'
                    end as predictionWarningLevel,
-               real_warning.latest_avg_temp as latestAvgTemp,
-               prediction_warning.latest_forecast_value as latestForecastValue
+                history_stats.history_avg_temp as historyAvgTemp,
+                history_stats.history_max_temp as historyMaxTemp
         from warehouse w
                  left join (
             select s.warehouse_id,
-                   case s.warning_level
-                       when 'WARNING' then 3
-                       when 'ATTENTION' then 2
-                       else 1
-                       end as level_score,
+                    case
+                        when s.max_temp >= 28.00 then 3
+                        when s.max_temp >= 25.00 then 2
+                        else 1
+                        end as level_score,
                    s.avg_temp as latest_avg_temp
             from grain_temp_summary s
                      join (
@@ -218,6 +237,13 @@
                           on latest_summary.warehouse_id = s.warehouse_id
                               and latest_summary.latest_collected_at = s.collected_at
         ) real_warning on real_warning.warehouse_id = w.id
+                 left join (
+            select warehouse_id,
+                   round(avg(avg_temp), 2) as history_avg_temp,
+                   max(max_temp) as history_max_temp
+            from grain_temp_summary
+            group by warehouse_id
+        ) history_stats on history_stats.warehouse_id = w.id
                  left join (
             select pt.warehouse_id,
                    max(case pr.warning_level
@@ -263,7 +289,7 @@
         from grain_temp_summary s
                  join warehouse w on w.id = s.warehouse_id
         where w.status != 'DISABLED'
-          and s.warning_flag = 1
+          and s.max_temp >= 25.00
         <include refid="screenWarehouseFilterW"/>
         <include refid="screenGrainSummaryTimeFilter"/>
     </select>
@@ -291,18 +317,26 @@
 
     <select id="selectScreenLatestRealAlerts" resultType="com.grain.platform.dto.dashboard.DashboardAlertItemResponse">
         select concat(w.warehouse_name, ' 实时粮温预警') as title,
-               s.warning_level as level,
+               case
+                   when s.max_temp >= 28.00 then 'WARNING'
+                   when s.max_temp >= 25.00 then 'ATTENTION'
+                   else 'NORMAL'
+                   end as level,
                'REAL' as sourceType,
                w.warehouse_name as warehouseName,
                date_format(s.collected_at, '%Y-%m-%d %H:%i:%s') as eventTime,
                coalesce(
-                       s.warning_message,
-                       concat('整仓均温 ', round(s.avg_temp, 2), '°C，最高温 ', round(s.max_temp, 2), '°C')
-               ) as description
+                        case
+                            when s.max_temp >= 28.00 then '检测到高温点，建议立即排查并通风降温'
+                            when s.max_temp >= 25.00 then '最高粮温接近阈值，建议持续关注'
+                            else null
+                            end,
+                        concat('整仓均温 ', round(s.avg_temp, 2), '°C，最高温 ', round(s.max_temp, 2), '°C')
+                ) as description
         from grain_temp_summary s
                  join warehouse w on w.id = s.warehouse_id
         where w.status != 'DISABLED'
-          and s.warning_flag = 1
+          and s.max_temp >= 25.00
         <include refid="screenWarehouseFilterW"/>
         <include refid="screenGrainSummaryTimeFilter"/>
         order by s.collected_at desc, s.id desc
@@ -339,9 +373,20 @@
                s.max_temp as maxTemp,
                s.min_temp as minTemp,
                date_format(s.collected_at, '%Y-%m-%d %H:%i:%s') as collectedAt,
-               s.warning_level as warningLevel,
-               s.warning_flag as warningFlag,
-               s.warning_message as warningMessage
+                case
+                    when s.max_temp >= 28.00 then 'WARNING'
+                    when s.max_temp >= 25.00 then 'ATTENTION'
+                    else 'NORMAL'
+                    end as warningLevel,
+                case
+                    when s.max_temp >= 25.00 then 1
+                    else 0
+                    end as warningFlag,
+                case
+                    when s.max_temp >= 28.00 then '检测到高温点，建议立即排查并通风降温'
+                    when s.max_temp >= 25.00 then '最高粮温接近阈值，建议持续关注'
+                    else null
+                    end as warningMessage
         from grain_temp_summary s
                  join warehouse w on w.id = s.warehouse_id
                  join (
@@ -356,7 +401,7 @@
                         and latest_summary.latest_collected_at = s.collected_at
         where w.status != 'DISABLED'
         <include refid="screenWarehouseFilterW"/>
-        order by s.warning_flag desc, s.collected_at desc, s.max_temp desc
+        order by case when s.max_temp >= 25.00 then 1 else 0 end desc, s.collected_at desc, s.max_temp desc
         limit 6
     </select>
 
@@ -385,17 +430,17 @@
                    when 2 then 'ATTENTION'
                    else 'NORMAL'
                    end as predictionWarningLevel,
-               real_warning.latest_avg_temp as latestAvgTemp,
-               prediction_warning.latest_forecast_value as latestForecastValue
+                history_stats.history_avg_temp as historyAvgTemp,
+                history_stats.history_max_temp as historyMaxTemp
         from warehouse w
                  left join (
             select latest_real.warehouse_id,
-                   case latest_real.warning_level
-                       when 'WARNING' then 3
-                       when 'ATTENTION' then 2
+                   case
+                       when latest_real.max_temp >= 28.00 then 3
+                       when latest_real.max_temp >= 25.00 then 2
                        else 1
                        end as level_score,
-                   latest_real.avg_temp as latest_avg_temp
+                latest_real.avg_temp as latest_avg_temp
             from grain_temp_summary latest_real
                      join (
                 select s2.warehouse_id, max(s2.collected_at) as latest_collected_at
@@ -408,6 +453,17 @@
             ) latest_summary on latest_summary.warehouse_id = latest_real.warehouse_id
                             and latest_summary.latest_collected_at = latest_real.collected_at
         ) real_warning on real_warning.warehouse_id = w.id
+                 left join (
+            select s2.warehouse_id,
+                   round(avg(s2.avg_temp), 2) as history_avg_temp,
+                   max(s2.max_temp) as history_max_temp
+            from grain_temp_summary s2
+                     join warehouse w2 on w2.id = s2.warehouse_id
+            where w2.status != 'DISABLED'
+            <include refid="screenWarehouseFilterW2"/>
+            <include refid="screenGrainSummaryTimeFilterS2"/>
+            group by s2.warehouse_id
+        ) history_stats on history_stats.warehouse_id = w.id
                  left join (
             select pt.warehouse_id,
                    max(case pr.warning_level
@@ -468,7 +524,7 @@
                 from grain_temp_summary s
                          join warehouse w on w.id = s.warehouse_id
                 where w.status != 'DISABLED'
-                  and s.warning_flag = 1
+                  and s.max_temp >= 25.00
                 <include refid="screenWarehouseFilterW"/>
                 <include refid="screenGrainSummaryTimeFilter"/>
                 group by date(s.collected_at)
@@ -538,9 +594,9 @@
         from warehouse w
                  left join (
             select latest_real.warehouse_id,
-                   case latest_real.warning_level
-                       when 'WARNING' then 3
-                       when 'ATTENTION' then 2
+                   case
+                       when latest_real.max_temp >= 28.00 then 3
+                       when latest_real.max_temp >= 25.00 then 2
                        else 1
                        end as level_score,
                    latest_real.avg_temp as latest_avg_temp
@@ -602,14 +658,22 @@
             select *
             from (
                 select concat(w.warehouse_name, ' 实时粮温预警') as title,
-                       s.warning_level as level,
+                       case
+                           when s.max_temp >= 28.00 then 'WARNING'
+                           when s.max_temp >= 25.00 then 'ATTENTION'
+                           else 'NORMAL'
+                           end as level,
                        'REAL' as sourceType,
                        w.warehouse_name as warehouseName,
                        date_format(s.collected_at, '%Y-%m-%d %H:%i:%s') as eventTime,
                        coalesce(
-                               s.warning_message,
+                               case
+                                   when s.max_temp >= 28.00 then '检测到高温点，建议立即排查并通风降温'
+                                   when s.max_temp >= 25.00 then '最高粮温接近阈值，建议持续关注'
+                                   else null
+                                   end,
                                concat('整仓均温 ', s.avg_temp, '°C，最高温 ', s.max_temp, '°C')
-                       ) as description
+                        ) as description
                 from grain_temp_summary s
                          join warehouse w on s.warehouse_id = w.id
                          join (
@@ -619,7 +683,7 @@
                 ) latest_summary
                               on latest_summary.warehouse_id = s.warehouse_id
                                   and latest_summary.latest_collected_at = s.collected_at
-                where s.warning_flag = 1
+                where s.max_temp >= 25.00
 
                 union all
 
@@ -658,14 +722,22 @@
         select *
         from (
             select concat(w.warehouse_name, ' 实时粮温预警') as title,
-                   s.warning_level as level,
+                   case
+                       when s.max_temp >= 28.00 then 'WARNING'
+                       when s.max_temp >= 25.00 then 'ATTENTION'
+                       else 'NORMAL'
+                       end as level,
                    'REAL' as sourceType,
                    w.warehouse_name as warehouseName,
                    date_format(s.collected_at, '%Y-%m-%d %H:%i:%s') as eventTime,
                    coalesce(
-                           s.warning_message,
-                           concat('整仓均温 ', s.avg_temp, '°C，最高温 ', s.max_temp, '°C')
-                   ) as description
+                            case
+                                when s.max_temp >= 28.00 then '检测到高温点，建议立即排查并通风降温'
+                                when s.max_temp >= 25.00 then '最高粮温接近阈值，建议持续关注'
+                                else null
+                                end,
+                            concat('整仓均温 ', s.avg_temp, '°C，最高温 ', s.max_temp, '°C')
+                    ) as description
             from grain_temp_summary s
                      join warehouse w on s.warehouse_id = w.id
                      join (
@@ -675,7 +747,7 @@
             ) latest_summary
                           on latest_summary.warehouse_id = s.warehouse_id
                               and latest_summary.latest_collected_at = s.collected_at
-            where s.warning_flag = 1
+            where s.max_temp >= 25.00
 
             union all
 
@@ -740,16 +812,16 @@
                            when 2 then 'ATTENTION'
                            else 'NORMAL'
                            end as predictionWarningLevel,
-                       real_warning.latest_avg_temp as latestAvgTemp,
-                       prediction_warning.latest_forecast_value as latestForecastValue
+                        history_stats.history_avg_temp as historyAvgTemp,
+                        history_stats.history_max_temp as historyMaxTemp
                 from warehouse w
                          left join (
                     select s.warehouse_id,
-                           case s.warning_level
-                               when 'WARNING' then 3
-                               when 'ATTENTION' then 2
-                               else 1
-                               end as level_score,
+                            case
+                                when s.max_temp >= 28.00 then 3
+                                when s.max_temp >= 25.00 then 2
+                                else 1
+                                end as level_score,
                            s.avg_temp as latest_avg_temp
                     from grain_temp_summary s
                              join (
@@ -761,6 +833,13 @@
                                       and latest_summary.latest_collected_at = s.collected_at
                 ) real_warning on real_warning.warehouse_id = w.id
                          left join (
+                    select warehouse_id,
+                           round(avg(avg_temp), 2) as history_avg_temp,
+                           max(max_temp) as history_max_temp
+                    from grain_temp_summary
+                    group by warehouse_id
+                ) history_stats on history_stats.warehouse_id = w.id
+                          left join (
                     select pt.warehouse_id,
                            max(case pr.warning_level
                                    when 'WARNING' then 3
@@ -787,8 +866,8 @@
                    or health_data.riskLevel like concat('%', #{keyword}, '%')
                    or health_data.realWarningLevel like concat('%', #{keyword}, '%')
                    or health_data.predictionWarningLevel like concat('%', #{keyword}, '%')
-                   or ifnull(cast(health_data.latestAvgTemp as char), '') like concat('%', #{keyword}, '%')
-                   or ifnull(cast(health_data.latestForecastValue as char), '') like concat('%', #{keyword}, '%')
+                   or ifnull(cast(health_data.historyAvgTemp as char), '') like concat('%', #{keyword}, '%')
+                   or ifnull(cast(health_data.historyMaxTemp as char), '') like concat('%', #{keyword}, '%')
             </if>
         ) filtered
     </select>
@@ -820,14 +899,14 @@
                        when 2 then 'ATTENTION'
                        else 'NORMAL'
                        end as predictionWarningLevel,
-                   real_warning.latest_avg_temp as latestAvgTemp,
-                   prediction_warning.latest_forecast_value as latestForecastValue
+                   history_stats.history_avg_temp as historyAvgTemp,
+                   history_stats.history_max_temp as historyMaxTemp
             from warehouse w
                      left join (
                 select s.warehouse_id,
-                       case s.warning_level
-                           when 'WARNING' then 3
-                           when 'ATTENTION' then 2
+                       case
+                           when s.max_temp >= 28.00 then 3
+                           when s.max_temp >= 25.00 then 2
                            else 1
                            end as level_score,
                        s.avg_temp as latest_avg_temp
@@ -841,6 +920,13 @@
                                   and latest_summary.latest_collected_at = s.collected_at
             ) real_warning on real_warning.warehouse_id = w.id
                      left join (
+                select warehouse_id,
+                       round(avg(avg_temp), 2) as history_avg_temp,
+                       max(max_temp) as history_max_temp
+                from grain_temp_summary
+                group by warehouse_id
+            ) history_stats on history_stats.warehouse_id = w.id
+                      left join (
                 select pt.warehouse_id,
                        max(case pr.warning_level
                                when 'WARNING' then 3
@@ -867,8 +953,8 @@
                or health_data.riskLevel like concat('%', #{keyword}, '%')
                or health_data.realWarningLevel like concat('%', #{keyword}, '%')
                or health_data.predictionWarningLevel like concat('%', #{keyword}, '%')
-               or ifnull(cast(health_data.latestAvgTemp as char), '') like concat('%', #{keyword}, '%')
-               or ifnull(cast(health_data.latestForecastValue as char), '') like concat('%', #{keyword}, '%')
+               or ifnull(cast(health_data.historyAvgTemp as char), '') like concat('%', #{keyword}, '%')
+               or ifnull(cast(health_data.historyMaxTemp as char), '') like concat('%', #{keyword}, '%')
         </if>
         order by health_data.healthScore asc, health_data.warehouseId asc
         limit #{offset}, #{pageSize}
@@ -886,9 +972,20 @@
                        s.max_temp as maxTemp,
                        s.min_temp as minTemp,
                        date_format(s.collected_at, '%Y-%m-%d %H:%i:%s') as collectedAt,
-                       s.warning_level as warningLevel,
-                       s.warning_flag as warningFlag,
-                       s.warning_message as warningMessage
+                       case
+                           when s.max_temp >= 28.00 then 'WARNING'
+                           when s.max_temp >= 25.00 then 'ATTENTION'
+                           else 'NORMAL'
+                           end as warningLevel,
+                       case
+                           when s.max_temp >= 25.00 then 1
+                           else 0
+                           end as warningFlag,
+                       case
+                           when s.max_temp >= 28.00 then '检测到高温点，建议立即排查并通风降温'
+                           when s.max_temp >= 25.00 then '最高粮温接近阈值，建议持续关注'
+                           else null
+                           end as warningMessage
                 from grain_temp_summary s
                          join warehouse w on s.warehouse_id = w.id
                          join (
@@ -921,9 +1018,20 @@
                    s.max_temp as maxTemp,
                    s.min_temp as minTemp,
                    date_format(s.collected_at, '%Y-%m-%d %H:%i:%s') as collectedAt,
-                   s.warning_level as warningLevel,
-                   s.warning_flag as warningFlag,
-                   s.warning_message as warningMessage
+                    case
+                        when s.max_temp >= 28.00 then 'WARNING'
+                        when s.max_temp >= 25.00 then 'ATTENTION'
+                        else 'NORMAL'
+                        end as warningLevel,
+                    case
+                        when s.max_temp >= 25.00 then 1
+                        else 0
+                        end as warningFlag,
+                    case
+                        when s.max_temp >= 28.00 then '检测到高温点，建议立即排查并通风降温'
+                        when s.max_temp >= 25.00 then '最高粮温接近阈值，建议持续关注'
+                        else null
+                        end as warningMessage
             from grain_temp_summary s
                      join warehouse w on s.warehouse_id = w.id
                      join (

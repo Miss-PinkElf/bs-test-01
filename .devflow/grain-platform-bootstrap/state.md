@@ -1,7 +1,7 @@
 # 当前状态
 
 ## 当前阶段
-- Pause-ready after 预测历史任务恢复为独立保存
+- Pause-ready after 首页健康度历史温度口径与粮温预警阈值修复
 
 ## 已确认的事实
 - 用户要求使用 `devflow` 记录过程。
@@ -75,6 +75,11 @@
   - 问题原因：2026-05-21 的实现把“预测开始时间可选”和“最新预测覆盖旧预测”绑在了一起，在 `PredictionService.predict` 中新增了按范围删除旧任务的逻辑。
   - 解决方案：撤销同口径旧预测删除逻辑，恢复“每次预测新增一条独立任务”；保留 `forecastStartTime`、训练样本自动截断、午夜预测开始时间对齐三项时间相关修复。
   - 验证已通过：`backend/` `mvn -q test -Dtest=PredictionServiceTest`、`mvn -q -DskipTests compile`
+- 已完成 2026-05-24 首页健康度历史温度口径与粮温预警阈值修复：
+  - 问题现象：仓库运行健康度的「均温 / 峰值」与最新粮温汇总显示接近；6 号仓最高温 23.x°C 仍显示 `ATTENTION`。
+  - 问题原因：健康度 SQL 混用了最新真实均温与最新预测峰值；演示库种子数据对 6 号仓写了 `23.20` 特殊低阈值；服务端温度关注阈值仍按 `28 * 0.9 = 25.2` 计算；读取层直接信任旧库中的 `warning_level`。
+  - 解决方案：健康度接口改为历史均温 `historyAvgTemp` 与历史峰值 `historyMaxTemp`；演示库、导入、手动重算、预测统一为 `>=28` 警告、`>=25` 关注、`<25` 正常；首页和粮温汇总读取层按 `max_temp` 重新计算有效预警，避免旧脏标记继续展示。
+  - 验证已通过：`backend/` `mvn -q -DskipTests compile`；`frontend/` `npm run build`
 - 已完成 2026-04-21 普通环境趋势图图例收口：
   - `frontend/src/views/DataView.vue` 的普通环境模式趋势图已改为根据当前指标动态显示图例与系列名称，当前查询湿度时显示“湿度”，查询二氧化碳时显示“二氧化碳浓度”
   - 环境模式图表更新已改为非合并更新，避免从粮温模式切换后残留“最高温”等旧图例或系列
@@ -223,6 +228,7 @@
 - 后续更像是“以现有项目为基础的半重写”，并以当前新主线作为唯一开发依据。
 
 ## 待解决的问题
+- 首页健康度历史温度口径与粮温预警阈值修复已完成静态验证，但尚未在重启后的 `8081` 后端上做页面人工复测。
 - 预测开始时间可选与“预测历史独立保存”已完成单元测试和后端编译，但尚未在重启后的 `8081` 后端上做完整页面人工复测。
 - 旧数据库中已经被覆盖删除的历史预测任务无法自动恢复；本次修复只保证之后的新预测会独立保存。
 - `schema.sql` 中 demo 任务的 `prediction_result` 仍是 `step 1 / 5 / 10`，且结果时间仍是 `00:00:00`；如果重置演示库后不执行新预测，初始 demo 任务仍会显示旧口径。
@@ -240,6 +246,7 @@
 - 若本地页面仍看不到预测区间内新真实值，优先检查是否仍在使用旧的 `8081` 后端进程；本轮运行态验证是在新启动的 `18082` 进程上完成的。
 
 ## 下一步
+- 若要确认本次首页与环境数据页修复，先重启本地 `8081` 后端，再进入 `/environment` 与 `/dashboard` 做页面人工复测。
 - 若要确认本次预测页修复的页面效果，先重启本地 `8081` 后端，再进入预测页选择预测开始时间并执行预测；确认预测记录会新增独立历史任务，且同一天实际值和预测值不再因为 `00:00:00` / `08:40:00` 断裂。
 - 若要确认本次系统管理员角色修复的页面效果，先重启本地 `8081` 后端，再进入用户管理页确认“新增用户”的角色下拉只剩“仓库管理员”和“参观者”；也可直接调接口提交 `ADMIN` 做后端负向 smoke。
 - 若要确认本次普通环境模板导入修复的页面效果，先重启本地 `8081` 后端，再在“普通环境数据”模式下载模板并上传验证。
@@ -273,14 +280,14 @@
 - `.devflow/grain-platform-bootstrap/plans/2026-04-10-usersview-and-screen-display-unification.md`
 
 ## 最新 handoff
-- `.devflow/grain-platform-bootstrap/handoffs/2026-05-23-029-pause-ready-after-prediction-history-independent-tasks.md`
+- `.devflow/grain-platform-bootstrap/handoffs/2026-05-24-030-pause-ready-after-dashboard-health-and-warning-threshold-fix.md`
 
 ## 最小活跃上下文摘要
-- **恢复**：`state.md` + handoff **029** + 根目录 `NEXT-SESSION-PROMPT-DEVFLOW.md`。本轮预测页计划见 `plans/2026-05-23-prediction-history-independent-tasks.md` 与 `plans/2026-05-21-prediction-start-time-and-latest-cover.md`。
-- **已完成**：预测页支持选择预测开始时间；训练样本会在指定预测开始时间前自动截断；午夜预测开始时间会自动对齐真实粮温采样时刻；新预测任务已恢复为独立保存，不再覆盖旧历史任务。
-- **验证**：`backend/` 已通过 `mvn -q test -Dtest=PredictionServiceTest` 与 `mvn -q -DskipTests compile`。
-- **仍需人工复测**：预测页需要在重启后的 `8081` 后端上连续执行多次预测，确认历史记录累积保存；用户管理页面点击验证尚未执行。
-- **开放**：已被错误覆盖删除的历史预测无法自动恢复；普通环境模板页面导入复测、demo 种子预测点稀疏且时间为 `00:00:00`、deadlock 真实并发复测、验收脚本补断言、文档/论文进一步收口仍可继续。
+- **恢复**：`state.md` + handoff **030** + 根目录 `NEXT-SESSION-PROMPT-DEVFLOW.md`。本轮首页修复计划见 `plans/2026-05-24-dashboard-health-and-warning-threshold-fix.md`，预测页相关计划见 `plans/2026-05-23-prediction-history-independent-tasks.md` 与 `plans/2026-05-21-prediction-start-time-and-latest-cover.md`。
+- **已完成**：首页健康度「均温 / 峰值」已改为全历史粮温口径；粮温真实预警统一为 `>=28` 警告、`>=25` 关注、`<25` 正常；读取层不再盲信旧库中的错误预警标记。
+- **验证**：`backend/` 已通过 `mvn -q -DskipTests compile`；`frontend/` 已通过 `npm run build`。
+- **仍需人工复测**：`/environment` 与 `/dashboard` 需要在重启后的 `8081` 后端上确认页面显示；预测页和用户管理页人工复测仍未完成。
+- **开放**：demo 种子预测点仍稀疏且时间为 `00:00:00`；普通环境模板页面实测、deadlock 真实并发复测、验收脚本补断言、文档/论文进一步收口仍可继续。
 
 
 

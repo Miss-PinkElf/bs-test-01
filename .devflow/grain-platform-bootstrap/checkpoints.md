@@ -641,4 +641,26 @@
 - 可以从活跃上下文移除的内容：
   - 本轮关于“默认高亮最新一条”展示语义的澄清过程。
 
+## 2026-05-24-028
+- 当前阶段：Apply / Verify completed
+- 本轮完成内容：
+  - 新增轻量计划：`.devflow/grain-platform-bootstrap/plans/2026-05-24-dashboard-health-and-warning-threshold-fix.md`。
+  - 修改首页健康度接口字段：`historyAvgTemp` 表示仓库历史粮温汇总均温，`historyMaxTemp` 表示仓库历史最高温。
+  - 修改 `DashboardMapper.xml`，首页健康度不再用最新粮温均温和预测峰值填充「均温 / 峰值」。
+  - 修改 `GrainTempSummaryMapper.xml` 和首页真实预警读取 SQL，按 `max_temp` 动态计算有效预警，避免现有库旧脏标记继续影响页面。
+  - 修改 `schema.sql`，移除 6 号仓 `23.20` 特殊低阈值预警规则，统一为 `>=28`、`>=25`、`<25` 三段。
+  - 修改粮温导入、手动重算和预测服务，温度关注阈值下限统一为 `25°C`。
+- 本轮决策与原因：
+  - 读取层也按规则重算预警，而不是只改种子 SQL，因为用户当前库中可能已经存在旧的错误 `warning_level`。
+  - 字段名改为 `historyAvgTemp / historyMaxTemp`，避免继续用 `latestForecastValue` 表达历史峰值。
+- 验证结果：
+  - `backend/` 执行 `mvn -q -DskipTests compile` 通过。
+  - `frontend/` 执行 `npm run build` 通过。
+- 待解决问题：
+  - 尚未启动页面做人工复测；如果用户当前后端仍是旧进程，需要重启 `8081` 后端才会看到新接口逻辑。
+- 下一步：
+  - 重启后端后打开首页与环境数据页，确认 6 号仓 23.x°C 不再显示 `ATTENTION`，且健康度「均温 / 峰值」不再等同最新粮温汇总。
+- 可以从活跃上下文移除的内容：
+  - 本轮对 Dashboard SQL 多处重复真实预警查询的逐段替换过程。
+
 

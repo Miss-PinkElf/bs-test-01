@@ -293,3 +293,38 @@
 - **代码：** `backend/src/main/java/com/grain/platform/service/PredictionService.java`、`backend/src/main/java/com/grain/platform/mapper/PredictionTaskMapper.java`、`backend/src/main/resources/mapper/PredictionTaskMapper.xml`
 - **测试：** `backend/src/test/java/com/grain/platform/service/PredictionServiceTest.java`
 - **计划：** `.devflow/grain-platform-bootstrap/plans/2026-05-23-prediction-history-independent-tasks.md`
+
+---
+
+## BUG-2026-05-24-009：首页健康度温度口径混用，且演示库 6 号仓低温误触发预警
+
+### 问题现象
+
+- 首页「仓库运行健康度」中的「均温 / 峰值」与「最新粮温汇总」显示接近，用户期望这里展示的是该仓库所有时间点粮温汇总的历史均值和历史峰值。
+- 数据页「粮温汇总结果」中，6 号仓最高温只有 23.x°C，却显示 `ATTENTION`，不符合 `>= 28°C` 高温预警、`25°C ~ 28°C` 关注、低于 `25°C` 正常的规则。
+
+### 问题原因
+
+1. `DashboardMapper.xml` 的仓库健康度 SQL 使用最新粮温汇总的 `avg_temp` 作为均温，并把最新预测任务的最大预测值作为“峰值”，字段名仍叫 `latestForecastValue`，导致真实历史口径和预测口径混在同一列。
+2. `backend/src/main/resources/db/schema.sql` 中演示种子数据对 6 号仓写了特殊低阈值：`2026-04-18 08:40:00` 之后最高温 `>= 23.20` 就标为 `ATTENTION`。
+3. 导入、手动重算、预测服务原先按 `maxThreshold * 0.9` 计算关注阈值；温度最大阈值 `28°C` 时等于 `25.2°C`，与当前确认的 `25°C` 关注下限不一致。
+4. 当前数据库中可能已经写入旧的 `warning_level` / `warning_flag`，如果页面继续直接读存储字段，即使修正 `schema.sql`，也要等重置库或重导入后才会消失。
+
+### 解决方案
+
+1. 首页健康度接口改为返回 `historyAvgTemp` 与 `historyMaxTemp`，分别表示该仓库所有粮温汇总记录的历史均温与历史最高温。
+2. 前端首页「仓库运行健康度」改读 `historyAvgTemp / historyMaxTemp`；大屏兜底展示文案从“预测峰值”收口为更通用的“峰值”。
+3. `schema.sql` 演示库粮温汇总统一按 `max_temp >= 28`、`max_temp >= 25`、`max_temp < 25` 三段计算预警，不再保留 6 号仓 `23.20` 特殊规则。
+4. 粮温导入、手动重算、预测服务同步把温度关注阈值下限设为 `25°C`。
+5. 首页真实预警、首页最新粮温汇总和数据页粮温汇总读取 SQL 改为按 `max_temp` 计算有效预警，避免现有库中的旧脏标记继续影响页面展示。
+
+### 验证结果
+
+- `backend/` 执行 `mvn -q -DskipTests compile` 通过。
+- `frontend/` 执行 `npm run build` 通过。
+
+### 关联
+
+- **代码：** `backend/src/main/resources/mapper/DashboardMapper.xml`、`backend/src/main/resources/mapper/GrainTempSummaryMapper.xml`、`backend/src/main/resources/db/schema.sql`、`frontend/src/views/DashboardView.vue`
+- **服务：** `backend/src/main/java/com/grain/platform/service/GrainTempService.java`、`backend/src/main/java/com/grain/platform/service/GrainTempImportService.java`、`backend/src/main/java/com/grain/platform/service/PredictionService.java`
+- **计划：** `.devflow/grain-platform-bootstrap/plans/2026-05-24-dashboard-health-and-warning-threshold-fix.md`

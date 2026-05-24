@@ -31,6 +31,9 @@ import java.util.stream.Collectors;
 // 粮温主线的核心服务：原始测点记录、汇总结果、预测输入序列都从这里经过。
 public class GrainTempService {
 
+    private static final double DEFAULT_WARNING_THRESHOLD = 28.0;
+    private static final double ATTENTION_THRESHOLD = 25.0;
+
     private final GrainTempPointMapper grainTempPointMapper;
     private final GrainTempRecordMapper grainTempRecordMapper;
     private final GrainTempSummaryMapper grainTempSummaryMapper;
@@ -313,12 +316,12 @@ public class GrainTempService {
         summary.setLayer3Avg(avgForLayer(byLayer.get(3)));
         summary.setLayer4Avg(avgForLayer(byLayer.get(4)));
 
-        double threshold = metric.getMaxThreshold() == null ? 28.0 : metric.getMaxThreshold().doubleValue();
+        double threshold = metric.getMaxThreshold() == null ? DEFAULT_WARNING_THRESHOLD : metric.getMaxThreshold().doubleValue();
         if (summary.getMaxTemp().doubleValue() >= threshold) {
             summary.setWarningLevel("WARNING");
             summary.setWarningFlag(true);
             summary.setWarningMessage("检测到高温点，建议立即排查并通风降温");
-        } else if (summary.getMaxTemp().doubleValue() >= threshold * 0.9) {
+        } else if (summary.getMaxTemp().doubleValue() >= ATTENTION_THRESHOLD) {
             summary.setWarningLevel("ATTENTION");
             summary.setWarningFlag(true);
             summary.setWarningMessage("最高粮温接近阈值，建议持续关注");

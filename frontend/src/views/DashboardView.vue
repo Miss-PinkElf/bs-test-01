@@ -311,7 +311,7 @@ onMounted(async () => {
               </el-table-column>
               <el-table-column label="均温 / 峰值" min-width="180">
                 <template #default="{ row }">
-                  {{ formatTemperature(row.latestAvgTemp) }} / {{ formatTemperature(row.latestForecastValue) }}
+                  {{ formatTemperature(row.historyAvgTemp) }} / {{ formatTemperature(row.historyMaxTemp) }}
                 </template>
               </el-table-column>
             </el-table>
