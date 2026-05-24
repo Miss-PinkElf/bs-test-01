@@ -663,4 +663,28 @@
 - 可以从活跃上下文移除的内容：
   - 本轮对 Dashboard SQL 多处重复真实预警查询的逐段替换过程。
 
+## 2026-05-24-029
+- 当前阶段：Checkpoint / Handoff completed
+- 本轮完成内容：
+  - 新增旧库预警回写工具：`scripts/rebuild-grain-temp-summary-warning.ps1`
+  - 新增旧库预警回写 SQL：`scripts/rebuild-grain-temp-summary-warning.sql`
+  - 收口 `backend/src/main/resources/db/schema.sql` 中与本次问题直接相关的演示库口径：
+    - `grain_temp_summary.analysis_result / analysis_remark`
+    - `prediction_task` 的预测起止时间与基准时间
+    - `prediction_result.result_time`
+    - 对比仓低于 `25°C` 的旧 `ATTENTION` 演示样例
+  - 新增最新 handoff：`2026-05-24-031-pause-ready-after-warning-rebuild-tools-and-schema-reset-alignment.md`
+  - 更新 `handoffs/index.md`、`state.md`、`NEXT-SESSION-PROMPT-DEVFLOW.md`
+- 本轮决策与原因：
+  - 不能只修读取层，也不能只修 `schema.sql`；用户既可能沿用当前库，也可能直接重置演示库，两条路径都要能落地。
+  - demo 预测时间统一到 `08:40:00`，是为了和真实粮温采样时刻保持一致，减少预测页视觉割裂。
+- 待解决问题：
+  - 旧库回写工具与新 `schema.sql` 还未完成实际运行态验证。
+  - 首页、环境数据页、预测页、管理员页面、普通环境模板页都还缺人工复测。
+- 下一步：
+  - 先决定是“保留当前库修旧数据”还是“重置整库”。
+  - 运行对应脚本后重启 `8081`，再做页面人工复测。
+- 可以从活跃上下文移除的内容：
+  - 本轮关于 `schema.sql` 内 demo 时间与旧样例的逐段 grep / diff 过程。
+
 

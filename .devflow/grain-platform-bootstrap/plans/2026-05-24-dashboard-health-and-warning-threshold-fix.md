@@ -38,3 +38,18 @@
 - `frontend/` 执行 `npm run build` 通过。
 - 已确认 `DashboardMapper.xml` 的健康度字段改为 `historyAvgTemp / historyMaxTemp`。
 - 已确认 `backend/src/main/resources/db/schema.sql` 和主要读取 SQL 不再依赖 6 号仓 `23.20`、2 号仓 `26.45` 的特殊预警规则。
+
+## 补充收口
+
+- 为兼容已经落库的旧 `grain_temp_summary` 数据，新增一次性回写工具：
+  - `scripts/rebuild-grain-temp-summary-warning.ps1`
+  - `scripts/rebuild-grain-temp-summary-warning.sql`
+- 作用：
+  - 按当前统一规则批量重算旧汇总行的 `warning_level`、`warning_flag`、`warning_message`、`analysis_result`、`analysis_remark`
+  - 统一规则为：
+    - `max_temp >= 28`：`WARNING`
+    - `25 <= max_temp < 28`：`ATTENTION`
+    - `max_temp < 25`：`NORMAL`
+- 说明：
+  - 这是旧库修正工具，不改变本轮已经完成的读取层“按 `max_temp` 实时兜底重算”的页面逻辑。
+  - 同时已更新 `backend/src/main/resources/db/schema.sql`，保证后续重置演示库时，`grain_temp_summary` 与 `prediction_task / prediction_result` 的演示数据也遵守本轮统一口径。

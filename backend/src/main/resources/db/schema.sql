@@ -536,16 +536,12 @@ SELECT
     END AS warning_message,
     CASE
         WHEN MAX(record.temperature_value) >= 25.00 THEN '粮温关注'
-        WHEN record.warehouse_id = 3 THEN '维护观察'
         ELSE '粮温正常'
     END AS analysis_result,
-    CASE record.warehouse_id
-        WHEN 1 THEN '粮温整体平稳'
-        WHEN 2 THEN '粮温接近阈值'
-        WHEN 3 THEN '维护状态历史记录'
-        WHEN 4 THEN '粮温整体平稳'
-        WHEN 5 THEN '粮温整体平稳'
-        ELSE '粮温轻微波动'
+    CASE
+        WHEN MAX(record.temperature_value) >= 28.00 THEN '检测到高温点，建议立即排查并通风降温'
+        WHEN MAX(record.temperature_value) >= 25.00 THEN '粮温接近阈值'
+        ELSE '粮温整体平稳'
     END AS analysis_remark
 FROM grain_temp_record record
 JOIN grain_temp_point point ON point.id = record.point_id
@@ -590,11 +586,11 @@ VALUES
         'AVG_TEMP',
         'LINEAR_REGRESSION',
         '线性回归',
-        '2026-01-01 00:00:00',
-        '2026-04-25 23:59:59',
-        '2026-04-26 00:00:00',
-        '2026-05-05 23:59:59',
-        '2026-04-25 23:59:59',
+        '2026-01-01 08:40:00',
+        '2026-04-25 08:40:00',
+        '2026-04-26 08:40:00',
+        '2026-05-05 08:40:00',
+        '2026-04-25 08:40:00',
         10,
         115,
         'INITIAL',
@@ -617,11 +613,11 @@ VALUES
         'AVG_TEMP',
         'WEIGHTED_MOVING_AVERAGE',
         '加权移动平均',
-        '2026-01-01 00:00:00',
-        '2026-04-25 23:59:59',
-        '2026-04-26 00:00:00',
-        '2026-05-05 23:59:59',
-        '2026-04-25 23:59:59',
+        '2026-01-01 08:40:00',
+        '2026-04-25 08:40:00',
+        '2026-04-26 08:40:00',
+        '2026-05-05 08:40:00',
+        '2026-04-25 08:40:00',
         10,
         115,
         'INITIAL',
@@ -644,11 +640,11 @@ VALUES
         'AVG_TEMP',
         'LINEAR_REGRESSION',
         '线性回归',
-        '2026-01-01 00:00:00',
-        '2026-04-25 23:59:59',
-        '2026-04-26 00:00:00',
-        '2026-05-05 23:59:59',
-        '2026-04-25 23:59:59',
+        '2026-01-01 08:40:00',
+        '2026-04-25 08:40:00',
+        '2026-04-26 08:40:00',
+        '2026-05-05 08:40:00',
+        '2026-04-25 08:40:00',
         10,
         115,
         'INITIAL',
@@ -671,11 +667,11 @@ VALUES
         'AVG_TEMP',
         'WEIGHTED_MOVING_AVERAGE',
         '加权移动平均',
-        '2026-01-01 00:00:00',
-        '2026-04-25 23:59:59',
-        '2026-04-26 00:00:00',
-        '2026-05-05 23:59:59',
-        '2026-04-25 23:59:59',
+        '2026-01-01 08:40:00',
+        '2026-04-25 08:40:00',
+        '2026-04-26 08:40:00',
+        '2026-05-05 08:40:00',
+        '2026-04-25 08:40:00',
         10,
         115,
         'INITIAL',
@@ -698,11 +694,11 @@ VALUES
         'AVG_TEMP',
         'LINEAR_REGRESSION',
         '线性回归',
-        '2026-01-01 00:00:00',
-        '2026-04-25 23:59:59',
-        '2026-04-26 00:00:00',
-        '2026-05-05 23:59:59',
-        '2026-04-25 23:59:59',
+        '2026-01-01 08:40:00',
+        '2026-04-25 08:40:00',
+        '2026-04-26 08:40:00',
+        '2026-05-05 08:40:00',
+        '2026-04-25 08:40:00',
         10,
         115,
         'INITIAL',
@@ -725,21 +721,21 @@ VALUES
         'AVG_TEMP',
         'LINEAR_REGRESSION',
         '线性回归',
-        '2026-01-01 00:00:00',
-        '2026-04-25 23:59:59',
-        '2026-04-26 00:00:00',
-        '2026-05-05 23:59:59',
-        '2026-04-25 23:59:59',
+        '2026-01-01 08:40:00',
+        '2026-04-25 08:40:00',
+        '2026-04-26 08:40:00',
+        '2026-05-05 08:40:00',
+        '2026-04-25 08:40:00',
         10,
         115,
         'INITIAL',
         'UNADJUSTED',
         'SUCCESS',
-        'ATTENTION',
+        'NORMAL',
         8,
         '2026-04-25 10:50:00',
         '2026-04-25 10:50:08',
-        '短期预测粮温轻微波动',
+        '短期预测保持低风险',
         '0425 全仓完整演示基线'
     );
 
@@ -774,40 +770,40 @@ SELECT
     seed.remark
 FROM prediction_task task
 JOIN (
-    SELECT 'TASK-DEMO-WH-A01-001' AS task_no, 'FUTURE' AS phase_type, 1 AS step_index, '2026-04-26 00:00:00' AS result_time, NULL AS actual_value, 20.10 AS predicted_value, NULL AS error_value, NULL AS error_rate, 'NORMAL' AS warning_level, 0 AS warning_flag, NULL AS warning_message, 0 AS is_corrected, '稳定仓未来预测点' AS remark
+    SELECT 'TASK-DEMO-WH-A01-001' AS task_no, 'FUTURE' AS phase_type, 1 AS step_index, '2026-04-26 08:40:00' AS result_time, NULL AS actual_value, 20.10 AS predicted_value, NULL AS error_value, NULL AS error_rate, 'NORMAL' AS warning_level, 0 AS warning_flag, NULL AS warning_message, 0 AS is_corrected, '稳定仓未来预测点' AS remark
     UNION ALL
-    SELECT 'TASK-DEMO-WH-A01-001', 'FUTURE', 5, '2026-04-30 00:00:00', NULL, 20.18, NULL, NULL, 'NORMAL', 0, NULL, 0, '稳定仓未来预测点'
+    SELECT 'TASK-DEMO-WH-A01-001', 'FUTURE', 5, '2026-04-30 08:40:00', NULL, 20.18, NULL, NULL, 'NORMAL', 0, NULL, 0, '稳定仓未来预测点'
     UNION ALL
-    SELECT 'TASK-DEMO-WH-A01-001', 'FUTURE', 10, '2026-05-05 00:00:00', NULL, 20.28, NULL, NULL, 'NORMAL', 0, NULL, 0, '稳定仓未来预测点'
+    SELECT 'TASK-DEMO-WH-A01-001', 'FUTURE', 10, '2026-05-05 08:40:00', NULL, 20.28, NULL, NULL, 'NORMAL', 0, NULL, 0, '稳定仓未来预测点'
     UNION ALL
-    SELECT 'TASK-DEMO-WH-A02-001', 'FUTURE', 1, '2026-04-26 00:00:00', NULL, 26.48, NULL, NULL, 'ATTENTION', 1, '预计粮温接近阈值，建议持续关注', 0, '风险仓未来预测点'
+    SELECT 'TASK-DEMO-WH-A02-001', 'FUTURE', 1, '2026-04-26 08:40:00', NULL, 26.48, NULL, NULL, 'ATTENTION', 1, '预计粮温接近阈值，建议持续关注', 0, '风险仓未来预测点'
     UNION ALL
-    SELECT 'TASK-DEMO-WH-A02-001', 'FUTURE', 5, '2026-04-30 00:00:00', NULL, 26.62, NULL, NULL, 'ATTENTION', 1, '预计粮温接近阈值，建议持续关注', 0, '风险仓未来预测点'
+    SELECT 'TASK-DEMO-WH-A02-001', 'FUTURE', 5, '2026-04-30 08:40:00', NULL, 26.62, NULL, NULL, 'ATTENTION', 1, '预计粮温接近阈值，建议持续关注', 0, '风险仓未来预测点'
     UNION ALL
-    SELECT 'TASK-DEMO-WH-A02-001', 'FUTURE', 10, '2026-05-05 00:00:00', NULL, 26.78, NULL, NULL, 'ATTENTION', 1, '预计粮温接近阈值，建议持续关注', 0, '风险仓未来预测点'
+    SELECT 'TASK-DEMO-WH-A02-001', 'FUTURE', 10, '2026-05-05 08:40:00', NULL, 26.78, NULL, NULL, 'ATTENTION', 1, '预计粮温接近阈值，建议持续关注', 0, '风险仓未来预测点'
     UNION ALL
-    SELECT 'TASK-DEMO-WH-B01-001', 'FUTURE', 1, '2026-04-26 00:00:00', NULL, 20.85, NULL, NULL, 'NORMAL', 0, NULL, 0, '维护仓未来预测点'
+    SELECT 'TASK-DEMO-WH-B01-001', 'FUTURE', 1, '2026-04-26 08:40:00', NULL, 20.85, NULL, NULL, 'NORMAL', 0, NULL, 0, '维护仓未来预测点'
     UNION ALL
-    SELECT 'TASK-DEMO-WH-B01-001', 'FUTURE', 5, '2026-04-30 00:00:00', NULL, 20.93, NULL, NULL, 'NORMAL', 0, NULL, 0, '维护仓未来预测点'
+    SELECT 'TASK-DEMO-WH-B01-001', 'FUTURE', 5, '2026-04-30 08:40:00', NULL, 20.93, NULL, NULL, 'NORMAL', 0, NULL, 0, '维护仓未来预测点'
     UNION ALL
-    SELECT 'TASK-DEMO-WH-B01-001', 'FUTURE', 10, '2026-05-05 00:00:00', NULL, 21.02, NULL, NULL, 'NORMAL', 0, NULL, 0, '维护仓未来预测点'
+    SELECT 'TASK-DEMO-WH-B01-001', 'FUTURE', 10, '2026-05-05 08:40:00', NULL, 21.02, NULL, NULL, 'NORMAL', 0, NULL, 0, '维护仓未来预测点'
     UNION ALL
-    SELECT 'TASK-DEMO-WH-B02-001', 'FUTURE', 1, '2026-04-26 00:00:00', NULL, 22.55, NULL, NULL, 'NORMAL', 0, NULL, 0, '日常仓未来预测点'
+    SELECT 'TASK-DEMO-WH-B02-001', 'FUTURE', 1, '2026-04-26 08:40:00', NULL, 22.55, NULL, NULL, 'NORMAL', 0, NULL, 0, '日常仓未来预测点'
     UNION ALL
-    SELECT 'TASK-DEMO-WH-B02-001', 'FUTURE', 5, '2026-04-30 00:00:00', NULL, 22.67, NULL, NULL, 'NORMAL', 0, NULL, 0, '日常仓未来预测点'
+    SELECT 'TASK-DEMO-WH-B02-001', 'FUTURE', 5, '2026-04-30 08:40:00', NULL, 22.67, NULL, NULL, 'NORMAL', 0, NULL, 0, '日常仓未来预测点'
     UNION ALL
-    SELECT 'TASK-DEMO-WH-B02-001', 'FUTURE', 10, '2026-05-05 00:00:00', NULL, 22.80, NULL, NULL, 'NORMAL', 0, NULL, 0, '日常仓未来预测点'
+    SELECT 'TASK-DEMO-WH-B02-001', 'FUTURE', 10, '2026-05-05 08:40:00', NULL, 22.80, NULL, NULL, 'NORMAL', 0, NULL, 0, '日常仓未来预测点'
     UNION ALL
-    SELECT 'TASK-DEMO-WH-C01-001', 'FUTURE', 1, '2026-04-26 00:00:00', NULL, 20.66, NULL, NULL, 'NORMAL', 0, NULL, 0, '低波动仓未来预测点'
+    SELECT 'TASK-DEMO-WH-C01-001', 'FUTURE', 1, '2026-04-26 08:40:00', NULL, 20.66, NULL, NULL, 'NORMAL', 0, NULL, 0, '低波动仓未来预测点'
     UNION ALL
-    SELECT 'TASK-DEMO-WH-C01-001', 'FUTURE', 5, '2026-04-30 00:00:00', NULL, 20.74, NULL, NULL, 'NORMAL', 0, NULL, 0, '低波动仓未来预测点'
+    SELECT 'TASK-DEMO-WH-C01-001', 'FUTURE', 5, '2026-04-30 08:40:00', NULL, 20.74, NULL, NULL, 'NORMAL', 0, NULL, 0, '低波动仓未来预测点'
     UNION ALL
-    SELECT 'TASK-DEMO-WH-C01-001', 'FUTURE', 10, '2026-05-05 00:00:00', NULL, 20.83, NULL, NULL, 'NORMAL', 0, NULL, 0, '低波动仓未来预测点'
+    SELECT 'TASK-DEMO-WH-C01-001', 'FUTURE', 10, '2026-05-05 08:40:00', NULL, 20.83, NULL, NULL, 'NORMAL', 0, NULL, 0, '低波动仓未来预测点'
     UNION ALL
-    SELECT 'TASK-DEMO-WH-C02-001', 'FUTURE', 1, '2026-04-26 00:00:00', NULL, 23.12, NULL, NULL, 'NORMAL', 0, NULL, 0, '对比仓未来预测点'
+    SELECT 'TASK-DEMO-WH-C02-001', 'FUTURE', 1, '2026-04-26 08:40:00', NULL, 23.12, NULL, NULL, 'NORMAL', 0, NULL, 0, '对比仓未来预测点'
     UNION ALL
-    SELECT 'TASK-DEMO-WH-C02-001', 'FUTURE', 5, '2026-04-30 00:00:00', NULL, 23.28, NULL, NULL, 'ATTENTION', 1, '预计粮温轻微波动，建议持续关注', 0, '对比仓未来预测点'
+    SELECT 'TASK-DEMO-WH-C02-001', 'FUTURE', 5, '2026-04-30 08:40:00', NULL, 23.28, NULL, NULL, 'NORMAL', 0, NULL, 0, '对比仓未来预测点'
     UNION ALL
-    SELECT 'TASK-DEMO-WH-C02-001', 'FUTURE', 10, '2026-05-05 00:00:00', NULL, 23.46, NULL, NULL, 'ATTENTION', 1, '预计粮温轻微波动，建议持续关注', 0, '对比仓未来预测点'
+    SELECT 'TASK-DEMO-WH-C02-001', 'FUTURE', 10, '2026-05-05 08:40:00', NULL, 23.46, NULL, NULL, 'NORMAL', 0, NULL, 0, '对比仓未来预测点'
 ) seed ON seed.task_no = task.task_no;
 

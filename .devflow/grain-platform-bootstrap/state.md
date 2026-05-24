@@ -1,7 +1,7 @@
 # 当前状态
 
 ## 当前阶段
-- Pause-ready after 首页健康度历史温度口径与粮温预警阈值修复
+- Pause-ready after 旧库预警回写工具与 schema 重置口径收口
 
 ## 已确认的事实
 - 用户要求使用 `devflow` 记录过程。
@@ -80,6 +80,14 @@
   - 问题原因：健康度 SQL 混用了最新真实均温与最新预测峰值；演示库种子数据对 6 号仓写了 `23.20` 特殊低阈值；服务端温度关注阈值仍按 `28 * 0.9 = 25.2` 计算；读取层直接信任旧库中的 `warning_level`。
   - 解决方案：健康度接口改为历史均温 `historyAvgTemp` 与历史峰值 `historyMaxTemp`；演示库、导入、手动重算、预测统一为 `>=28` 警告、`>=25` 关注、`<25` 正常；首页和粮温汇总读取层按 `max_temp` 重新计算有效预警，避免旧脏标记继续展示。
   - 验证已通过：`backend/` `mvn -q -DskipTests compile`；`frontend/` `npm run build`
+- 已补 2026-05-24 旧库粮温汇总预警字段重算工具：
+  - 问题现象：页面读取层虽已按 `max_temp` 兜底重算，但数据库里历史 `grain_temp_summary.warning_*` 与分析字段仍可能保留旧口径。
+  - 问题原因：本轮业务修复主要发生在读取层、导入链路和种子数据；已落库旧汇总行不会自动全量回写。
+  - 解决方案：新增 `scripts/rebuild-grain-temp-summary-warning.ps1` 与 `scripts/rebuild-grain-temp-summary-warning.sql`，用于按 `>=28` / `>=25` / `<25` 规则批量回写 `warning_level`、`warning_flag`、`warning_message`、`analysis_result`、`analysis_remark`。
+- 已同步更新 `backend/src/main/resources/db/schema.sql` 的演示库重置口径：
+  - `grain_temp_summary.analysis_result / analysis_remark` 改为按当前统一温度规则生成，不再保留旧 demo 特判。
+  - `prediction_task.forecast_start_time / forecast_end_time / based_on_actual_end_time` 与 `prediction_result.result_time` 改为和真实粮温一致的 `08:40:00`。
+  - `prediction_task` 与 `prediction_result` 中低于 `25°C` 的对比仓预测样例已改回 `NORMAL`，避免重置演示库后再次出现 23.x°C 旧预警。
 - 已完成 2026-04-21 普通环境趋势图图例收口：
   - `frontend/src/views/DataView.vue` 的普通环境模式趋势图已改为根据当前指标动态显示图例与系列名称，当前查询湿度时显示“湿度”，查询二氧化碳时显示“二氧化碳浓度”
   - 环境模式图表更新已改为非合并更新，避免从粮温模式切换后残留“最高温”等旧图例或系列
@@ -229,6 +237,8 @@
 
 ## 待解决的问题
 - 首页健康度历史温度口径与粮温预警阈值修复已完成静态验证，但尚未在重启后的 `8081` 后端上做页面人工复测。
+- 旧库粮温汇总预警字段重算工具已补，但尚未在用户本地数据库上实际执行。
+- `schema.sql` 已收口到新规则，但若用户本地数据库不是重置重建，而是直接沿用旧库，则仍需额外执行旧库回写脚本或 SQL。
 - 预测开始时间可选与“预测历史独立保存”已完成单元测试和后端编译，但尚未在重启后的 `8081` 后端上做完整页面人工复测。
 - 旧数据库中已经被覆盖删除的历史预测任务无法自动恢复；本次修复只保证之后的新预测会独立保存。
 - `schema.sql` 中 demo 任务的 `prediction_result` 仍是 `step 1 / 5 / 10`，且结果时间仍是 `00:00:00`；如果重置演示库后不执行新预测，初始 demo 任务仍会显示旧口径。
@@ -247,6 +257,8 @@
 
 ## 下一步
 - 若要确认本次首页与环境数据页修复，先重启本地 `8081` 后端，再进入 `/environment` 与 `/dashboard` 做页面人工复测。
+- 若要把历史 `grain_temp_summary` 旧口径字段也统一刷正，可先执行 `scripts/rebuild-grain-temp-summary-warning.ps1`，或直接在 MySQL 中运行 `scripts/rebuild-grain-temp-summary-warning.sql`。
+- 若要从根上重置整套演示数据，可直接执行 `scripts/reset-demo-db.ps1`，它会重跑已经更新过的 `backend/src/main/resources/db/schema.sql`。
 - 若要确认本次预测页修复的页面效果，先重启本地 `8081` 后端，再进入预测页选择预测开始时间并执行预测；确认预测记录会新增独立历史任务，且同一天实际值和预测值不再因为 `00:00:00` / `08:40:00` 断裂。
 - 若要确认本次系统管理员角色修复的页面效果，先重启本地 `8081` 后端，再进入用户管理页确认“新增用户”的角色下拉只剩“仓库管理员”和“参观者”；也可直接调接口提交 `ADMIN` 做后端负向 smoke。
 - 若要确认本次普通环境模板导入修复的页面效果，先重启本地 `8081` 后端，再在“普通环境数据”模式下载模板并上传验证。
